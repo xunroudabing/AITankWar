@@ -1,0 +1,9 @@
+package com.hisense.codewar;
+
+import java.util.List;
+
+public interface TankGamePlayInterface {
+    public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles);
+    public void gametick(ITtank tank);
+
+}

@@ -1,0 +1,209 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.hisense</groupId>
+	<artifactId>codewar</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>AITank</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	<!-- 使用阿里 maven库 -->
+	<repositories>
+		<repository>
+			<id>ali-maven</id>
+			<url>http://maven.aliyun.com/nexus/content/groups/public</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+				<checksumPolicy>fail</checksumPolicy>
+			</snapshots>
+		</repository>
+	</repositories>
+	<dependencies>
+		<!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
+		<!-- https://mvnrepository.com/artifact/com.alibaba.fastjson2/fastjson2 -->
+		<dependency>
+			<groupId>com.alibaba.fastjson2</groupId>
+			<artifactId>fastjson2</artifactId>
+			<version>2.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.16</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jfinal</groupId>
+			<artifactId>jfinal</artifactId>
+			<version>2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jfinal</groupId>
+			<artifactId>cos</artifactId>
+			<version>2017.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.9</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.7.9</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.6</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>lib/</classpathPrefix>
+							<mainClass>com.hisense.codewar.MainGroupGame</mainClass>
+						</manifest>
+						<manifestEntries>
+							<Class-Path>config/</Class-Path>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.10</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>copy-resources</id>
+						<!-- here the phase you need -->
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/config</outputDirectory>
+							<resources>
+								<resource>
+									<directory>res</directory>
+									<filtering>true</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
+				<version>1.10</version>
+				<executions>
+					<execution>
+						<id>assemble</id>
+						<phase>package</phase>
+						<goals>
+							<goal>assemble</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<binFileExtensions>
+						<unix>.sh</unix>
+					</binFileExtensions>
+					<!-- 生成linux, windows两种平台的执行脚本 -->
+					<platforms>
+						<platform>windows</platform>
+						<platform>unix</platform>
+					</platforms>
+					<!-- 根目录 -->
+					<assembleDirectory>${project.build.directory}/AITank</assembleDirectory>
+					<!-- 打包的jar，以及maven依赖的jar放到这个目录里面 -->
+					<repositoryName>lib</repositoryName>
+					<!-- 可执行脚本的目录 -->
+					<binFolder>bin</binFolder>
+					<!-- 配置文件的目标目录 -->
+					<configurationDirectory>config</configurationDirectory>
+					<!-- 拷贝配置文件到上面的目录中 -->
+					<copyConfigurationDirectory>true</copyConfigurationDirectory>
+					<!-- 从哪里拷贝配置文件 (默认src/main/config) -->
+					<configurationSourceDirectory>src/main/resources</configurationSourceDirectory>
+					<!-- lib目录中jar的存放规则，默认是${groupId}/${artifactId}的目录格式，flat表示直接把jar放到lib目录 -->
+					<repositoryLayout>flat</repositoryLayout>
+					<encoding>UTF-8</encoding>
+					<logsDirectory>logs</logsDirectory>
+					<tempDirectory>tmp</tempDirectory>
+					<programs>
+						<program>
+							<platforms>
+								<platform>windows</platform>
+							</platforms>
+							<id>startup-windows</id>
+							<!-- 启动类 -->
+							<mainClass>com.hisense.codewar.MainGroupGame</mainClass>
+							<jvmSettings>
+								<extraArguments>
+									<extraArgument>-Xmx2G</extraArgument>
+									<extraArgument>-Xms2G</extraArgument>
+								</extraArguments>
+							</jvmSettings>
+						</program>
+						<program>
+							<platforms>
+								<platform>unix</platform>
+							</platforms>
+							<id>startup</id>
+							<!-- 启动类 -->
+							<mainClass>com.hisense.codewar.MainGroupGame</mainClass>
+							<jvmSettings>
+								<extraArguments>
+									<extraArgument>-Xmx2G</extraArgument>
+									<extraArgument>-Xms2G</extraArgument>
+								</extraArguments>
+							</jvmSettings>
+							<commandLineArguments>
+								<commandLineArgument>>> /dev/null 2 >&amp; 1 &amp; echo $! > pid</commandLineArgument>
+							</commandLineArguments>
+						</program>
+					</programs>
+				</configuration>
+			</plugin>
+
+		</plugins>
+	</build>
+</project>

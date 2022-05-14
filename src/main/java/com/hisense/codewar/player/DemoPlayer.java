@@ -22,11 +22,16 @@ import com.jfinal.log.Log;
 
 public class DemoPlayer implements TankGamePlayInterface {
 	public static void main(String[] args) {
-		int i = -90;
-
-		int j = Utils.formatAngle(i);
-
-		System.out.println(j);
+		int a = 3;
+		int b = 4;
+		int c = 5;
+	
+		//int r = (int) Math.toDegrees(Math.acos((a*a+b*b-c*c)/2*a*b));
+		double d = Math.acos((b*b+c*c-a*a)/(2.0*b*c));
+		
+		int r = (int) Math.toDegrees(d);
+		
+		System.out.println(r+ "," + d);
 	}
 
 	private static final Logger log = LoggerFactory.getLogger(DemoPlayer.class);
@@ -36,7 +41,8 @@ public class DemoPlayer implements TankGamePlayInterface {
 	int nowx, nowy = 0;
 	private Suggestion mSuggestion = null;
 	private CombatWarning mCombatWarning = new CombatWarning();
-	private Random mRandom=new Random();
+	private Random mRandom = new Random();
+
 	@Override
 	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles) {
 		// TODO Auto-generated method stub
@@ -50,7 +56,7 @@ public class DemoPlayer implements TankGamePlayInterface {
 				nowx = t.x;
 				nowy = t.y;
 				heading = t.getR();
-				mCombatWarning.updateMyPos(id,nowx, nowy, heading);
+				mCombatWarning.updateMyPos(id, nowx, nowy, heading);
 				break;
 			}
 		}
@@ -63,21 +69,21 @@ public class DemoPlayer implements TankGamePlayInterface {
 	@Override
 	public void gametick(ITtank tank) {
 		// TODO Auto-generated method stub
-		log.debug("gametick");
+		//log.debug("gametick");
 		if (mSuggestion != null) {
 			int action = mSuggestion.action;
 			if (action == Suggestion.DODGE) {
 				int r = mSuggestion.r;
 				int h = mSuggestion.heading;
-				
-				//r = mRandom.nextInt(90);
+
+				// r = mRandom.nextInt(90);
 				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, r);
 				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, r);
 				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, h);
-				log.debug(String.format("##Dodge###r[%d]h[%d]", r, h));
+				log.debug(String.format("$$$$$$$$$Dodge$$$$$$$$r[%d]h[%d]", r, h));
 			}
 		}
-		
+
 //		tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, 0);
 //		tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, 0);
 

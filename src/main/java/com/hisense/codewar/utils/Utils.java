@@ -50,5 +50,29 @@ public class Utils {
 		}
 		return ret;
 	}
+	/**
+	 * 
+	 * @param ax 
+	 * @param ay
+	 * @param bx
+	 * @param by
+	 * @param cx
+	 * @param cy
+	 * @return
+	 */
+	public static int getAngle(int ax,int ay,int bx,int by,int cx,int cy) {
+		
+		int c = getDistance(ax, ay, bx, by);
+		int b = getDistance(ax, ay, cx, cy);
+		
+		int a = getDistance(bx, by, cx, cy);
+		
+		if(b == 0 || c == 0) {
+			return -1;
+		}
+		 double d = Math.acos((b*b+c*c-a*a)/(2.0d*b*c));
+		 int angle = (int) Math.toDegrees(d);
+		 return angle;
+	}
 
 }

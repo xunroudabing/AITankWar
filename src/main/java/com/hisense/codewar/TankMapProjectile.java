@@ -13,6 +13,10 @@ public class TankMapProjectile {
         this.r = r;
     }
 
-    
+    @Override
+    public String toString() {
+    	// TODO Auto-generated method stub
+    	return String.format("bullet[%d,%d]r[%d]->tankid[%d]", x,y,r,tankid);
+    }
     
 }

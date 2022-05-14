@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.demo.DemoShooterGame;
+import com.hisense.codewar.player.DemoPlayer;
 import com.jfinal.kit.PropKit;
 
 public class MainGroupGame implements TankGamePlayInterface {
@@ -16,26 +17,43 @@ public class MainGroupGame implements TankGamePlayInterface {
 		String server = PropKit.get("server.ip");
 		int port = PropKit.getInt("server.port");
 		System.out.println("server is " + server + ":" + port);
-		final String token1 = PropKit.get("tank1.token");
-		log.info("token is " + token1);
-		TankGame game1 = new TankGame();
-		TankGame game2 = new TankGame();
+		final String token3 = PropKit.get("tank3.token");
+		log.info("token is " + token3);
+
 		TankGame game3 = new TankGame();
-		DemoShooterGame player1 = new DemoShooterGame();
-		DemoShooterGame player2 = new DemoShooterGame();
-		DemoShooterGame player3 = new DemoShooterGame();
+
+		DemoPlayer player3 = new DemoPlayer();
+		
+		ITtank tank3 = game3.tank_init("10.18.224.205", 22222, token3, player3, null);
+		
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				game3.tank_loop(tank3);
+
+			}
+		}).start();
 	}
 
 	@Override
 	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles) {
 		// TODO Auto-generated method stub
-
+		log.debug("updatemap");
 	}
 
 	@Override
 	public void gametick(ITtank tank) {
 		// TODO Auto-generated method stub
+		log.debug("gametick");
 
+	}
+
+	@Override
+	public void onstart(int i) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

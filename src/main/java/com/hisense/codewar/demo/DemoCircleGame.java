@@ -47,6 +47,13 @@ public class DemoCircleGame implements TankGamePlayInterface{
         String token = "c9d55dd569553ce1b1703cc9999e362a";
         ITtank tank = game.tank_init("10.18.224.205", 22222, token, player, null);
         game.tank_loop(tank);
-    }    
+    }
+
+
+	@Override
+	public void onstart(int i) {
+		// TODO Auto-generated method stub
+		
+	}    
 
 }

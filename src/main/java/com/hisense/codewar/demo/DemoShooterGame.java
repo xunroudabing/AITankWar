@@ -382,4 +382,10 @@ public class DemoShooterGame implements TankGamePlayInterface {
 		}).start();
 	}
 
+	@Override
+	public void onstart(int i) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

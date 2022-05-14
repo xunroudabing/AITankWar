@@ -58,7 +58,13 @@ public class DemoCrazyGame implements TankGamePlayInterface{
         String token = "d2dba9687037aa47da426a7d66adf9fd";
         ITtank tank = game.tank_init("10.18.224.205", 22222, token, player, null);
         game.tank_loop(tank);
-    }   
+    }
+
+	@Override
+	public void onstart(int i) {
+		// TODO Auto-generated method stub
+		
+	}   
 
 
 }

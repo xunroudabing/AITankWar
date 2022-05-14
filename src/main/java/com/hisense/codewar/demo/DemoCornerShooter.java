@@ -185,4 +185,10 @@ public class DemoCornerShooter implements TankGamePlayInterface {
 		game.tank_loop(tank);
 	}
 
+	@Override
+	public void onstart(int i) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

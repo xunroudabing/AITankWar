@@ -13,12 +13,17 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.hisense.codewar.player.DemoPlayer;
 
 
 public class TankGame {
+	private static final Logger log = LoggerFactory.getLogger(TankGame.class);
     private String mIp;
     private int mPort;
     private TankGamePlayInterface mPlay;
@@ -291,12 +296,13 @@ public class TankGame {
                                             tank.setId(Integer.parseInt(cmdData[1]));
                                             tank.clearBlocks();
                                             record_start(tank, "");
+                                            mPlay.onstart(2);
                                         }
                                         if(cmdData.length == 3){
                                             tank.setId(Integer.parseInt(cmdData[1]));
                                             tank.clearBlocks();
-                                            record_start(tank, cmdData[2]);
-
+                                            record_start(tank, cmdData[2]);	
+                                            mPlay.onstart(3);
                                             String[] cmdBlockData = cmdData[2].split(";");
                                             for(String block : cmdBlockData){
                                                 String[] blockPos = block.split(",");

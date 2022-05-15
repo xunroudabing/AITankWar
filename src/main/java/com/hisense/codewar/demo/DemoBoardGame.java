@@ -4,6 +4,12 @@ import java.util.List;
 import java.util.Random;
 
 import com.hisense.codewar.*;
+import com.hisense.codewar.model.ITtank;
+import com.hisense.codewar.model.TankGame;
+import com.hisense.codewar.model.TankGameActionType;
+import com.hisense.codewar.model.TankGameInfo;
+import com.hisense.codewar.model.TankGamePlayInterface;
+import com.hisense.codewar.model.TankMapProjectile;
 
 class DemoBoardGame implements TankGamePlayInterface {
     public int state = 0;

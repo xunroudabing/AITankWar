@@ -1,4 +1,4 @@
-package com.hisense.codewar;
+package com.hisense.codewar.model;
 
 public class TankMapProjectile {
     public  int tankid;

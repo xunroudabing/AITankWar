@@ -6,6 +6,7 @@
 .settings
 .classpath
 .project
+.idea
 target
 # BlueJ files
 *.ctxt

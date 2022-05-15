@@ -1,4 +1,6 @@
-package com.hisense.codewar;
+package com.hisense.codewar.model;
+
+import java.util.Objects;
 
 public class TankGameInfo {
 	public int id;
@@ -58,5 +60,11 @@ public class TankGameInfo {
 			return getId() == o.id;
 		}
 		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		return Objects.hash(getId());
 	}
 }

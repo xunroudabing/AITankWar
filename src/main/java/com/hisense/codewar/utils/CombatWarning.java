@@ -12,8 +12,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hisense.codewar.TankGameInfo;
-import com.hisense.codewar.TankMapProjectile;
+import com.hisense.codewar.model.TankGameInfo;
+import com.hisense.codewar.model.TankMapProjectile;
 
 public class CombatWarning {
 	private static final Logger log = LoggerFactory.getLogger(CombatWarning.class);

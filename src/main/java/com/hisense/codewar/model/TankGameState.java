@@ -1,4 +1,4 @@
-package com.hisense.codewar;
+package com.hisense.codewar.model;
 
 public enum TankGameState {
     sInit(0), sWait(1), sGaming(2);

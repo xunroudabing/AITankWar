@@ -1,4 +1,4 @@
-package com.hisense.codewar;
+package com.hisense.codewar.model;
 
 import java.io.FileWriter;
 import java.io.IOException;

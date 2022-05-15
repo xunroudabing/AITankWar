@@ -6,6 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.demo.DemoShooterGame;
+import com.hisense.codewar.model.ITtank;
+import com.hisense.codewar.model.TankGame;
+import com.hisense.codewar.model.TankGameInfo;
+import com.hisense.codewar.model.TankGamePlayInterface;
+import com.hisense.codewar.model.TankMapProjectile;
 import com.hisense.codewar.player.DemoPlayer;
 import com.jfinal.kit.PropKit;
 

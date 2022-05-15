@@ -1,4 +1,4 @@
-package com.hisense.codewar;
+package com.hisense.codewar.model;
 
 import java.util.List;
 

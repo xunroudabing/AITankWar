@@ -3,12 +3,12 @@ package com.hisense.codewar.demo;
 import java.util.List;
 import java.util.Random;
 
-import com.hisense.codewar.ITtank;
-import com.hisense.codewar.TankGame;
-import com.hisense.codewar.TankGameActionType;
-import com.hisense.codewar.TankGameInfo;
-import com.hisense.codewar.TankGamePlayInterface;
-import com.hisense.codewar.TankMapProjectile;
+import com.hisense.codewar.model.ITtank;
+import com.hisense.codewar.model.TankGame;
+import com.hisense.codewar.model.TankGameActionType;
+import com.hisense.codewar.model.TankGameInfo;
+import com.hisense.codewar.model.TankGamePlayInterface;
+import com.hisense.codewar.model.TankMapProjectile;
 
 public class DemoCornerShooter implements TankGamePlayInterface {
 	public long dest_deg = 0;

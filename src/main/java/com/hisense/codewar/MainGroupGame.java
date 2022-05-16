@@ -27,8 +27,8 @@ public class MainGroupGame implements TankGamePlayInterface {
 
 		TankGame game3 = new TankGame();
 
-		DemoPlayer player3 = new DemoPlayer();
-		
+		//DemoPlayer player3 = new DemoPlayer();
+		DemoShooterGame player3 = new DemoShooterGame();
 		ITtank tank3 = game3.tank_init("10.18.224.205", 22222, token3, player3, null);
 		
 		new Thread(new Runnable() {

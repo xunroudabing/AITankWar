@@ -5,14 +5,19 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
 import com.hisense.codewar.model.TankGameActionType;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankGamePlayInterface;
 import com.hisense.codewar.model.TankMapProjectile;
+import com.hisense.codewar.player.DemoPlayer;
 
 public class DemoShooterGame implements TankGamePlayInterface {
+	private static final Logger log = LoggerFactory.getLogger(DemoShooterGame.class);
 	public Random mRandom = new Random();
 	public static final int[] FRIENDS = { 71, 75, 76, 130, 131, 132 };
 	public List<Integer> friends = new ArrayList<Integer>();
@@ -177,6 +182,9 @@ public class DemoShooterGame implements TankGamePlayInterface {
 			dest_deg += 180;
 		}
 		escape = (distance < 15000);
+		
+		printLog1(tanks);
+		printlog2(projectiles);
 
 	}
 
@@ -386,6 +394,19 @@ public class DemoShooterGame implements TankGamePlayInterface {
 	public void onstart(int i) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	private void printLog1(List<TankGameInfo> tanks) {
+		for (TankGameInfo info : tanks) {
+			log.debug("#TankGameInfo#" + info.toString());
+		}
+
+	}
+
+	private void printlog2(List<TankMapProjectile> projectiles) {
+		for (TankMapProjectile p : projectiles) {
+			log.debug("#projectiles#" + p.toString());
+		}
 	}
 
 }

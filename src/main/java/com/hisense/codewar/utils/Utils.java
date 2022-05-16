@@ -2,6 +2,8 @@ package com.hisense.codewar.utils;
 
 import static java.lang.Math.PI;
 
+import java.awt.Point;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,31 +11,71 @@ public class Utils {
 	private static final Logger log = LoggerFactory.getLogger(Utils.class);
 	public static void main(String[] args) {
 		int angle = 180;
-
-		int x1 = 800;
-		int y1 = 450;
-
-		int x2 = 700;
-		int y2 = 440;
-
-		// double a = r2a(Math.atan((float) (y2 - y1) / (float) x2 - x1));
-
+		//839,818]r[355]distance[630]-->result[0]me[1465,746
+//		int x1 = 839;
+//		int y1 = 818;
+//
+//		int x2 = 1465;
+//		int y2 = 746;
+//
+//		// double a = r2a(Math.atan((float) (y2 - y1) / (float) x2 - x1));
+//
+//		int a = Utils.getTargetRadius(x2, y2, x1, y1);
+//
+//		int g = Utils.getTargetRadius(x1, y1, x2, y2);
+////
+////		double c = Math.toDegrees(b);
+////
+//		int d = Utils.angleToDegress(x1, y1, x2, y2);
+//		int e = Utils.getFireAngle(x1, y1, x2, y2);
+//		int f = Utils.getFireAngle(x2, y2, x1, y1);
+//		
+//		System.out.println(a);
+//		System.out.println(g);
+//		System.out.println(e);
+//		System.out.println(f);
+//		
+//		System.out.println(d);
+//		
+//		int d360 = Utils.formatAngle(-83);
+//		System.out.println("360:"+d360);
+		
+		//827,819    839,818     1465,746   r 355
+		
+		int x1 = 827;
+		int y1 = 819;
+		
+		int x2 = 839;
+		int y2 = 818;
+		
+		int mx = 1465;
+		int my = 746;
+		
 		int a = Utils.getTargetRadius(x2, y2, x1, y1);
-
-		int g = Utils.getTargetRadius(x1, y1, x2, y2);
-//
-//		double c = Math.toDegrees(b);
-//
-		int d = Utils.angleToDegress(x1, y1, x2, y2);
-		int e = Utils.getFireAngle(x1, y1, x2, y2);
-		int f = Utils.getFireAngle(x2, y2, x1, y1);
+		
+		int b = Utils.getFireAngle(x1, y1, mx, my);
 		
 		System.out.println(a);
-		System.out.println(g);
-		System.out.println(e);
-		System.out.println(f);
+		
+		System.out.println(b);
+		
+		System.out.println(Utils.formatAngle(a));
+		
+		System.out.println(Utils.formatAngle(b));
+		
+		Point d = Utils.getFoot( new Point(mx, my),new Point(x1, y1), new Point(x2, y2));
 		
 		System.out.println(d);
+		
+		Point d2 = Utils.getFoot2(new Point(x1, y1), new Point(x2, y2),new Point(mx, my));
+		
+		System.out.println(d2);
+		
+		int distance = Utils.getDistance(mx, my, d2.x, d2.y);
+		
+		System.out.println("distance=" + distance);
+		
+		
 
 	}
 
@@ -144,9 +186,52 @@ public class Utils {
 			return -1;
 		}
 		double d = Math.acos((b * b + c * c - a * a) / (2.0d * b * c));
+		log.debug("d=" +Math.toDegrees(d));
 		int angle = (int) Math.toDegrees(d);
 		return angle;
 	}
+	
+	public static boolean inline(int x1,int y1,int x2,int y2,int tx,int ty) {
+		boolean ret = (tx-x1)*(y1-y2) == (x1-x2)*(ty-y1);
+		return ret;
+		
+	}
+	
+	public static Point getFoot2(Point p1,Point p2,Point p3){
+        Point foot=new Point();
+        
+        float dx=p1.x-p2.x;
+        float dy=p1.y-p2.y;
+        
+        float u=(p3.x-p1.x)*dx+(p3.y-p1.y)*dy;
+        u/=dx*dx+dy*dy;
+        
+        foot.x=(int)(p1.x+u*dx);
+        foot.y=(int)(p1.y+u*dy);
+        
+        return foot;
+    }
+	
+	
+	   //点到其他两点垂足计算
+    public static Point getFoot(Point pt,Point beginPt,Point endPt){
+        Point result = new Point();
+        double dx = beginPt.getX()-endPt.getX();
+        double dy = beginPt.getY()-endPt.getY();
+ 
+        if(Math.abs(dx)<0.000001&&Math.abs(dy)<0.000001){
+            result = pt;
+        }
+ 
+        double u = (pt.getX()-beginPt.getX())*(beginPt.getX()-endPt.getX())+
+                (pt.getY()-beginPt.getY())*(beginPt.getY()-endPt.getY());
+        log.debug("u=" + u);
+        u = u /(dx*dx+dy*dy);
+        result.x = (int) (beginPt.getX()+u*dx);
+        result.y = (int) (beginPt.getY()+u*dy);
+        
+        return result;
+    }
 
 	private final static double TWO_PI = 2 * PI;
 	private final static double THREE_PI_OVER_TWO = 3 * PI / 2;

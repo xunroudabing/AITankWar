@@ -26,13 +26,13 @@ public class DemoPlayer implements TankGamePlayInterface {
 		int a = 3;
 		int b = 4;
 		int c = 5;
-	
-		//int r = (int) Math.toDegrees(Math.acos((a*a+b*b-c*c)/2*a*b));
-		double d = Math.acos((b*b+c*c-a*a)/(2.0*b*c));
-		
+
+		// int r = (int) Math.toDegrees(Math.acos((a*a+b*b-c*c)/2*a*b));
+		double d = Math.acos((b * b + c * c - a * a) / (2.0 * b * c));
+
 		int r = (int) Math.toDegrees(d);
-		
-		System.out.println(r+ "," + d);
+
+		System.out.println(r + "," + d);
 	}
 
 	private static final Logger log = LoggerFactory.getLogger(DemoPlayer.class);
@@ -70,7 +70,7 @@ public class DemoPlayer implements TankGamePlayInterface {
 	@Override
 	public void gametick(ITtank tank) {
 		// TODO Auto-generated method stub
-		//log.debug("gametick");
+		// log.debug("gametick");
 		if (mSuggestion != null) {
 			int action = mSuggestion.action;
 			if (action == Suggestion.DODGE) {
@@ -114,6 +114,19 @@ public class DemoPlayer implements TankGamePlayInterface {
 			log.debug("********************start********************");
 		} else if (i == 2) {
 			log.debug("######################start######################");
+		}
+	}
+
+	private void printLog1(List<TankGameInfo> tanks) {
+		for (TankGameInfo info : tanks) {
+			log.debug("#TankGameInfo#" + info.toString());
+		}
+
+	}
+
+	private void printlog2(List<TankMapProjectile> projectiles) {
+		for (TankMapProjectile p : projectiles) {
+			log.debug("#projectiles#" + p.toString());
 		}
 	}
 }

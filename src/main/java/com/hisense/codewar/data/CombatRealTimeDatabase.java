@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.model.TankGameInfo;
+import com.hisense.codewar.model.TankMapProjectile;
 import com.hisense.codewar.player.DemoPlayer;
 import com.jfinal.kit.PropKit;
 /**
@@ -24,28 +25,36 @@ public class CombatRealTimeDatabase {
 	private int mNowY;
 	private int mHeading;
 	private int[] mFriendTanksID;
+	private List<TankMapProjectile> mProjectiles;
 	private List<TankGameInfo> mAllTanks;
 	private List<TankGameInfo> mFriendTanks;
 
-	private static final Logger log = LoggerFactory.getLogger(DemoPlayer.class);
+	private static final Logger log = LoggerFactory.getLogger(CombatRealTimeDatabase.class);
 
 	public CombatRealTimeDatabase() {
 		PropKit.use("tank.properties");
 		mAllTanks = new ArrayList<>();
+		mProjectiles = new ArrayList<>();
 		mFriendTanks = new ArrayList<>();
 		initFriendTanks();
 	}
 
 	public void reset() {
 		mAllTanks.clear();
+		mProjectiles.clear();
 	}
-
+	public void setMyTankId(int tankid) {
+		mTankId = tankid;
+	}
 	public void updateAllTanks(List<TankGameInfo> list) {
 		mAllTanks.clear();
 		mAllTanks.addAll(list);
 		loopAllTanks();
 	}
-
+	public void udpateProjectiles(List<TankMapProjectile> list) {
+		mProjectiles.clear();
+		mProjectiles.addAll(list);
+	}
 	public List<TankGameInfo> getFriendTanks() {
 		return mFriendTanks;
 	}
@@ -64,6 +73,10 @@ public class CombatRealTimeDatabase {
 
 	public int getMyTankId() {
 		return mTankId;
+	}
+	
+	public List<TankMapProjectile> geTankMapProjectiles(){
+		return mProjectiles;
 	}
 
 	private void loopAllTanks() {

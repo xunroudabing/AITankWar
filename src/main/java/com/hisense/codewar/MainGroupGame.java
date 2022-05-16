@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.demo.DemoShooterGame;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
@@ -24,7 +25,7 @@ public class MainGroupGame implements TankGamePlayInterface {
 		System.out.println("server is " + server + ":" + port);
 		final String token3 = PropKit.get("tank3.token");
 		log.info("token is " + token3);
-
+		AppConfig.init();
 		TankGame game3 = new TankGame();
 
 		//DemoPlayer player3 = new DemoPlayer();

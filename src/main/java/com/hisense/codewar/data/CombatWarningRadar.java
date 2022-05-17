@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
+import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.BulletInfo;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
@@ -24,6 +25,7 @@ import com.hisense.codewar.utils.Utils;
  *
  */
 public class CombatWarningRadar {
+	private int mTick = 0;
 	// 威胁列表，敌人tankid,弹道数据等
 	private List<ThreatTarget> mThreatTargets;
 	// 雷达范围内弹道数据
@@ -47,7 +49,8 @@ public class CombatWarningRadar {
 		mThreatTargets.clear();
 	}
 
-	public void scan() {
+	public void scan(int tick) {
+		mTick = tick;
 		int mTankId = mDatabase.getMyTankId();
 
 		List<TankMapProjectile> list = mDatabase.geTankMapProjectiles();
@@ -64,8 +67,9 @@ public class CombatWarningRadar {
 
 		// 扫描威胁数据
 		scanThreatBullet();
+		
 		// 扫描威胁目标
-		scanThreadTarget();
+		// scanThreadTarget();
 	}
 
 	/**
@@ -89,60 +93,33 @@ public class CombatWarningRadar {
 
 	// 扫描弹道
 	protected void scanBullets(TankMapProjectile projectile) {
-		boolean existTank = false;
-		boolean hasSameR = false;
-		boolean hasSameXY = false;
-		int tickIndex = -1;
-		Iterator<BulletInfo> iterator = mBulletInfos.iterator();
+		Iterator<Bullet> iterator = mDatabase.getBullets().iterator();
+		boolean isExist = false;
 		while (iterator.hasNext()) {
-			BulletInfo bulletInfo = iterator.next();
-			if (bulletInfo.getTankId() == projectile.tankid) {
-				existTank = true;
-				if (bulletInfo.getR() == projectile.r) {
-					hasSameR = true;
-					if (hasSameR) {
-						//if (bulletInfo.getStartX() == projectile.x && bulletInfo.getStartY() == projectile.y) {
-							hasSameXY = true;
-							if (hasSameXY) {
-								tickIndex = bulletInfo.isChild(projectile.x, projectile.y);
-								log.debug("tickIndex =" + tickIndex + "," + projectile.x + "," + projectile.y
-										+ ",bullet[" + bulletInfo.getStartX() + "," + bulletInfo.getStartY());
-								if (tickIndex > 0) {
-									// 归属已知弹道，更新数据
-									bulletInfo.setCurrentX(projectile.x);
-									bulletInfo.setCurrentY(projectile.y);
-									bulletInfo.setTicks(tickIndex);
-								}
-							}
-						//}
-					}
+			Bullet bullet = (Bullet) iterator.next();
+			if (projectile.tankid == bullet.tankid && projectile.r == bullet.r) {
+				// 属于同一弹道,不处理
+				boolean isChild = bullet.isChild(projectile.x, projectile.y);
+				if (isChild) {
+					bullet.currentX = projectile.x;
+					bullet.currentY = projectile.y;
+					isExist = true;
+					break;
 				}
-				break;
 			}
 
 		}
-
-		// 不存在此坦克弹道，为新弹道
-		if (!existTank) {
-			insertBulletsInfo(projectile);
-			return;
-		}
-		// 存在此坦克弹道，但R值不同，为新弹道
-		if (!hasSameR) {
-			insertBulletsInfo(projectile);
-			return;
-		}
-		// R值也相同,但是startXY相同，为新弹道
-		if (hasSameXY) {
-			//insertBulletsInfo(projectile);
-			return;
-		}
-
-		// 此处R值相同，需要用公式算该子弹是否归属目标弹道
-		// 公式返回-1，说明为新弹道
-		if (tickIndex < 0) {
-			insertBulletsInfo(projectile);
-			return;
+		if (!isExist) {
+			Bullet bullet = new Bullet();
+			bullet.startX = projectile.x;
+			bullet.startY = projectile.y;
+			bullet.currentX = projectile.x;
+			bullet.currentY = projectile.y;
+			bullet.r = projectile.r;
+			bullet.tankid = projectile.tankid;
+			bullet.createTick = mTick;
+			mDatabase.getBullets().add(bullet);
+			log.debug("[RadarWarning]" + bullet.toString());
 		}
 
 	}
@@ -156,21 +133,56 @@ public class CombatWarningRadar {
 	protected void scanThreatBullet() {
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
-		Iterator<BulletInfo> iterator = mBulletInfos.iterator();
-		while (iterator.hasNext()) {
-			BulletInfo bulletInfo = iterator.next();
-			// 弹道超时，移除
-			if (!bulletInfo.isAlive()) {
-				//iterator.remove();
+
+		Iterator<Bullet> iterator2 = mDatabase.getBullets().iterator();
+		while (iterator2.hasNext()) {
+			Bullet bullet = (Bullet) iterator2.next();
+			if (!bullet.isActive(mTick)) {
+				iterator2.remove();
 			}
-			// 发现来袭子弹会击中我
-			if (Utils.willHit(bulletInfo.getCurrentX(), bulletInfo.getCurrentY(), bulletInfo.getR(), nowX, nowY,
-					AppConfig.TANK_WIDTH)) {
-				// 加入威胁列表
-				ThreatTarget target = createThreatTarget(bulletInfo);
-				if (!mThreatTargets.contains(target)) {
-					mThreatTargets.add(target);
-				}
+			boolean canHit = false;
+			// 計算圓心到彈道的垂足 ，p1,p2为弹道 p3圆心
+			Position p1 = new Position(bullet.currentX, bullet.currentY);
+			Position p2 = Utils.getNextBulletByTick(bullet.currentX, bullet.currentY, bullet.r, 2);
+			Position p3 = new Position(nowX, nowY);
+			// 垂足
+			Position p4 = Utils.getFoot(p1, p2, p3);
+
+			// 坦克半径
+			int c = AppConfig.TANK_WIDTH;
+			// 垂足到圆心距离
+			int a = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
+			// 会被击中
+			if (a < c) {
+				canHit = true;
+			}
+
+			if (!canHit) {
+				continue;
+			}
+			int b = (int) Math.sqrt(c * c - a * a);
+
+			// 总距离
+			int totalDistance = Utils.distanceTo(p4.x, p4.y, p1.x, p1.y);
+			// 子弹到我的距离
+			int distance = totalDistance - b;
+			// 剩余来袭时间
+			int hitTickleft = distance / AppConfig.BULLET_SPEED;
+			// 计算最佳躲避方向，按最佳方向闪避,闪避耗时约为10tick
+			int dodgeAngle = Utils.getTargetRadius(p4.x, p4.y, nowX, nowY);
+			// 所需移动距离
+			int dodgeDistance = AppConfig.TANK_WIDTH - a;
+			// 闪避所需时间
+			int dodgeNeedTick = dodgeDistance / AppConfig.BULLET_SPEED;
+			// 为了保险提前2个tick进行闪避
+			dodgeNeedTick += 2;
+			int leftTick = hitTickleft - dodgeNeedTick;
+			// 时间到，马上进行闪避
+			if (leftTick == 0) {
+				mMoveHelper.addDodgeByDistance(dodgeAngle, dodgeDistance);
+			} else {
+				// 先不用急着闪
+				continue;
 			}
 		}
 	}
@@ -257,7 +269,7 @@ public class CombatWarningRadar {
 		List<Integer> angleList = new ArrayList<Integer>();
 		int sum = 0;
 		// 当前是否正在闪避，如果是取当前方向，否则重新计算
-		int currentDodgeR = mMoveHelper.getHeading();
+		int currentDodgeR = 0;
 		int i = 0;
 		Iterator<ThreatTarget> iterator2 = mThreatTargets.iterator();
 		while (iterator2.hasNext()) {

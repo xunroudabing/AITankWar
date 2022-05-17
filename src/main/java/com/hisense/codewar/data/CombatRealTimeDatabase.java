@@ -6,6 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankMapProjectile;
 import com.hisense.codewar.player.DemoPlayer;
@@ -30,7 +31,8 @@ public class CombatRealTimeDatabase {
 	private List<TankMapProjectile> mProjectiles;
 	private List<TankGameInfo> mAllTanks;
 	private List<TankGameInfo> mFriendTanks;
-
+	private List<Bullet> mBullets;
+	
 	private static final Logger log = LoggerFactory.getLogger(CombatRealTimeDatabase.class);
 
 	public CombatRealTimeDatabase() {
@@ -38,12 +40,14 @@ public class CombatRealTimeDatabase {
 		mAllTanks = new ArrayList<>();
 		mProjectiles = new ArrayList<>();
 		mFriendTanks = new ArrayList<>();
+		mBullets = new ArrayList<>();
 		initFriendTanks();
 	}
 
 	public void reset() {
 		mAllTanks.clear();
 		mProjectiles.clear();
+		mBullets.clear();
 	}
 
 	public void setMyTankId(int tankid) {
@@ -64,6 +68,11 @@ public class CombatRealTimeDatabase {
 	public List<TankGameInfo> getFriendTanks() {
 		return mFriendTanks;
 	}
+	
+	public List<Bullet> getBullets() {
+		return mBullets;
+	}
+
 
 	public int getNowX() {
 		return mNowX;

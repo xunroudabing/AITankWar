@@ -10,8 +10,10 @@ import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankMapProjectile;
 import com.hisense.codewar.player.DemoPlayer;
 import com.jfinal.kit.PropKit;
+
 /**
  * 战斗实时数据库
+ * 
  * @author hanzheng
  *
  */
@@ -43,18 +45,22 @@ public class CombatRealTimeDatabase {
 		mAllTanks.clear();
 		mProjectiles.clear();
 	}
+
 	public void setMyTankId(int tankid) {
 		mTankId = tankid;
 	}
+
 	public void updateAllTanks(List<TankGameInfo> list) {
 		mAllTanks.clear();
 		mAllTanks.addAll(list);
 		loopAllTanks();
 	}
-	public void udpateProjectiles(List<TankMapProjectile> list) {
+
+	public void updateProjectiles(List<TankMapProjectile> list) {
 		mProjectiles.clear();
 		mProjectiles.addAll(list);
 	}
+
 	public List<TankGameInfo> getFriendTanks() {
 		return mFriendTanks;
 	}
@@ -74,9 +80,20 @@ public class CombatRealTimeDatabase {
 	public int getMyTankId() {
 		return mTankId;
 	}
-	
-	public List<TankMapProjectile> geTankMapProjectiles(){
+
+	public List<TankMapProjectile> geTankMapProjectiles() {
 		return mProjectiles;
+	}
+
+	public TankGameInfo getTankById(int tankid) {
+		TankGameInfo ret = null;
+		for (TankGameInfo info : mAllTanks) {
+			if (info.id == tankid) {
+				ret = info;
+				break;
+			}
+		}
+		return ret;
 	}
 
 	private void loopAllTanks() {

@@ -3,6 +3,7 @@ package com.hisense.codewar.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +28,8 @@ import com.hisense.codewar.utils.Utils;
 public class BulletInfo {
 	public static void main(String[] args) {
 		// 201,684
-		int x = 201;
-		int y = 684;
+		int x = 630;
+		int y = 284;
 
 		// 221,565
 		int x1 = 221;
@@ -45,12 +46,11 @@ public class BulletInfo {
 		int tx = 418;
 		int ty = 880;
 
-		boolean hit = willHit(bx, by, 168, tx, ty, 29);
+		boolean hit = Utils.willHit(bx, by, 168, tx, ty, 29);
 		System.out.println("hit result " + hit);
 	}
 
 	private static final Logger log = LoggerFactory.getLogger(BulletInfo.class);
-	private List<Position> mBulletRecord;
 	private int mTankId;
 	private int mStartX;
 	private int mStartY;
@@ -60,9 +60,9 @@ public class BulletInfo {
 	private int mCurrentX;
 	private int mCurrentY;
 	private long mCreateTime = 0L;
+	private String id;
 
 	public BulletInfo(int tankid, int startX, int startY, int r) {
-		mBulletRecord = new ArrayList<Position>();
 		mTankId = tankid;
 		mStartX = startX;
 		mStartY = startY;
@@ -71,6 +71,11 @@ public class BulletInfo {
 		ticks = 0;
 		mR = r;
 		mCreateTime = System.currentTimeMillis();
+		id = UUID.randomUUID().toString();
+	}
+
+	public String getId() {
+		return id;
 	}
 
 	public int getTicks() {
@@ -95,14 +100,6 @@ public class BulletInfo {
 
 	public void setStartX(int mStartX) {
 		this.mStartX = mStartX;
-	}
-
-	public List<Position> getBulletRecord() {
-		return mBulletRecord;
-	}
-
-	public void setBulletRecord(List<Position> mBulletRecord) {
-		this.mBulletRecord = mBulletRecord;
 	}
 
 	public int getTankId() {
@@ -141,7 +138,7 @@ public class BulletInfo {
 	public boolean isAlive() {
 		long currentTime = System.currentTimeMillis();
 		long span = currentTime - mCreateTime;
-		return span <= AppConfig.BULLET_ALIVE_TIME;
+		return span >= AppConfig.BULLET_ALIVE_TIME;
 	}
 
 	/**
@@ -160,62 +157,6 @@ public class BulletInfo {
 	}
 
 	/**
-	 * 获取第N个tick后子弹的位置
-	 * 
-	 * @param nowX 子弹起始X
-	 * @param nowY 子弹起始Y
-	 * @param r    角度
-	 * @param tick tick>=0
-	 * @return
-	 */
-	public static Position getNextBulletByTick(int nowX, int nowY, int r, int tick) {
-		float rr = Utils.a2r(r);
-		// startx + kProjectileSpeed * cosf(rr) * elapsed;
-		int x = (int) (nowX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick);
-		// starty + kProjectileSpeed * sinf(rr) * elapsed;
-		int y = (int) (nowY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick);
-		return new Position(x, y);
-	}
-
-	private static int distanceTo(int x, int y, int tx, int ty) {
-		return (int) Math.hypot(x - tx, y - ty);
-	}
-
-	/**
-	 * 计算当前弹道是否会打到目标 目标是一个以targetwidth为半径的圆，如果垂足长度小于该半径，则会击中目标
-	 * 
-	 * @param bulletX
-	 * @param bulletY
-	 * @param r           子弹角度
-	 * @param targetX     目标X
-	 * @param targetY     目标Y
-	 * @param targetWidth 坦克为41X41正方形，此处虚拟为半径29的圆，此处取值建议为29
-	 * @return
-	 */
-	public static boolean willHit(int bulletX, int bulletY, int r, int targetX, int targetY, int targetWidth) {
-		Position nextPos = getNextBulletByTick(bulletX, bulletY, r, 1);
-
-		// 计算目标到弹道的垂足
-		Position foot = new Position();
-
-		float dx = bulletX - nextPos.x;
-		float dy = bulletY - nextPos.y;
-
-		float u = (targetX - bulletX) * dx + (targetY - bulletY) * dy;
-		u /= dx * dx + dy * dy;
-
-		foot.x = (int) (bulletX + u * dx);
-		foot.y = (int) (bulletY + u * dy);
-
-		int distance = distanceTo(foot.x, foot.y, targetX, targetY);
-		log.debug("willhit,distance=" + distance);
-		// 垂足小于半径，会打到
-		// todo 这里有Bug,还需要判断方向
-		return distance < targetWidth;
-
-	}
-
-	/**
 	 * 是否归属此弹道的tick index，前提是R相等
 	 * 
 	 * @param x
@@ -227,7 +168,7 @@ public class BulletInfo {
 		for (int i = 0; i < max; i++) {
 			Position position = getBulletPositionByTick(i);
 			// log.debug(position.toString());
-			if (position.x == x && position.y == y) {
+			if (Utils.isNear(position.x, position.y, x, y)) {
 				return i;
 			}
 		}
@@ -240,7 +181,7 @@ public class BulletInfo {
 		if (obj instanceof BulletInfo) {
 			BulletInfo info = (BulletInfo) obj;
 			if (mTankId == info.mTankId && mStartX == info.mStartX && mStartY == info.mStartY && mR == info.mR
-					&& ticks == info.ticks) {
+					&& ticks == info.ticks && id.equals(info.id)) {
 				return true;
 			}
 		}
@@ -251,5 +192,12 @@ public class BulletInfo {
 	public int hashCode() {
 		// TODO Auto-generated method stub
 		return Objects.hash(mTankId, mStartX, mStartY, mR);
+	}
+
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return String.format("##BulletInfo##.tankid[%d]bullet.start[%d,%d].current[%d,%d]r[%d]ticks[%d]", mTankId,
+				mStartX, mStartY, mCurrentX, mCurrentY, mR, ticks);
 	}
 }

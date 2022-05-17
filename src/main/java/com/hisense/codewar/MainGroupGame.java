@@ -12,6 +12,7 @@ import com.hisense.codewar.model.TankGame;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankGamePlayInterface;
 import com.hisense.codewar.model.TankMapProjectile;
+import com.hisense.codewar.player.AutoBotsPlayer;
 import com.hisense.codewar.player.DemoPlayer;
 import com.jfinal.kit.PropKit;
 
@@ -29,7 +30,8 @@ public class MainGroupGame implements TankGamePlayInterface {
 		TankGame game3 = new TankGame();
 
 		//DemoPlayer player3 = new DemoPlayer();
-		DemoShooterGame player3 = new DemoShooterGame();
+		//DemoShooterGame player3 = new DemoShooterGame();
+		AutoBotsPlayer player3 = new AutoBotsPlayer();
 		ITtank tank3 = game3.tank_init("10.18.224.205", 22222, token3, player3, null);
 		
 		new Thread(new Runnable() {

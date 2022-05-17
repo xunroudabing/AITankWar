@@ -3,79 +3,33 @@ package com.hisense.codewar.utils;
 import static java.lang.Math.PI;
 
 import java.awt.Point;
+import java.math.BigDecimal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.config.AppConfig;
+import com.hisense.codewar.model.Position;
+
 public class Utils {
 	private static final Logger log = LoggerFactory.getLogger(Utils.class);
+
 	public static void main(String[] args) {
-		int angle = 180;
-		//839,818]r[355]distance[630]-->result[0]me[1465,746
-//		int x1 = 839;
-//		int y1 = 818;
-//
-//		int x2 = 1465;
-//		int y2 = 746;
-//
-//		// double a = r2a(Math.atan((float) (y2 - y1) / (float) x2 - x1));
-//
-//		int a = Utils.getTargetRadius(x2, y2, x1, y1);
-//
-//		int g = Utils.getTargetRadius(x1, y1, x2, y2);
-////
-////		double c = Math.toDegrees(b);
-////
-//		int d = Utils.angleToDegress(x1, y1, x2, y2);
-//		int e = Utils.getFireAngle(x1, y1, x2, y2);
-//		int f = Utils.getFireAngle(x2, y2, x1, y1);
-//		
-//		System.out.println(a);
-//		System.out.println(g);
-//		System.out.println(e);
-//		System.out.println(f);
-//		
-//		System.out.println(d);
-//		
-//		int d360 = Utils.formatAngle(-83);
-//		System.out.println("360:"+d360);
+		// 346,423
+		int x = 630;
+		int y = 284;
+		int r = -4;
 		
-		//827,819    839,818     1465,746   r 355
-		
-		int x1 = 827;
-		int y1 = 819;
-		
-		int x2 = 839;
-		int y2 = 818;
-		
-		int mx = 1465;
-		int my = 746;
-		
-		int a = Utils.getTargetRadius(x2, y2, x1, y1);
-		
-		int b = Utils.getFireAngle(x1, y1, mx, my);
-		
-		System.out.println(a);
-		
+		int x1 = 631;
+		int y1 = 283;
+
+		boolean b = Utils.isNear(x1, y1, x, y);
 		System.out.println(b);
-		
-		System.out.println(Utils.formatAngle(a));
-		
-		System.out.println(Utils.formatAngle(b));
-		
-		Point d = Utils.getFoot( new Point(mx, my),new Point(x1, y1), new Point(x2, y2));
-		
-		System.out.println(d);
-		
-		Point d2 = Utils.getFoot2(new Point(x1, y1), new Point(x2, y2),new Point(mx, my));
-		
-		System.out.println(d2);
-		
-		int distance = Utils.getDistance(mx, my, d2.x, d2.y);
-		
-		System.out.println("distance=" + distance);
-		
-		
+		for(int i=0;i<20;i++) {
+			Position position = Utils.getNextBulletByTick(x, y, r, i);
+			System.out.println(position);
+		}
+	
 
 	}
 
@@ -92,10 +46,6 @@ public class Utils {
 		int dy = ty - y;
 		int dist = dx * dx + dy * dy;
 		return (int) Math.sqrt(dist);
-	}
-
-	public static int distanceTo(int x, int y, int tx, int ty) {
-		return (int) Math.hypot(x - tx, y - ty);
 	}
 
 	/**
@@ -129,7 +79,7 @@ public class Utils {
 	 * @return
 	 */
 	public static int getTargetRadius(int tx, int ty, int nowx, int nowy) {
-		//return getFireAngle(nowx, nowy, tx, ty);
+		// return getFireAngle(nowx, nowy, tx, ty);
 		int ret = 0;
 		if (tx == nowx) {
 			if (ty > nowy) {
@@ -186,52 +136,59 @@ public class Utils {
 			return -1;
 		}
 		double d = Math.acos((b * b + c * c - a * a) / (2.0d * b * c));
-		log.debug("d=" +Math.toDegrees(d));
+		log.debug("d=" + Math.toDegrees(d));
 		int angle = (int) Math.toDegrees(d);
 		return angle;
 	}
-	
-	public static boolean inline(int x1,int y1,int x2,int y2,int tx,int ty) {
-		boolean ret = (tx-x1)*(y1-y2) == (x1-x2)*(ty-y1);
+
+	public static boolean inline(int x1, int y1, int x2, int y2, int tx, int ty) {
+		boolean ret = (tx - x1) * (y1 - y2) == (x1 - x2) * (ty - y1);
 		return ret;
-		
+
 	}
-	
-	public static Point getFoot2(Point p1,Point p2,Point p3){
-        Point foot=new Point();
-        
-        float dx=p1.x-p2.x;
-        float dy=p1.y-p2.y;
-        
-        float u=(p3.x-p1.x)*dx+(p3.y-p1.y)*dy;
-        u/=dx*dx+dy*dy;
-        
-        foot.x=(int)(p1.x+u*dx);
-        foot.y=(int)(p1.y+u*dy);
-        
-        return foot;
-    }
-	
-	
-	   //点到其他两点垂足计算
-    public static Point getFoot(Point pt,Point beginPt,Point endPt){
-        Point result = new Point();
-        double dx = beginPt.getX()-endPt.getX();
-        double dy = beginPt.getY()-endPt.getY();
- 
-        if(Math.abs(dx)<0.000001&&Math.abs(dy)<0.000001){
-            result = pt;
-        }
- 
-        double u = (pt.getX()-beginPt.getX())*(beginPt.getX()-endPt.getX())+
-                (pt.getY()-beginPt.getY())*(beginPt.getY()-endPt.getY());
-        log.debug("u=" + u);
-        u = u /(dx*dx+dy*dy);
-        result.x = (int) (beginPt.getX()+u*dx);
-        result.y = (int) (beginPt.getY()+u*dy);
-        
-        return result;
-    }
+
+	/**
+	 * 计算 p3 到 p1,p2的垂足
+	 * 
+	 * @param p1
+	 * @param p2
+	 * @param p3
+	 * @return
+	 */
+	public static Position getFoot(Position p1, Position p2, Position p3) {
+		Position foot = new Position();
+
+		float dx = p1.x - p2.x;
+		float dy = p1.y - p2.y;
+
+		float u = (p3.x - p1.x) * dx + (p3.y - p1.y) * dy;
+		u /= dx * dx + dy * dy;
+
+		foot.x = (int) (p1.x + u * dx);
+		foot.y = (int) (p1.y + u * dy);
+
+		return foot;
+	}
+
+	// 点到其他两点垂足计算
+//    public static Point getFoot(Point pt,Point beginPt,Point endPt){
+//        Point result = new Point();
+//        double dx = beginPt.getX()-endPt.getX();
+//        double dy = beginPt.getY()-endPt.getY();
+// 
+//        if(Math.abs(dx)<0.000001&&Math.abs(dy)<0.000001){
+//            result = pt;
+//        }
+// 
+//        double u = (pt.getX()-beginPt.getX())*(beginPt.getX()-endPt.getX())+
+//                (pt.getY()-beginPt.getY())*(beginPt.getY()-endPt.getY());
+//        log.debug("u=" + u);
+//        u = u /(dx*dx+dy*dy);
+//        result.x = (int) (beginPt.getX()+u*dx);
+//        result.y = (int) (beginPt.getY()+u*dy);
+//        
+//        return result;
+//    }
 
 	private final static double TWO_PI = 2 * PI;
 	private final static double THREE_PI_OVER_TWO = 3 * PI / 2;
@@ -261,7 +218,7 @@ public class Utils {
 	 * @return the angle to the coordinate (tx,ty).
 	 */
 	private static double angleTo(int x, int y, double tx, double ty) {
-		
+
 		return Math.atan2(x - tx, y - ty);
 	}
 
@@ -494,4 +451,105 @@ public class Utils {
 		}
 	}
 
+	public static int distanceTo(int x, int y, int tx, int ty) {
+		return (int) Math.hypot(x - tx, y - ty);
+	}
+
+	/**
+	 * 获取第N个tick后子弹的位置
+	 * 
+	 * @param nowX 子弹起始X
+	 * @param nowY 子弹起始Y
+	 * @param r    角度
+	 * @param tick tick>=0
+	 * @return
+	 */
+	public static Position getNextBulletByTick(int nowX, int nowY, int r, int tick) {
+		float rr = Utils.a2r(r);
+		// startx + kProjectileSpeed * cosf(rr) * elapsed;
+		int x = (int) (nowX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick);
+		// starty + kProjectileSpeed * sinf(rr) * elapsed;
+		int y = (int) (nowY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick);
+		return new Position(x, y);
+	}
+
+//	public static void getNextBulletByTick2(int nowX, int nowY, int r, int tick) {
+//		float rr = Utils.a2r(r);
+//		// startx + kProjectileSpeed * cosf(rr) * elapsed;
+//		BigDecimal dx = new BigDecimal(String.valueOf(Math.cos(rr)));
+//		BigDecimal x = dx.multiply(BigDecimal.valueOf(tick)).multiply(BigDecimal.valueOf(AppConfig.BULLET_SPEED))
+//				.add(BigDecimal.valueOf(nowX)).setScale(1, BigDecimal.ROUND_DOWN);
+//		// double x = (nowX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick);
+//
+//		// starty + kProjectileSpeed * sinf(rr) * elapsed;
+//		BigDecimal dy = new BigDecimal(String.valueOf(Math.sin(rr)));
+//		BigDecimal y= dy.multiply(BigDecimal.valueOf(tick)).multiply(BigDecimal.valueOf(AppConfig.BULLET_SPEED))
+//				.add(BigDecimal.valueOf(nowY)).setScale(0, BigDecimal.ROUND_HALF_DOWN);
+//		// double y = (nowY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick);
+//		System.out
+//				.println(String.format("[%s,%s]",String.valueOf(x.doubleValue()),String.valueOf(y.doubleValue())));
+//		// return new Position(x, y);
+//	}
+
+	/**
+	 * 计算当前弹道是否会打到目标 目标是一个以targetwidth为半径的圆，如果垂足长度小于该半径，则会击中目标
+	 * 
+	 * @param bulletX
+	 * @param bulletY
+	 * @param r           子弹角度
+	 * @param targetX     目标X
+	 * @param targetY     目标Y
+	 * @param targetWidth 坦克为41X41正方形，此处虚拟为半径29的圆，此处取值建议为29
+	 * @return
+	 */
+	public static boolean willHit(int bulletX, int bulletY, int r, int targetX, int targetY, int targetWidth) {
+		Position nextPos = getNextBulletByTick(bulletX, bulletY, r, 1);
+
+		// 计算目标到弹道的垂足
+		Position foot = new Position();
+
+		float dx = bulletX - nextPos.x;
+		float dy = bulletY - nextPos.y;
+
+		float u = (targetX - bulletX) * dx + (targetY - bulletY) * dy;
+		u /= dx * dx + dy * dy;
+
+		foot.x = (int) (bulletX + u * dx);
+		foot.y = (int) (bulletY + u * dy);
+
+		int distance = distanceTo(foot.x, foot.y, targetX, targetY);
+		// log.debug("willhit,distance=" + distance);
+		// 垂足小于半径，会打到
+		// todo 这里有Bug,还需要判断方向
+		return distance < targetWidth;
+
+	}
+
+	// 求夹角,返回[0,180]
+	public static int bearing(int angle1, int angle2) {
+		int a1 = (int) normalAbsoluteAngleDegrees(angle1);
+		int a2 = (int) normalAbsoluteAngleDegrees(angle2);
+		int ret = Math.abs(a1 - a2);
+		ret = (ret + 180) % 180;
+		return ret;
+	}
+
+	//
+	public static Position getNextPostion(int x, int y, int r, int tick) {
+		float angle = a2r(r);
+		int dy = (int) (AppConfig.TANK_SPEED * tick * Math.sin(angle));
+		int dx = (int) (AppConfig.TANK_SPEED * tick * Math.cos(angle));
+
+		int nx = x + dx;
+		int ny = y + dy;
+		return new Position(nx, ny);
+	}
+
+	public static boolean isNear(Position p1, Position p2) {
+		return (Math.abs(p1.x - p2.x) <= 1) && (Math.abs(p1.y - p2.y) <= 1);
+	}
+
+	public static boolean isNear(int x1, int y1, int x2, int y2) {
+		return Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1;
+	}
 }

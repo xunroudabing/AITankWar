@@ -30,6 +30,7 @@ public class CombatRealTimeDatabase {
 	private int[] mFriendTanksID;
 	private List<TankMapProjectile> mProjectiles;
 	private List<TankGameInfo> mAllTanks;
+
 	private List<TankGameInfo> mFriendTanks;
 	private List<Bullet> mBullets;
 	
@@ -42,6 +43,9 @@ public class CombatRealTimeDatabase {
 		mFriendTanks = new ArrayList<>();
 		mBullets = new ArrayList<>();
 		initFriendTanks();
+	}
+	public List<TankGameInfo> getAllTanks() {
+		return mAllTanks;
 	}
 
 	public void reset() {
@@ -148,7 +152,7 @@ public class CombatRealTimeDatabase {
 
 	}
 
-	private boolean isFriend(int tankid) {
+	boolean isFriend(int tankid) {
 		if (mFriendTanksID == null) {
 			log.warn("friends has no data");
 			return false;

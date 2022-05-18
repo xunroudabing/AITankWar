@@ -17,37 +17,11 @@ public class Utils {
 	private static final Logger log = LoggerFactory.getLogger(Utils.class);
 
 	public static void main(String[] args) {
-		// HitWarning]tankid[61]bulletDis[108]hitTickLeft[6]dodgeNeedTick[3]tickleft[3]dodgeDis[23]->tankid[61]->Bullet-[7aa5f]start[887,326]current[774,201]r[228]t[62]--->me[704,118]r[0]
-		// start[1057,242]current[768,389]r[153]t[47]--->me[711,427]r[0]
-		// [996,177]
-		// 1057,242
-		// 1057,242]current[790,378]r[153]t[47]
-		int x = 887;
-		int y = 326;
-
-		// 886,329
-		int x1 = 704;
-		int y1 = 118;
-
-		Bullet bullet = new Bullet();
-		bullet.startX = x;
-		bullet.startY = y;
-		bullet.r = 228;
-
-		boolean bbb = bullet.isChild(x1, y1);
-		System.out.println(bbb);
-		int aaa = Utils.angleTo(x, y, x1, y1);
-		System.out.println(aaa);
-
-		int r = Utils.getTargetRadius(x, y, x1, y1);
-		// int r = Utils.getFireAngle(x, y, x1, y1);
-		System.out.println(r);
-
-		// double a = Math.atan((float) (y - y1) / (float) x - x1);
-		double a = Math.atan2(y - y1, x - x1);
-		BigDecimal bigDecimal = BigDecimal.valueOf(a);
-		BigDecimal bResult = bigDecimal.multiply(BigDecimal.valueOf(180)).divide(BigDecimal.valueOf(PI), 2,
-				BigDecimal.ROUND_HALF_UP);
+		BigDecimal bigDecimal = new BigDecimal(16);
+		BigDecimal a = bigDecimal.divide(BigDecimal.valueOf(3),0,BigDecimal.ROUND_CEILING);
+		
+		System.out.println(a.intValue());
+		
 
 	}
 

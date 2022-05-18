@@ -35,7 +35,7 @@ public class CombatWarningRadar {
 	private CombatMovementHelper mMoveHelper;
 	// 雷达扫描半径
 	private int SCAN_RADIUS = 400;
-	private static final Logger log = LoggerFactory.getLogger(CombatRealTimeDatabase.class);
+	private static final Logger log = LoggerFactory.getLogger(CombatWarningRadar.class);
 
 	public CombatWarningRadar(CombatRealTimeDatabase database, CombatMovementHelper helper) {
 		mDatabase = database;

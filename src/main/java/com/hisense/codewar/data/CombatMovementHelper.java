@@ -65,8 +65,8 @@ public class CombatMovementHelper {
 		MoveEvent event = new MoveEvent();
 		event.heading = r;
 		BigDecimal b = BigDecimal.valueOf(distance);
-		// distance / AppConfig.TANK_SPEED; 四舍五入
-		int tick = b.divide(BigDecimal.valueOf(AppConfig.TANK_SPEED), 0, BigDecimal.ROUND_HALF_UP).intValue();
+		// distance / AppConfig.TANK_SPEED; CEILING，向上取整
+		int tick = b.divide(BigDecimal.valueOf(AppConfig.TANK_SPEED), 0, BigDecimal.ROUND_CEILING).intValue();
 		event.tick = tick;
 		mDodgeQueue.add(event);
 	}

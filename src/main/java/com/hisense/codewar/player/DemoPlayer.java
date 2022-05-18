@@ -16,8 +16,6 @@ import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankGamePlayInterface;
 import com.hisense.codewar.model.TankGameState;
 import com.hisense.codewar.model.TankMapProjectile;
-import com.hisense.codewar.utils.CombatWarning;
-import com.hisense.codewar.utils.CombatWarning.Suggestion;
 import com.hisense.codewar.utils.Utils;
 import com.jfinal.log.Log;
 
@@ -40,8 +38,6 @@ public class DemoPlayer implements TankGamePlayInterface {
 	private int heading = 0;
 	private int id = 0;
 	int nowx, nowy = 0;
-	private Suggestion mSuggestion = null;
-	private CombatWarning mCombatWarning = new CombatWarning();
 	private Random mRandom = new Random();
 
 	@Override
@@ -57,33 +53,21 @@ public class DemoPlayer implements TankGamePlayInterface {
 				nowx = t.x;
 				nowy = t.y;
 				heading = t.getR();
-				mCombatWarning.updateMyPos(id, nowx, nowy, heading);
+			
 				break;
 			}
 		}
-		mCombatWarning.updateTanksPos(tanks);
+		
 		// print1(tanks);
 		// print2(projectiles);
-		mSuggestion = mCombatWarning.analyze(projectiles);
+		
 	}
 
 	@Override
 	public void gametick(ITtank tank) {
 		// TODO Auto-generated method stub
 		// log.debug("gametick");
-		if (mSuggestion != null) {
-			int action = mSuggestion.action;
-			if (action == Suggestion.DODGE) {
-				int r = mSuggestion.r;
-				int h = mSuggestion.heading;
-
-				// r = mRandom.nextInt(90);
-				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, r);
-				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, r);
-				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, h);
-				log.debug(String.format("$$$$$$$$$Dodge$$$$$$$$r[%d]h[%d]", r, h));
-			}
-		}
+		
 
 //		tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, 0);
 //		tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, 0);
@@ -100,7 +84,7 @@ public class DemoPlayer implements TankGamePlayInterface {
 		for (TankMapProjectile p : list) {
 			log.debug(p.toString());
 			if (p.tankid == id) {
-				int bulletDistance = Utils.getDistance(p.x, p.y, nowx, nowy);
+				int bulletDistance = Utils.distanceTo(p.x, p.y, nowx, nowy);
 				log.debug(String.format("bullet[%d,%d]r[%d]distance[%d]-->tankid[%d]", p.x, p.y, p.r, bulletDistance,
 						id));
 			}

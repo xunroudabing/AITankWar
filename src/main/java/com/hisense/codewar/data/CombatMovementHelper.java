@@ -1,5 +1,6 @@
 package com.hisense.codewar.data;
 
+import java.math.BigDecimal;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -31,11 +32,26 @@ public class CombatMovementHelper {
 
 	public boolean needDodge(int tick) {
 		if (mDodgeEvent != null) {
-			return true;
+			int t = mDodgeEvent.tick;
+			return t > 0;
 		} else if (!mDodgeQueue.isEmpty()) {
 			return true;
 		}
 		return false;
+	}
+	/**
+	 * 返回当前躲闪耗时
+	 * @return
+	 */
+	public int getCurrentDodgeCost() {
+		int cost = 0;
+		if (mDodgeEvent != null) {
+			cost += mDodgeEvent.tick;
+		} else if (!mDodgeQueue.isEmpty()) {
+			MoveEvent event = mDodgeQueue.peek();
+			cost += event.tick;
+		}
+		return cost;
 	}
 
 	public void addDodgeByTick(int r, int tick) {
@@ -48,10 +64,13 @@ public class CombatMovementHelper {
 	public void addDodgeByDistance(int r, int distance) {
 		MoveEvent event = new MoveEvent();
 		event.heading = r;
-		event.tick = distance / AppConfig.TANK_SPEED;
+		BigDecimal b = BigDecimal.valueOf(distance);
+		// distance / AppConfig.TANK_SPEED; 四舍五入
+		int tick = b.divide(BigDecimal.valueOf(AppConfig.TANK_SPEED), 0, BigDecimal.ROUND_HALF_UP).intValue();
+		event.tick = tick;
 		mDodgeQueue.add(event);
 	}
-	
+
 	public void addMoveByTick(int r, int tick) {
 		MoveEvent event = new MoveEvent();
 		event.heading = r;
@@ -80,7 +99,7 @@ public class CombatMovementHelper {
 			int heading = mDodgeEvent.heading;
 			int dodgeTick = mDodgeEvent.tick;
 			if (dodgeTick <= 0) {
-				log.debug(String.format("tank[%d]cant dodge,no tick left", tank.id));
+				log.debug(String.format("[T%d]tank[%d]cant dodge,no tick left", tick, tank.id));
 				return false;
 			}
 			dodgeTick--;
@@ -88,17 +107,17 @@ public class CombatMovementHelper {
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			log.debug(String.format("[Dodge]tank[%d]r[%d]tick[%d]", tank.id,heading,dodgeTick));
+			log.debug(String.format("[Command-Dodge]tank[%d]r[%d]tick[%d]", tank.id, heading, dodgeTick));
 			if (dodgeTick == 0) {
 				mDodgeEvent = null;
 			}
 			return true;
 		}
-		log.debug(String.format("tank[%d]cant dodge,no dodgeEvent", tank.id));
+		log.debug(String.format("[T%d]tank[%d]cant dodge,no dodgeEvent", tick, tank.id));
 		return false;
 	}
 
-	public boolean move(ITtank tank,int tick) {
+	public boolean move(ITtank tank, int tick) {
 		if (mMoveEvent == null) {
 			try {
 				mMoveEvent = mMoveQueue.take();
@@ -120,7 +139,7 @@ public class CombatMovementHelper {
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			log.debug(String.format("[Move]tank[%d]r[%d]tick[%d]", tank.id,heading,moveTick));
+			log.debug(String.format("[Move]tank[%d]r[%d]tick[%d]", tank.id, heading, moveTick));
 			if (moveTick == 0) {
 				mMoveEvent = null;
 			}

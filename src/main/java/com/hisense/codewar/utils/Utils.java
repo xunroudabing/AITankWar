@@ -9,28 +9,65 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
+import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.Position;
+import com.sun.scenario.effect.Blend;
 
 public class Utils {
 	private static final Logger log = LoggerFactory.getLogger(Utils.class);
 
 	public static void main(String[] args) {
-		// 346,423
-		int x = 630;
-		int y = 284;
-		int r = -4;
-		
-		int x1 = 631;
-		int y1 = 283;
+		// HitWarning]tankid[61]bulletDis[108]hitTickLeft[6]dodgeNeedTick[3]tickleft[3]dodgeDis[23]->tankid[61]->Bullet-[7aa5f]start[887,326]current[774,201]r[228]t[62]--->me[704,118]r[0]
+		// start[1057,242]current[768,389]r[153]t[47]--->me[711,427]r[0]
+		// [996,177]
+		// 1057,242
+		// 1057,242]current[790,378]r[153]t[47]
+		int x = 887;
+		int y = 326;
 
-		boolean b = Utils.isNear(x1, y1, x, y);
-		System.out.println(b);
-		for(int i=0;i<20;i++) {
-			Position position = Utils.getNextBulletByTick(x, y, r, i);
-			System.out.println(position);
+		// 886,329
+		int x1 = 704;
+		int y1 = 118;
+
+		Bullet bullet = new Bullet();
+		bullet.startX = x;
+		bullet.startY = y;
+		bullet.r = 228;
+
+		boolean bbb = bullet.isChild(x1, y1);
+		System.out.println(bbb);
+		int aaa = Utils.angleTo(x, y, x1, y1);
+		System.out.println(aaa);
+
+		int r = Utils.getTargetRadius(x, y, x1, y1);
+		// int r = Utils.getFireAngle(x, y, x1, y1);
+		System.out.println(r);
+
+		// double a = Math.atan((float) (y - y1) / (float) x - x1);
+		double a = Math.atan2(y - y1, x - x1);
+		BigDecimal bigDecimal = BigDecimal.valueOf(a);
+		BigDecimal bResult = bigDecimal.multiply(BigDecimal.valueOf(180)).divide(BigDecimal.valueOf(PI), 2,
+				BigDecimal.ROUND_HALF_UP);
+
+	}
+
+	public static int angleTo(int nowx, int nowy, int tx, int ty) {
+		int ret = 0;
+		if (tx == nowx) {
+			if (ty > nowy) {
+				ret = 90;
+			} else {
+				ret = 270;
+			}
+		} else {
+			ret = (int) r2a(Math.atan2(nowy - ty, nowx - tx));
+
 		}
-	
-
+		// bearing角，[-180~180]
+		if ((tx < nowx && ty < nowy) || (tx < nowx && ty > nowy)) {
+			ret += 180;
+		}
+		return ret;
 	}
 
 	public static int formatAngle(int angle) {
@@ -39,13 +76,6 @@ public class Utils {
 			a += 360;
 		}
 		return (a + 360) % 360;
-	}
-
-	public static int getDistance(int x, int y, int tx, int ty) {
-		int dx = tx - x;
-		int dy = ty - y;
-		int dist = dx * dx + dy * dy;
-		return (int) Math.sqrt(dist);
 	}
 
 	/**
@@ -65,12 +95,12 @@ public class Utils {
 	 * @return
 	 */
 	public static int r2a(double radian) {
-		// return Math.round(radian * 180.0f / 3.14159265358979f);
-		return (int) Math.toDegrees(radian);
+
+		return (int) Math.round(radian * 180.0f / 3.14159265358979f);
 	}
 
 	/**
-	 * 获取目标角度
+	 * 获取目标角度 bug
 	 * 
 	 * @param tx
 	 * @param ty
@@ -78,6 +108,7 @@ public class Utils {
 	 * @param nowy
 	 * @return
 	 */
+	@Deprecated
 	public static int getTargetRadius(int tx, int ty, int nowx, int nowy) {
 		// return getFireAngle(nowx, nowy, tx, ty);
 		int ret = 0;
@@ -89,29 +120,12 @@ public class Utils {
 			}
 		} else {
 			ret = (int) r2a(Math.atan((float) (ty - nowy) / (float) tx - nowx));
+
 		}
 		// bearing角，[-180~180]
 		if ((tx < nowx && ty < nowy) || (tx < nowx && ty > nowy)) {
 			ret += 180;
 		}
-		return ret;
-	}
-
-	public static int getFireAngle(int nowx, int nowy, int tx, int ty) {
-		int ret = 0;
-		if (tx == nowx) {
-			if (ty > nowy) {
-				ret = 90;
-			} else {
-				ret = 270;
-			}
-		} else {
-			ret = angleToDegress(nowx, nowy, tx, ty);
-		}
-		// bearing角，[-180~180]
-//		if ((tx < nowx && ty < nowy) || (tx < nowx && ty > nowy)) {
-//			ret += 180;
-//		}
 		return ret;
 	}
 
@@ -125,12 +139,12 @@ public class Utils {
 	 * @param cy
 	 * @return
 	 */
-	public static int getAngle(int ax, int ay, int bx, int by, int cx, int cy) {
+	public static int getAngle3(int ax, int ay, int bx, int by, int cx, int cy) {
 
-		int c = getDistance(ax, ay, bx, by);
-		int b = getDistance(ax, ay, cx, cy);
+		int c = distanceTo(ax, ay, bx, by);
+		int b = distanceTo(ax, ay, cx, cy);
 
-		int a = getDistance(bx, by, cx, cy);
+		int a = distanceTo(bx, by, cx, cy);
 
 		if (b == 0 || c == 0) {
 			return -1;
@@ -139,12 +153,6 @@ public class Utils {
 		log.debug("d=" + Math.toDegrees(d));
 		int angle = (int) Math.toDegrees(d);
 		return angle;
-	}
-
-	public static boolean inline(int x1, int y1, int x2, int y2, int tx, int ty) {
-		boolean ret = (tx - x1) * (y1 - y2) == (x1 - x2) * (ty - y1);
-		return ret;
-
 	}
 
 	/**
@@ -170,26 +178,6 @@ public class Utils {
 		return foot;
 	}
 
-	// 点到其他两点垂足计算
-//    public static Point getFoot(Point pt,Point beginPt,Point endPt){
-//        Point result = new Point();
-//        double dx = beginPt.getX()-endPt.getX();
-//        double dy = beginPt.getY()-endPt.getY();
-// 
-//        if(Math.abs(dx)<0.000001&&Math.abs(dy)<0.000001){
-//            result = pt;
-//        }
-// 
-//        double u = (pt.getX()-beginPt.getX())*(beginPt.getX()-endPt.getX())+
-//                (pt.getY()-beginPt.getY())*(beginPt.getY()-endPt.getY());
-//        log.debug("u=" + u);
-//        u = u /(dx*dx+dy*dy);
-//        result.x = (int) (beginPt.getX()+u*dx);
-//        result.y = (int) (beginPt.getY()+u*dy);
-//        
-//        return result;
-//    }
-
 	private final static double TWO_PI = 2 * PI;
 	private final static double THREE_PI_OVER_TWO = 3 * PI / 2;
 	private final static double PI_OVER_TWO = PI / 2;
@@ -211,40 +199,6 @@ public class Utils {
 	}
 
 	/**
-	 * Method that returns the angle to a coordinate (tx,ty) from our robot.
-	 * 
-	 * @param x is the x coordinate.
-	 * @param y is the y coordinate.
-	 * @return the angle to the coordinate (tx,ty).
-	 */
-	private static double angleTo(int x, int y, double tx, double ty) {
-
-		return Math.atan2(x - tx, y - ty);
-	}
-
-	/**
-	 * Method that returns the angle to a coordinate (tx,ty) from our robot.
-	 * 
-	 * @param x is the x coordinate.
-	 * @param y is the y coordinate.
-	 * @return the angle to the coordinate (tx,ty).
-	 */
-	public static int angleToDegress(int x, int y, int tx, int ty) {
-		return (int) Math.toDegrees(angleTo(x, y, tx, ty));
-	}
-
-	/**
-	 * Normalizes an angle to an absolute angle. The normalized angle will be in the
-	 * range from 0 to 2*PI, where 2*PI itself is not included.
-	 *
-	 * @param angle the angle to normalize
-	 * @return the normalized angle that will be in the range of [0,2*PI[
-	 */
-	public static double normalAbsoluteAngle(double angle) {
-		return (angle %= TWO_PI) >= 0 ? angle : (angle + TWO_PI);
-	}
-
-	/**
 	 * Normalizes an angle to an absolute angle. The normalized angle will be in the
 	 * range from 0 to 360, where 360 itself is not included.
 	 *
@@ -253,94 +207,6 @@ public class Utils {
 	 */
 	public static double normalAbsoluteAngleDegrees(double angle) {
 		return (angle %= 360) >= 0 ? angle : (angle + 360);
-	}
-
-	/**
-	 * Normalizes an angle to a relative angle. The normalized angle will be in the
-	 * range from -PI to PI, where PI itself is not included.
-	 *
-	 * @param angle the angle to normalize
-	 * @return the normalized angle that will be in the range of [-PI,PI[
-	 */
-	public static double normalRelativeAngle(double angle) {
-		return (angle %= TWO_PI) >= 0 ? (angle < PI) ? angle : angle - TWO_PI : (angle >= -PI) ? angle : angle + TWO_PI;
-	}
-
-	/**
-	 * Normalizes an angle to a relative angle. The normalized angle will be in the
-	 * range from -180 to 180, where 180 itself is not included.
-	 *
-	 * @param angle the angle to normalize
-	 * @return the normalized angle that will be in the range of [-180,180[
-	 */
-	public static double normalRelativeAngleDegrees(double angle) {
-		return (angle %= 360) >= 0 ? (angle < 180) ? angle : angle - 360 : (angle >= -180) ? angle : angle + 360;
-	}
-
-	/**
-	 * Normalizes an angle to be near an absolute angle. The normalized angle will
-	 * be in the range from 0 to 360, where 360 itself is not included. If the
-	 * normalized angle is near to 0, 90, 180, 270 or 360, that angle will be
-	 * returned. The {@link #isNear(double, double) isNear} method is used for
-	 * defining when the angle is near one of angles listed above.
-	 *
-	 * @param angle the angle to normalize
-	 * @return the normalized angle that will be in the range of [0,360[
-	 * @see #normalAbsoluteAngle(double)
-	 * @see #isNear(double, double)
-	 */
-	public static double normalNearAbsoluteAngleDegrees(double angle) {
-		angle = (angle %= 360) >= 0 ? angle : (angle + 360);
-
-		if (isNear(angle, 180)) {
-			return 180;
-		} else if (angle < 180) {
-			if (isNear(angle, 0)) {
-				return 0;
-			} else if (isNear(angle, 90)) {
-				return 90;
-			}
-		} else {
-			if (isNear(angle, 270)) {
-				return 270;
-			} else if (isNear(angle, 360)) {
-				return 0;
-			}
-		}
-		return angle;
-	}
-
-	/**
-	 * Normalizes an angle to be near an absolute angle. The normalized angle will
-	 * be in the range from 0 to 2*PI, where 2*PI itself is not included. If the
-	 * normalized angle is near to 0, PI/2, PI, 3*PI/2 or 2*PI, that angle will be
-	 * returned. The {@link #isNear(double, double) isNear} method is used for
-	 * defining when the angle is near one of angles listed above.
-	 *
-	 * @param angle the angle to normalize
-	 * @return the normalized angle that will be in the range of [0,2*PI[
-	 * @see #normalAbsoluteAngle(double)
-	 * @see #isNear(double, double)
-	 */
-	public static double normalNearAbsoluteAngle(double angle) {
-		angle = (angle %= TWO_PI) >= 0 ? angle : (angle + TWO_PI);
-
-		if (isNear(angle, PI)) {
-			return PI;
-		} else if (angle < PI) {
-			if (isNear(angle, 0)) {
-				return 0;
-			} else if (isNear(angle, PI_OVER_TWO)) {
-				return PI_OVER_TWO;
-			}
-		} else {
-			if (isNear(angle, THREE_PI_OVER_TWO)) {
-				return THREE_PI_OVER_TWO;
-			} else if (isNear(angle, TWO_PI)) {
-				return 0;
-			}
-		}
-		return angle;
 	}
 
 	/**
@@ -359,96 +225,6 @@ public class Utils {
 	 */
 	public static boolean isNear(double value1, double value2) {
 		return (Math.abs(value1 - value2) < NEAR_DELTA);
-	}
-
-	/**
-	 * Throws AssertionError when the param value is null. It could be used to
-	 * express validation of invariant.
-	 * 
-	 * @param message of the eventual error
-	 * @param value   tested value
-	 */
-	public static void assertNotNull(String message, Object value) {
-		if (value == null) {
-			throw new AssertionError(message);
-		}
-	}
-
-	/**
-	 * Throws AssertionError when the params expected and actual do not equal each
-	 * other. It could be used to express validation of invariant.
-	 * 
-	 * @param message  of the eventual error
-	 * @param expected expected value
-	 * @param actual   tested value
-	 */
-	public static void assertEquals(String message, Object expected, Object actual) {
-		if (expected == null && actual == null) {
-			return;
-		}
-		if (expected == null || actual == null) {
-			throw new AssertionError(message);
-		}
-		if (!expected.equals(actual)) {
-			throw new AssertionError(message);
-		}
-	}
-
-	/**
-	 * Throws AssertionError when the assertion is false. It could be used to
-	 * express validation of invariant.
-	 * 
-	 * @param message   of the eventual error
-	 * @param assertion expected to be true
-	 */
-	public static void assertTrue(String message, boolean assertion) {
-		if (!assertion) {
-			throw new AssertionError(message);
-		}
-	}
-
-	/**
-	 * Throws AssertionError when the params expected and actual do not within
-	 * .00001 difference. It could be used to express validation of invariant.
-	 * 
-	 * @param message  of the eventual error
-	 * @param expected expected value
-	 * @param actual   tested value
-	 */
-	public static void assertNear(String message, double expected, double actual) {
-		if (!isNear(expected, actual)) {
-			throw new AssertionError(message + " expected:" + expected + " actual:" + actual);
-		}
-	}
-
-	/**
-	 * Returns approximate cardinal direction for absolute angle in radians, like
-	 * N,NE,E,SE,S,SW,W,NW
-	 * 
-	 * @param angle absolute angle in radians
-	 * @return N,NE,E,SE,S,SW,W,NW
-	 */
-	public static String angleToApproximateDirection(double angle) {
-		double absoluteAngle = normalAbsoluteAngle(angle);
-		if (absoluteAngle < NORTH + PI_OVER_EIGHT) {
-			return "N";
-		} else if (absoluteAngle < NORTH_EAST + PI_OVER_EIGHT) {
-			return "NE";
-		} else if (absoluteAngle < EAST + PI_OVER_EIGHT) {
-			return "E";
-		} else if (absoluteAngle < SOUTH_EAST + PI_OVER_EIGHT) {
-			return "SE";
-		} else if (absoluteAngle < SOUTH + PI_OVER_EIGHT) {
-			return "S";
-		} else if (absoluteAngle < SOUTH_WEST + PI_OVER_EIGHT) {
-			return "SW";
-		} else if (absoluteAngle < WEST + PI_OVER_EIGHT) {
-			return "W";
-		} else if (absoluteAngle < NORTH_WEST + PI_OVER_EIGHT) {
-			return "NW";
-		} else {
-			return "N";
-		}
 	}
 
 	public static int distanceTo(int x, int y, int tx, int ty) {
@@ -521,6 +297,12 @@ public class Utils {
 		// log.debug("willhit,distance=" + distance);
 		// 垂足小于半径，会打到
 		// todo 这里有Bug,还需要判断方向
+
+		int rr = angleTo(bulletX, bulletY, foot.x, foot.y);
+		if (rr * r < 0) {
+			log.error("rr * r < 0");
+			return false;
+		}
 		return distance < targetWidth;
 
 	}
@@ -534,7 +316,7 @@ public class Utils {
 		return ret;
 	}
 
-	//
+	// 坦克移动位置
 	public static Position getNextPostion(int x, int y, int r, int tick) {
 		float angle = a2r(r);
 		int dy = (int) (AppConfig.TANK_SPEED * tick * Math.sin(angle));

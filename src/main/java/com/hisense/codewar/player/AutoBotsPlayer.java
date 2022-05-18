@@ -36,20 +36,26 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	@Override
 	public void onstart(int i) {
 		// TODO Auto-generated method stub
+		log.debug("###########BattleSTART############");
 		mCombatRealTimeDatabase.reset();
 		mCombatWarningRadar.reset();
 		mMovementHelper.reset();
+		mTick.set(0);
 	}
 
 	@Override
 	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles) {
 		// TODO Auto-generated method stub
 		try {
+			long start = System.currentTimeMillis();
 			mTankId = tank.id;
 			mCombatRealTimeDatabase.setMyTankId(mTankId);
 			mCombatRealTimeDatabase.updateAllTanks(tanks);
 			mCombatRealTimeDatabase.updateProjectiles(projectiles);
 			mCombatWarningRadar.scan(mTick.getAndIncrement());
+			long end = System.currentTimeMillis();
+			long cost = end - start;
+			log.debug(String.format("[ScanCost][%d]cost %dms", mTick.get(), cost));
 
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -68,10 +74,10 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 				boolean dodgeDone = mMovementHelper.dodge(tank, mTick.get());
 				if (!dodgeDone) {
 					// 没有闪躲，可以移动或攻击
-					randomMove(tank);
+					//randomMove(tank);
 				}
 			} else if (canMove) {
-				randomMove(tank);
+				//randomMove(tank);
 			}
 
 		} catch (Exception e) {

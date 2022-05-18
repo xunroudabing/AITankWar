@@ -17,6 +17,7 @@ import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankMapProjectile;
 import com.hisense.codewar.model.ThreatTarget;
 import com.hisense.codewar.utils.Utils;
+import com.jfinal.log.Log;
 
 /**
  * 以自己为中心，扫描半径内的来袭子弹
@@ -67,7 +68,7 @@ public class CombatWarningRadar {
 
 		// 扫描威胁数据
 		scanThreatBullet();
-		
+
 		// 扫描威胁目标
 		// scanThreadTarget();
 	}
@@ -119,7 +120,7 @@ public class CombatWarningRadar {
 			bullet.tankid = projectile.tankid;
 			bullet.createTick = mTick;
 			mDatabase.getBullets().add(bullet);
-			log.debug("[RadarWarning]" + bullet.toString());
+			log.debug(String.format("[T%d][RadarWarning] %s", mTick, bullet.toString()));
 		}
 
 	}
@@ -133,12 +134,19 @@ public class CombatWarningRadar {
 	protected void scanThreatBullet() {
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
-
+		int mHeading = mDatabase.getHeading();
+		int targetUnhandle = 0;//未处理的且会击中我的目标
+		int lastDodgeCost = 0;//上一个目标闪避耗时
 		Iterator<Bullet> iterator2 = mDatabase.getBullets().iterator();
 		while (iterator2.hasNext()) {
 			Bullet bullet = (Bullet) iterator2.next();
 			if (!bullet.isActive(mTick)) {
 				iterator2.remove();
+			}
+			if (bullet.handled) {
+				int distance = Utils.distanceTo(nowX, nowY, bullet.currentX, bullet.currentY);
+				log.debug(String.format("%s distance[%d] is handled,continue", bullet.toString(), distance));
+				continue;
 			}
 			boolean canHit = false;
 			// 計算圓心到彈道的垂足 ，p1,p2为弹道 p3圆心
@@ -160,6 +168,8 @@ public class CombatWarningRadar {
 			if (!canHit) {
 				continue;
 			}
+			//雷达当前威胁目标+1
+			targetUnhandle++;
 			int b = (int) Math.sqrt(c * c - a * a);
 
 			// 总距离
@@ -168,18 +178,45 @@ public class CombatWarningRadar {
 			int distance = totalDistance - b;
 			// 剩余来袭时间
 			int hitTickleft = distance / AppConfig.BULLET_SPEED;
+			// 被击中，来不及躲
+			if (hitTickleft <= 0) {
+				log.debug(String.format("[T%d][HitMe]hitTickLeft[%d]%s", mTick, hitTickleft, bullet.toString()));
+				continue;
+			}
 			// 计算最佳躲避方向，按最佳方向闪避,闪避耗时约为10tick
-			int dodgeAngle = Utils.getTargetRadius(p4.x, p4.y, nowX, nowY);
+			// int dodgeAngle = Utils.getTargetRadius(p4.x, p4.y, nowX, nowY);
+			int dodgeAngle = Utils.angleTo(nowX, nowY, p4.x, p4.y);
 			// 所需移动距离
 			int dodgeDistance = AppConfig.TANK_WIDTH - a;
 			// 闪避所需时间
-			int dodgeNeedTick = dodgeDistance / AppConfig.BULLET_SPEED;
-			// 为了保险提前2个tick进行闪避
-			dodgeNeedTick += 2;
+			int dodgeNeedTick = dodgeDistance / AppConfig.TANK_SPEED;
+			//如果有大于1个目标需要提前闪避，防止被集火
+			if(targetUnhandle > 1) {
+				dodgeNeedTick += lastDodgeCost;
+			}else {
+				// 为了保险提前2个tick进行闪避
+				dodgeNeedTick += 4;
+			}		
+			boolean dodgeIng = mMoveHelper.needDodge(mTick);
+			// 当前正在躲避
+			if (dodgeIng) {
+				int addTick = mMoveHelper.getCurrentDodgeCost();
+				dodgeNeedTick += addTick;
+				log.debug(String.format("[T%d][HitWarning]%s now in dodgeing,cost will add %d tick", mTick,bullet.toString(),addTick));
+			}
 			int leftTick = hitTickleft - dodgeNeedTick;
+
+			int dis = Utils.distanceTo(nowX, nowY, bullet.currentX, bullet.currentY);
+			log.debug(String.format(
+					"[T%d][HitWarning]tankid[%d]bulletDis[%d]hitTickLeft[%d]dodgeNeedTick[%d]tickleft[%d]dodgeDis[%d]->%s--->me[%d,%d]r[%d]dodge[%b]currentBullet[%d]",
+					mTick, bullet.tankid, dis, hitTickleft, dodgeNeedTick, leftTick, dodgeDistance, bullet.toString(),
+					nowX, nowY, mHeading,dodgeIng,targetUnhandle));
+
 			// 时间到，马上进行闪避
-			if (leftTick == 0) {
+			if (leftTick <= 0) {
+				bullet.handled = true;
 				mMoveHelper.addDodgeByDistance(dodgeAngle, dodgeDistance);
+				log.debug(String.format("[T%d][Dodge]angle[%d]dis[%d]", mTick, dodgeAngle, dodgeDistance));
 			} else {
 				// 先不用急着闪
 				continue;
@@ -188,6 +225,7 @@ public class CombatWarningRadar {
 	}
 
 	// 扫描威胁数据,进行计算
+	@Deprecated
 	protected void scanThreadTarget() {
 		int mTankId = mDatabase.getMyTankId();
 		int nowX = mDatabase.getNowX();
@@ -248,7 +286,7 @@ public class CombatWarningRadar {
 			// 计算来袭时间结束
 
 			// 计算最佳躲避方向
-			int r = Utils.getFireAngle(p4.x, p4.y, nowX, nowY);
+			int r = Utils.angleTo(nowX, nowY, p4.x, p4.y);
 			target.dodgeBestR = r;
 			target.dodgeBestDis = AppConfig.TANK_WIDTH - a;
 			target.dodgeBestTick = target.dodgeBestDis / AppConfig.BULLET_SPEED;
@@ -289,7 +327,7 @@ public class CombatWarningRadar {
 			int span = Utils.bearing(currentDodgeR, angle);
 			// 不能为钝角，掉头180度
 			if (span > 90) {
-				angle = (int) Utils.normalNearAbsoluteAngleDegrees(angle + 180);
+				// angle = (int) Utils.normalNearAbsoluteAngleDegrees(angle + 180);
 			}
 			angleList.add(angle);
 			sum += angle;

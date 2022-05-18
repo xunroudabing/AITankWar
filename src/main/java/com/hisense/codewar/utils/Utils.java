@@ -22,6 +22,18 @@ public class Utils {
 		
 		System.out.println(a.intValue());
 		
+		// [Fire]me[76]pos[1227,290]dest[-109]-->tankid[27]pos[1302,514]heading[251]
+		int x = 1227;
+		int y = 290;
+		
+		int x1 = 1302;
+		int y1 = 514;
+		
+		int r = Utils.angleTo(x, y, x1, y1);
+		int r1 = Utils.getTargetRadius(x1, y1, x, y);
+		System.out.println(r);
+		System.out.println(r1);
+		System.ou
 
 	}
 

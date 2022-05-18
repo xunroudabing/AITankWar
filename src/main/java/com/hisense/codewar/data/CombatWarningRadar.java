@@ -188,8 +188,8 @@ public class CombatWarningRadar {
 			int dodgeAngle = Utils.angleTo(nowX, nowY, p4.x, p4.y);
 			// 所需移动距离
 			int dodgeDistance = AppConfig.TANK_WIDTH - a;
-			// 闪避所需时间
-			int dodgeNeedTick = dodgeDistance / AppConfig.TANK_SPEED;
+			// 闪避所需时间 dodgeDistance / AppConfig.TANK_SPEED;
+			int dodgeNeedTick = Utils.getTicks(dodgeDistance, AppConfig.TANK_SPEED);
 			//如果有大于1个目标需要提前闪避，防止被集火
 			if(targetUnhandle > 1) {
 				dodgeNeedTick += lastDodgeCost;

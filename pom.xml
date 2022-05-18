@@ -82,7 +82,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>com.hisense.codewar.MainGroupGame</mainClass>
+							<mainClass>com.hisense.codewar.AutoBotsSingleGame</mainClass>
 						</manifest>
 						<manifestEntries>
 							<Class-Path>config/</Class-Path>
@@ -176,7 +176,7 @@
 							</platforms>
 							<id>startup-windows</id>
 							<!-- 启动类 -->
-							<mainClass>com.hisense.codewar.MainGroupGame</mainClass>
+							<mainClass>com.hisense.codewar.AutoBotsSingleGame</mainClass>
 							<jvmSettings>
 								<extraArguments>
 									<extraArgument>-Xmx2G</extraArgument>
@@ -190,7 +190,7 @@
 							</platforms>
 							<id>startup</id>
 							<!-- 启动类 -->
-							<mainClass>com.hisense.codewar.MainGroupGame</mainClass>
+							<mainClass>com.hisense.codewar.AutoBotsSingleGame</mainClass>
 							<jvmSettings>
 								<extraArguments>
 									<extraArgument>-Xmx2G</extraArgument>

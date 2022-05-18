@@ -1,14 +1,19 @@
 package com.hisense.codewar.data;
 
+import java.util.List;
+import java.util.Random;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.model.FireRange;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGameActionType;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.Utils;
 
 public class FireHelper {
+	private Random mRandom = new Random();
 	private int mTick = 30;
 	CombatRealTimeDatabase mDatabase;
 	CombatAttackRadar mAttackRadar;
@@ -45,7 +50,18 @@ public class FireHelper {
 		int heading = mDatabase.getHeading();
 
 		int dest = Utils.angleTo(nowX, nowY, target.x, target.y);
-		tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
+		//避免误伤
+		if(willHitFriends(dest)) {
+			//boolean b = mRandom.nextBoolean();
+		}
+		// 射界内，不需要转向，直接开火
+		if (Math.abs(dest - heading) <= range) {
+			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+		} else {
+			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+		}
+
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		log.debug(String.format("[Fire]me[%d]pos[%d,%d]dest[%d]-->tankid[%d]pos[%d,%d]heading[%d]", mtankid, nowX, nowY,
@@ -53,4 +69,18 @@ public class FireHelper {
 		mTick = 0;
 		return true;
 	}
+
+	public boolean willHitFriends(int dest) {
+		boolean ret = false;
+		List<FireRange> friends = mAttackRadar.getFriendsFireRange();
+		for (FireRange fireRange : friends) {
+			//在友军射界内
+			if (Math.abs(dest - fireRange.fireAngle) < fireRange.range) {
+				ret = true;
+				break;
+			}
+		}
+		return ret;
+	}
+
 }

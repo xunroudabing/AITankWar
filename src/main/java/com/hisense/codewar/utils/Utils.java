@@ -18,25 +18,49 @@ public class Utils {
 
 	public static void main(String[] args) {
 		BigDecimal bigDecimal = new BigDecimal(16);
-		BigDecimal a = bigDecimal.divide(BigDecimal.valueOf(3),0,BigDecimal.ROUND_CEILING);
-		
+		BigDecimal a = bigDecimal.divide(BigDecimal.valueOf(3), 0, BigDecimal.ROUND_CEILING);
+
 		System.out.println(a.intValue());
-		
+
 		// [Fire]me[76]pos[1227,290]dest[-109]-->tankid[27]pos[1302,514]heading[251]
 		int x = 1227;
 		int y = 290;
-		
+
 		int x1 = 1302;
 		int y1 = 514;
-		
+
 		int r = Utils.angleTo(x, y, x1, y1);
 		int r1 = Utils.getTargetRadius(x1, y1, x, y);
 		System.out.println(r);
 		System.out.println(r1);
-		System.ou
-
+		
+		double range = Utils.getFireRange(x, y, x1, y1);
+		System.out.println("range=" + range);
 	}
 
+	/**
+	 * 计算所需时间，向上取整
+	 * 
+	 * @param distance
+	 * @param speed
+	 * @return
+	 */
+	public static int getTicks(int distance, int speed) {
+		BigDecimal b = BigDecimal.valueOf(distance);
+		// distance / AppConfig.TANK_SPEED; CEILING，向上取整
+		int tick = b.divide(BigDecimal.valueOf(speed), 0, BigDecimal.ROUND_CEILING).intValue();
+		return tick;
+	}
+
+	/**
+	 * 开火方向
+	 * 
+	 * @param nowx
+	 * @param nowy
+	 * @param tx   目标
+	 * @param ty   目标
+	 * @return
+	 */
 	public static int angleTo(int nowx, int nowy, int tx, int ty) {
 		int ret = 0;
 		if (tx == nowx) {
@@ -45,13 +69,23 @@ public class Utils {
 			} else {
 				ret = 270;
 			}
+		}
+
+		else if (ty == nowy) {
+			if (tx > nowx) {
+				ret = 0;
+			} else {
+				ret = 180;
+			}
 		} else {
 			ret = (int) r2a(Math.atan2(nowy - ty, nowx - tx));
 
 		}
 		// bearing角，[-180~180]
-		if ((tx < nowx && ty < nowy) || (tx < nowx && ty > nowy)) {
+		if ((tx < nowx && ty < nowy) || (tx > nowx && ty > nowy)) {
 			ret += 180;
+		} else if ((tx > nowx && ty < nowy) || (tx < nowx && ty > nowy)) {
+			ret -= 180;
 		}
 		return ret;
 	}
@@ -320,4 +354,12 @@ public class Utils {
 	public static boolean isNear(int x1, int y1, int x2, int y2) {
 		return Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1;
 	}
+
+	public static int getFireRange(int nowx, int nowy, int tx, int ty) {
+		int distance = distanceTo(nowx, nowy, tx, ty);
+		double angle = Math.atan2(AppConfig.TARGET_RADIUS,distance);
+		return r2a(angle);
+	}
+	
+	
 }

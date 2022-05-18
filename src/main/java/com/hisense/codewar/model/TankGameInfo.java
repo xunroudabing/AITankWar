@@ -2,7 +2,7 @@ package com.hisense.codewar.model;
 
 import java.util.Objects;
 
-public class TankGameInfo {
+public class TankGameInfo implements Comparable<TankGameInfo>{
 	public int id;
 	public int x;
 	public int y;
@@ -66,5 +66,11 @@ public class TankGameInfo {
 	public int hashCode() {
 		// TODO Auto-generated method stub
 		return Objects.hash(getId());
+	}
+
+	@Override
+	public int compareTo(TankGameInfo o) {
+		// TODO Auto-generated method stub
+		return getId() - o.getId();
 	}
 }

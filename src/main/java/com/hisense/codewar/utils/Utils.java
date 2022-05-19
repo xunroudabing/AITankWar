@@ -17,25 +17,31 @@ public class Utils {
 	private static final Logger log = LoggerFactory.getLogger(Utils.class);
 
 	public static void main(String[] args) {
-		BigDecimal bigDecimal = new BigDecimal(16);
-		BigDecimal a = bigDecimal.divide(BigDecimal.valueOf(3), 0, BigDecimal.ROUND_CEILING);
+		//[389,686]
 
-		System.out.println(a.intValue());
 
-		// [Fire]me[76]pos[1227,290]dest[-109]-->tankid[27]pos[1302,514]heading[251]
-		int x = 1227;
-		int y = 290;
-
-		int x1 = 1302;
-		int y1 = 514;
-
-		int r = Utils.angleTo(x, y, x1, y1);
-		int r1 = Utils.getTargetRadius(x1, y1, x, y);
-		System.out.println(r);
-		System.out.println(r1);
+//TankMapProjectile.bullet[399,769]r[83]->tankid[235]
+//TankMapProjectile.bullet[403,805]r[83]->tankid[235]
 		
-		double range = Utils.getFireRange(x, y, x1, y1);
-		System.out.println("range=" + range);
+		Bullet bullet = new Bullet();
+		bullet.startX = 389;
+		bullet.startY = 686;
+		bullet.r = 83;
+		
+		int x1 = 399;
+		int y1 = 769;
+		
+		int x2 = 403;
+		int y2 = 805;
+		
+		boolean ischild = bullet.isChild(x2, y2);
+		//358,372
+		int mx = 358;
+		int my = 372;
+		int dis = Utils.distanceTo(x1, y1, mx, my);
+		System.out.println(ischild);
+		System.out.println(dis);
+		
 	}
 
 	/**

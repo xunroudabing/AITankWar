@@ -21,6 +21,8 @@ public class Bullet {
 	public boolean handled = false;
 	// 创建时间，单位tick
 	public int createTick;
+	// 更新时间
+	public int updateTick;
 	// 预测弹道的长度，50tick * 12 = 600m
 	private static final int MAX_TICK = 50;
 	private static final Logger log = LoggerFactory.getLogger(Bullet.class);
@@ -31,6 +33,11 @@ public class Bullet {
 	}
 
 	public boolean isActive(int currentTick) {
+		int timeNoUpdate = currentTick - updateTick;// 数据很久没更新了
+		//2个tick周期没有数据，直接移除掉该数据
+		if (timeNoUpdate >= 2) {
+			return false;
+		}
 		int span = currentTick - createTick;
 		return span <= 74;
 	}
@@ -92,7 +99,7 @@ public class Bullet {
 		// 计算最佳躲避方向，按最佳方向闪避,闪避耗时约为10tick
 		// int dodgeAngle = Utils.getTargetRadius(p4.x, p4.y, nowX, nowY);
 		public int dodgeBestAngle;
-		//建议躲避方向
+		// 建议躲避方向
 		public int dodgeSuggetAngle;
 		public int dodgeSuggestDistance;
 		// 所需移动距离

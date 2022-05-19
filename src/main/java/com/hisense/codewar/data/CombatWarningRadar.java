@@ -46,6 +46,7 @@ public class CombatWarningRadar {
 	}
 
 	public void reset() {
+		mTick = 0;
 		mBulletInfos.clear();
 		mThreatTargets.clear();
 	}
@@ -61,6 +62,7 @@ public class CombatWarningRadar {
 			if (projectile.tankid == mDatabase.getMyTankId()) {
 				continue;
 			}
+			//bullet出界了也要考虑
 			if (inScanRange(projectile)) {
 				scanBullets(projectile);
 			}
@@ -104,6 +106,7 @@ public class CombatWarningRadar {
 				if (isChild) {
 					bullet.currentX = projectile.x;
 					bullet.currentY = projectile.y;
+					bullet.updateTick = mTick;//刷新更新时间
 					isExist = true;
 					break;
 				}
@@ -119,6 +122,7 @@ public class CombatWarningRadar {
 			bullet.r = projectile.r;
 			bullet.tankid = projectile.tankid;
 			bullet.createTick = mTick;
+			bullet.updateTick = mTick;
 			mDatabase.getBullets().add(bullet);
 			log.debug(String.format("[T%d][RadarWarning] %s", mTick, bullet.toString()));
 		}
@@ -297,12 +301,17 @@ public class CombatWarningRadar {
 					// 现在需要立刻躲避
 					if (leftTickEarly <= 2) {
 						bullet.handled = true;
-						int a = (int) Utils.a2r(suggestAngle);
-						int suggestDodgeDistance = (int) (bullet.suggestion.dodgeBestDistance / Math.cos(a));
-						mMoveHelper.addDodgeByDistance(suggestAngle, suggestDodgeDistance);
+						//多弹道情况需要再考虑最佳方向 交叉火力需要算多条线的垂线
+//						int a = (int) Utils.a2r(suggestAngle);
+//						int suggestDodgeDistance = (int) (bullet.suggestion.dodgeBestDistance / Math.cos(a));
+//						int suggestTick = Utils.getTicks(suggestDodgeDistance, AppConfig.TANK_SPEED);
+						//时间不够怎么办
+						//if(suggestTick > bullet.suggestion.hitTickleft)
+						//mMoveHelper.addDodgeByDistance(suggestAngle, suggestDodgeDistance);
+						mMoveHelper.addDodgeByDistance(bullet.suggestion.dodgeBestAngle, bullet.suggestion.dodgeBestDistance);
 						log.debug(String.format(
 								"[T%d][Dodge][urgent]angle[%d]dis[%d]earlyTick[%d]bestAngle[%d]bestDis[%d]", mTick,
-								suggestAngle, suggestDodgeDistance, leftTickEarly, bullet.suggestion.dodgeBestAngle,
+								suggestAngle, -1, leftTickEarly, bullet.suggestion.dodgeBestAngle,
 								bullet.suggestion.dodgeBestDistance));
 					}
 				} else {

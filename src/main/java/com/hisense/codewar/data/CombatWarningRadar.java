@@ -2,7 +2,6 @@ package com.hisense.codewar.data;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -19,7 +18,6 @@ import com.hisense.codewar.model.TankMapProjectile;
 import com.hisense.codewar.model.ThreatTarget;
 import com.hisense.codewar.utils.Utils;
 import com.jfinal.log.Log;
-import com.oracle.webservices.internal.api.databinding.Databinding.Builder;
 
 /**
  * 以自己为中心，扫描半径内的来袭子弹

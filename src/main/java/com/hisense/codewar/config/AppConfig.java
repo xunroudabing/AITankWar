@@ -1,13 +1,14 @@
 package com.hisense.codewar.config;
 
-import com.jfinal.kit.Prop;
 import com.jfinal.kit.PropKit;
 
 public class AppConfig {
+
+	public static int COMBAT_DISTANCE = 300;
 	/**
 	 * 提前闪躲，值越大闪躲的越早
 	 */
-	public static int DODGE_TICK=2;
+	public static int DODGE_TICK = 2;
 	/**
 	 * 子弹速度
 	 */
@@ -22,6 +23,7 @@ public class AppConfig {
 	public static int BULLET_ALIVE_TIME = 2442;
 	public static int RADAR_SCAN_RADIUS = 400;
 	public static int TARGET_RADIUS = 20;
+
 	public static void init() {
 		PropKit.use("tank.properties");
 		BULLET_SPEED = PropKit.getInt("battle.bulletSpeed");
@@ -32,5 +34,6 @@ public class AppConfig {
 		RADAR_SCAN_RADIUS = PropKit.getInt("battle.radar.scanRadius");
 		TARGET_RADIUS = PropKit.getInt("battle.targetRadius");
 		DODGE_TICK = PropKit.getInt("dodge.earlytick");
+		COMBAT_DISTANCE = PropKit.getInt("battle.combatDistance");
 	}
 }

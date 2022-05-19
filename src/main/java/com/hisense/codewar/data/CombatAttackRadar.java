@@ -17,10 +17,6 @@ public class CombatAttackRadar {
 	private int mTargetTankId;
 	private TankGameInfo mTargetTank;
 	private List<FireRange> mFriendsFireRange;
-	
-
-	
-
 
 	private List<TankGameInfo> mTargets;
 	private CombatRealTimeDatabase mDatabase;
@@ -39,8 +35,9 @@ public class CombatAttackRadar {
 		mTargetTankId = -1;
 		mTargetTank = null;
 	}
-	//计算友军射界，避免误伤
-	private void caculateFriendsFireRange(int nowX,int nowY,TankGameInfo tank) {
+
+	// 计算友军射界，避免误伤
+	private void caculateFriendsFireRange(int nowX, int nowY, TankGameInfo tank) {
 		int fireAngle = Utils.angleTo(nowX, nowY, tank.x, tank.y);
 		int range = Utils.getFireRange(nowX, nowY, tank.x, tank.y);
 		FireRange fireRange = new FireRange();
@@ -48,8 +45,9 @@ public class CombatAttackRadar {
 		fireRange.range = range;
 		mFriendsFireRange.add(fireRange);
 	}
+
 	public void scan(int tick) {
-		
+
 		mTick = tick;
 		int mTankId = mDatabase.getMyTankId();
 		int nowX = mDatabase.getNowX();
@@ -80,20 +78,22 @@ public class CombatAttackRadar {
 				enemyId = enemyTank.getId();
 			}
 		}
-		
-		if(enemyId == -1) {
+
+		if (enemyId == -1) {
 			log.debug("No Target found");
 			return;
 		}
-		
+
 		mTargetTankId = enemyId;
 		TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
 		mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r);
 		log.debug(String.format("[T%d][AttackTarget]->%s", mTick, mTargetTank.toString()));
 	}
+
 	public List<FireRange> getFriendsFireRange() {
 		return mFriendsFireRange;
 	}
+
 	public TankGameInfo getTargetTank() {
 		return mTargetTank;
 	}
@@ -101,7 +101,6 @@ public class CombatAttackRadar {
 	public int getTargetTankId() {
 		return mTargetTankId;
 	}
-
 
 	public TankGameInfo getLeader() {
 		List<TankGameInfo> friends = mDatabase.getFriendTanks();

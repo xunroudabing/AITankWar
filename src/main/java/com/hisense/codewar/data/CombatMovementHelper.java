@@ -24,9 +24,9 @@ public class CombatMovementHelper {
 
 	private CombatAttackRadar mAttackRadar;
 	private CombatRealTimeDatabase mDatabase;
-	private MoveEvent mMoveEvent;
+	private PostionEvent mMoveEvent;
 	private MoveEvent mDodgeEvent;
-	private BlockingQueue<MoveEvent> mMoveQueue;
+	private BlockingQueue<PostionEvent> mMoveQueue;
 	private BlockingQueue<MoveEvent> mDodgeQueue;
 	private static final Logger log = LoggerFactory.getLogger(CombatMovementHelper.class);
 
@@ -88,17 +88,17 @@ public class CombatMovementHelper {
 	}
 
 	public void addMoveByTick(int r, int tick) {
-		MoveEvent event = new MoveEvent();
-		event.heading = r;
-		event.tick = tick;
-		mMoveQueue.add(event);
+//		MoveEvent event = new MoveEvent();
+//		event.heading = r;
+//		event.tick = tick;
+//		mMoveQueue.add(event);
 	}
 
 	public void addMoveByDistance(int r, int distance) {
-		MoveEvent event = new MoveEvent();
-		event.heading = r;
-		event.tick = distance / AppConfig.TANK_SPEED;
-		mMoveQueue.add(event);
+//		MoveEvent event = new MoveEvent();
+//		event.heading = r;
+//		event.tick = distance / AppConfig.TANK_SPEED;
+//		mMoveQueue.add(event);
 	}
 
 	public boolean dodge(ITtank tank, int tick) {
@@ -156,20 +156,19 @@ public class CombatMovementHelper {
 
 		if (mMoveEvent != null) {
 			int heading = mMoveEvent.heading;
-			int moveTick = mMoveEvent.tick;
-			if (moveTick <= 0) {
-				log.debug(String.format("tank[%d]cant move,no tick left", tank.id));
-				return false;
-			}
-			moveTick--;
-			mMoveEvent.tick = moveTick;
+			int x = mMoveEvent.x;
+			int y = mMoveEvent.y;
+
+			int nowX = mDatabase.getNowX();
+			int nowY = mDatabase.getNowY();
+			
+			int dest = Utils.angleTo(nowX, nowY, x, y);
+			
+			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
+			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			log.debug(String.format("[Move]tank[%d]r[%d]tick[%d]", tank.id, heading, moveTick));
-			if (moveTick == 0) {
-				mMoveEvent = null;
-			}
+			log.debug(String.format("[Move]tank[%d]pos[%d,%d]r[%d]nextPos[%d,%d]heading[%d]", tank.id,nowX,nowY, dest, x,y,1));
+
 			return true;
 		}
 		log.debug(String.format("tank[%d]cant move,no moveEvent", tank.id));
@@ -188,5 +187,11 @@ public class CombatMovementHelper {
 	public static class MoveEvent {
 		public int heading;
 		public int tick;
+	}
+
+	public static class PostionEvent {
+		public int x;
+		public int y;
+		public int heading;
 	}
 }

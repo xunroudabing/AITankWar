@@ -34,9 +34,9 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		// TODO Auto-generated constructor stub
 		mTick = new AtomicInteger();
 		mCombatRealTimeDatabase = new CombatRealTimeDatabase();
-		mMovementHelper = new CombatMovementHelper();
 		mAttackRadar = new CombatAttackRadar(mCombatRealTimeDatabase);
 		mFireHelper = new FireHelper(mCombatRealTimeDatabase, mAttackRadar);
+		mMovementHelper = new CombatMovementHelper(mCombatRealTimeDatabase,mAttackRadar);
 		mCombatWarningRadar = new CombatWarningRadar(mCombatRealTimeDatabase, mMovementHelper);
 
 	}

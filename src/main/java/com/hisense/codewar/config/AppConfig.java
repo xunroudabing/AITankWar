@@ -31,6 +31,6 @@ public class AppConfig {
 		FIRE_SPAN = PropKit.getInt("battle.fireSpan");
 		RADAR_SCAN_RADIUS = PropKit.getInt("battle.radar.scanRadius");
 		TARGET_RADIUS = PropKit.getInt("battle.targetRadius");
-		DODGE_TICK = PropKit.getInt("DODGE_TICK");
+		DODGE_TICK = PropKit.getInt("dodge.earlytick");
 	}
 }

@@ -10,17 +10,31 @@ import org.slf4j.LoggerFactory;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGameActionType;
+import com.hisense.codewar.model.TankGameInfo;
+import com.hisense.codewar.utils.Utils;
 
 public class CombatMovementHelper {
+
+	public static void main(String[] args) {
+		BigDecimal b = BigDecimal.valueOf(28);
+		// distance / AppConfig.TANK_SPEED; CEILING，向上取整
+		int tick = b.divide(BigDecimal.valueOf(AppConfig.TANK_SPEED), 0, BigDecimal.ROUND_CEILING).intValue();
+		System.out.println(tick);
+	}
+
+	private CombatAttackRadar mAttackRadar;
+	private CombatRealTimeDatabase mDatabase;
 	private MoveEvent mMoveEvent;
 	private MoveEvent mDodgeEvent;
 	private BlockingQueue<MoveEvent> mMoveQueue;
 	private BlockingQueue<MoveEvent> mDodgeQueue;
 	private static final Logger log = LoggerFactory.getLogger(CombatMovementHelper.class);
 
-	public CombatMovementHelper() {
+	public CombatMovementHelper(CombatRealTimeDatabase database, CombatAttackRadar radar) {
 		mDodgeQueue = new LinkedBlockingQueue<>();
 		mMoveQueue = new LinkedBlockingQueue<>();
+		mDatabase = database;
+		mAttackRadar = radar;
 	}
 
 	public void reset() {
@@ -39,8 +53,10 @@ public class CombatMovementHelper {
 		}
 		return false;
 	}
+
 	/**
 	 * 返回当前躲闪耗时
+	 * 
 	 * @return
 	 */
 	public int getCurrentDodgeCost() {
@@ -104,10 +120,21 @@ public class CombatMovementHelper {
 			}
 			dodgeTick--;
 			mDodgeEvent.tick = dodgeTick;
+			int nowX = mDatabase.getNowX();
+			int nowY = mDatabase.getNowY();
+			int currentHeading = mDatabase.getHeading();
+			TankGameInfo enemyTank = mAttackRadar.getTargetTank();
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			log.debug(String.format("[Command-Dodge]tank[%d]r[%d]tick[%d]", tank.id, heading, dodgeTick));
+			if (enemyTank != null) {
+				int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
+				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
+			} else {
+				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
+			}
+
+			log.debug(String.format("[Command-Dodge]tank[%d]pos[%d,%d]chead[%d]r[%d]tick[%d]", tank.id, nowX, nowY,
+					currentHeading, heading, dodgeTick));
 			if (dodgeTick == 0) {
 				mDodgeEvent = null;
 			}

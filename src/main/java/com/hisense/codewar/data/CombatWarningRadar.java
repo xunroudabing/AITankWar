@@ -3,6 +3,7 @@ package com.hisense.codewar.data;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,14 +28,14 @@ import com.jfinal.log.Log;
  *
  */
 public class CombatWarningRadar {
-	
+
 	public static void main(String[] args) {
-		
-		List<Integer> aList = Arrays.asList(90,270);
+
+		List<Integer> aList = Arrays.asList(90, 270);
 		int s = getSuggestDodageAngle(aList);
 		System.out.print(s);
 	}
-	
+
 	private int mTick = 0;
 	// 威胁列表，敌人tankid,弹道数据等
 	private List<ThreatTarget> mThreatTargets;
@@ -161,6 +162,7 @@ public class CombatWarningRadar {
 		String urgentBulletId = null;
 		int totalDodgeAngle = 0;
 		List<Integer> bestDodgeAngle = new ArrayList<Integer>();
+		List<Bullet> toDoList = new ArrayList<>();
 		Iterator<Bullet> iterator2 = mDatabase.getBullets().iterator();
 		while (iterator2.hasNext()) {
 			Bullet bullet = (Bullet) iterator2.next();
@@ -262,22 +264,14 @@ public class CombatWarningRadar {
 			suggestion.leftTick = leftTick;
 
 			bullet.suggestion = suggestion;
-
+			// 加入待处理列表
+			toDoList.add(bullet);
 			int dis = Utils.distanceTo(nowX, nowY, bullet.currentX, bullet.currentY);
 			log.debug(String.format(
 					"[T%d][HitWarning]tankid[%d]bulletDis[%d]hitTickLeft[%d]dodgeNeedTick[%d]tickleft[%d]dodgeDis[%d]dodgeAngle[%d]->%s--->me[%d,%d]r[%d]dodge[%b]currentBullet[%d]",
 					mTick, bullet.tankid, dis, hitTickleft, dodgeNeedTick, leftTick, dodgeDistance, dodgeAngle,
 					bullet.toString(), nowX, nowY, mHeading, dodgeIng, targetUnhandle));
 
-			// 时间到，马上进行闪避
-//			if (leftTick <= 0) {
-//				bullet.handled = true;
-//				mMoveHelper.addDodgeByDistance(dodgeAngle, dodgeDistance);
-//				log.debug(String.format("[T%d][Dodge]angle[%d]dis[%d]", mTick, dodgeAngle, dodgeDistance));
-//			} else {
-//				// 先不用急着闪
-//				continue;
-//			}
 		}
 
 		if (urgentBulletId == null) {
@@ -285,16 +279,23 @@ public class CombatWarningRadar {
 		} else if (targetUnhandle <= 0) {
 			return;
 		}
-		
-		
-		//todo排序？
-		
+
+		// 排序
+		Collections.sort(toDoList, new Comparator<Bullet>() {
+
+			@Override
+			public int compare(Bullet o1, Bullet o2) {
+				// TODO Auto-generated method stub
+				return o1.suggestion.hitTickleft - o2.suggestion.hitTickleft;
+			}
+		});
+
 		// 计算建议躲避方向，多个方向取平均值
-		//int suggestAngle = totalDodgeAngle / targetUnhandle;
+		// int suggestAngle = totalDodgeAngle / targetUnhandle;
 		int suggestAngle = getSuggestDodageAngle(bestDodgeAngle);
 		// 是否有足够的时间去闪避
 		int span = maxHitLeftTick - totalDodageNeedTicks;
-		Iterator<Bullet> iterator3 = mDatabase.getBullets().iterator();
+		Iterator<Bullet> iterator3 = toDoList.iterator();
 		while (iterator3.hasNext()) {
 			Bullet bullet = (Bullet) iterator3.next();
 			if (bullet.handled) {
@@ -325,9 +326,9 @@ public class CombatWarningRadar {
 						// mMoveHelper.addDodgeByDistance(bullet.suggestion.dodgeBestAngle,
 						// bullet.suggestion.dodgeBestDistance);
 						log.debug(String.format(
-								"[T%d][Dodge][urgent]suggestAngle[%d]suggestDis[%d]earlyTick[%d]bestAngle[%d]bestDis[%d]", mTick,
-								suggestAngle, suggestDodgeDistance, leftTickEarly, bullet.suggestion.dodgeBestAngle,
-								bullet.suggestion.dodgeBestDistance));
+								"[T%d][Dodge][urgent]suggestAngle[%d]suggestDis[%d]earlyTick[%d]bestAngle[%d]bestDis[%d]",
+								mTick, suggestAngle, suggestDodgeDistance, leftTickEarly,
+								bullet.suggestion.dodgeBestAngle, bullet.suggestion.dodgeBestDistance));
 					}
 				} else {
 					// 时间到，马上进行闪避

@@ -175,8 +175,8 @@
 								<platform>windows</platform>
 							</platforms>
 							<id>startup-windows</id>
-							<!-- 启动类 -->
-							<mainClass>com.hisense.codewar.AutoBotsSingleGame</mainClass>
+							<!-- 启动类 AutoBotsGroupGame AutoBotsSingleGame-->
+							<mainClass>com.hisense.codewar.AutoBotsGroupGame</mainClass>
 							<jvmSettings>
 								<extraArguments>
 									<extraArgument>-Xmx2G</extraArgument>
@@ -190,7 +190,7 @@
 							</platforms>
 							<id>startup</id>
 							<!-- 启动类 -->
-							<mainClass>com.hisense.codewar.AutoBotsSingleGame</mainClass>
+							<mainClass>com.hisense.codewar.AutoBotsGroupGame</mainClass>
 							<jvmSettings>
 								<extraArguments>
 									<extraArgument>-Xmx2G</extraArgument>

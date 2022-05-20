@@ -51,14 +51,19 @@ public class FireHelper {
 
 		int dest = Utils.angleTo(nowX, nowY, target.x, target.y);
 		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
-		//避免误伤
-		if(willHitFriends(dest)) {
-			//boolean b = mRandom.nextBoolean();
+		// 避免误伤
+		if (willHitFriends(dest)) {
+			// boolean b = mRandom.nextBoolean();
 		}
 		// 射界内，不需要转向，直接开火
 		if (Math.abs(dest - heading) <= range) {
 			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		} else {
+			// 射界内加随机数
+			boolean b = mRandom.nextBoolean();
+			int seed = b ? 1 : -1;
+			int ranRange = mRandom.nextInt(range);
+			dest = dest + seed * ranRange;
 			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
 		}
 
@@ -74,7 +79,7 @@ public class FireHelper {
 		boolean ret = false;
 		List<FireRange> friends = mAttackRadar.getFriendsFireRange();
 		for (FireRange fireRange : friends) {
-			//在友军射界内
+			// 在友军射界内
 			if (Math.abs(dest - fireRange.fireAngle) < fireRange.range) {
 				ret = true;
 				break;

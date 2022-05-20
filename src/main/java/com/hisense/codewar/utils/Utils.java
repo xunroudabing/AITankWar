@@ -17,31 +17,30 @@ public class Utils {
 	private static final Logger log = LoggerFactory.getLogger(Utils.class);
 
 	public static void main(String[] args) {
-		//[389,686]
-
+		// [389,686]
 
 //TankMapProjectile.bullet[399,769]r[83]->tankid[235]
 //TankMapProjectile.bullet[403,805]r[83]->tankid[235]
-		
+
 		Bullet bullet = new Bullet();
 		bullet.startX = 389;
 		bullet.startY = 686;
 		bullet.r = 83;
-		
+
 		int x1 = 399;
 		int y1 = 769;
-		
+
 		int x2 = 403;
 		int y2 = 805;
-		
+
 		boolean ischild = bullet.isChild(x2, y2);
-		//358,372
+		// 358,372
 		int mx = 358;
 		int my = 372;
 		int dis = Utils.distanceTo(x1, y1, mx, my);
 		System.out.println(ischild);
 		System.out.println(dis);
-		
+
 	}
 
 	/**
@@ -353,6 +352,26 @@ public class Utils {
 		return new Position(nx, ny);
 	}
 
+	// 返回x y r方向上 distance的点
+	public static Position getNextPositionByDistance(int x, int y, int r, int distance) {
+		float angle = a2r(r);
+		int dy = (int) (distance * Math.sin(angle));
+		int dx = (int) (distance * Math.cos(angle));
+
+		int nx = x + dx;
+		int ny = y + dy;
+		return new Position(nx, ny);
+	}
+
+	public static boolean isOutRange(int x,int y) {
+		if(x > AppConfig.MAP_WITH - AppConfig.TANK_SIZE || x < AppConfig.TANK_SIZE) {
+			return true;
+		}else if (y > AppConfig.MPA_HEIGHT - AppConfig.TANK_SIZE ||  y<AppConfig.TANK_SIZE) {
+			return true;
+		}
+		return false;
+	}
+
 	public static boolean isNear(Position p1, Position p2) {
 		return (Math.abs(p1.x - p2.x) <= 1) && (Math.abs(p1.y - p2.y) <= 1);
 	}
@@ -363,9 +382,8 @@ public class Utils {
 
 	public static int getFireRange(int nowx, int nowy, int tx, int ty) {
 		int distance = distanceTo(nowx, nowy, tx, ty);
-		double angle = Math.atan2(AppConfig.TARGET_RADIUS,distance);
+		double angle = Math.atan2(AppConfig.TARGET_RADIUS, distance);
 		return r2a(angle);
 	}
-	
-	
+
 }

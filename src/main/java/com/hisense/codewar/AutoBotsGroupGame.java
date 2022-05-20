@@ -18,6 +18,7 @@ public class AutoBotsGroupGame {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		PropKit.use("tank.properties");
+		System.out.println("App version " + AppConfig.APPVERSION);
 		System.out.println("AITank AutoBots Group Game start...");
 		String server = PropKit.get("server.ip");
 		int port = PropKit.getInt("server.port");

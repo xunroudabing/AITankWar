@@ -55,7 +55,7 @@ public class CombatAttackRadar {
 		List<TankGameInfo> friends = mDatabase.getFriendTanks();
 		Iterator<TankGameInfo> iterator = mDatabase.getAllTanks().iterator();
 
-		TankGameInfo leader = getLeader();
+		TankGameInfo leader = mDatabase.getLeader();
 
 		int enemyId = -1;
 		int minDistance = -1;
@@ -102,14 +102,4 @@ public class CombatAttackRadar {
 		return mTargetTankId;
 	}
 
-	public TankGameInfo getLeader() {
-		List<TankGameInfo> friends = mDatabase.getFriendTanks();
-		int tankid = mDatabase.getMyTankId();
-		Collections.sort(friends);
-		// 如果没有队友，自己就是leader,id最小的是leader
-		if (friends.size() > 1) {
-			tankid = Math.min(tankid, friends.get(0).id);
-		}
-		return mDatabase.getTankById(tankid);
-	}
 }

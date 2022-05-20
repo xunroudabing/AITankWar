@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.ITtank;
+import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameActionType;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.Utils;
@@ -92,13 +93,30 @@ public class CombatMovementHelper {
 //		event.heading = r;
 //		event.tick = tick;
 //		mMoveQueue.add(event);
+		PostionEvent event = new PostionEvent();
+		event.heading = r;
+		event.tick = tick;
+		mMoveQueue.add(event);
 	}
 
 	public void addMoveByDistance(int r, int distance) {
-//		MoveEvent event = new MoveEvent();
-//		event.heading = r;
-//		event.tick = distance / AppConfig.TANK_SPEED;
-//		mMoveQueue.add(event);
+		PostionEvent event = new PostionEvent();
+		event.heading = r;
+		event.tick = Utils.getTicks(distance, AppConfig.TANK_SPEED);
+		mMoveQueue.add(event);
+	}
+
+	public void lock(ITtank tank, int tick) {
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int currentHeading = mDatabase.getHeading();
+		TankGameInfo enemyTank = mAttackRadar.getTargetTank();
+		if (enemyTank != null) {
+			int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
+			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+		}
 	}
 
 	public boolean dodge(ITtank tank, int tick) {
@@ -126,9 +144,10 @@ public class CombatMovementHelper {
 			TankGameInfo enemyTank = mAttackRadar.getTargetTank();
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
+			// 锁定
 			if (enemyTank != null) {
 				int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
-				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
 			} else {
 				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			}
@@ -143,7 +162,12 @@ public class CombatMovementHelper {
 		log.debug(String.format("[T%d]tank[%d]cant dodge,no dodgeEvent", tick, tank.id));
 		return false;
 	}
-
+	//停止移动
+	public void stop(ITtank tank) {
+		mMoveEvent = null;
+		mMoveQueue.clear();
+	}
+	//移动
 	public boolean move(ITtank tank, int tick) {
 		if (mMoveEvent == null) {
 			try {
@@ -155,20 +179,37 @@ public class CombatMovementHelper {
 		}
 
 		if (mMoveEvent != null) {
-			int heading = mMoveEvent.heading;
+
 			int x = mMoveEvent.x;
 			int y = mMoveEvent.y;
+			int dest = mMoveEvent.heading;
+			int moveTick = mMoveEvent.tick;
 
+			if (moveTick <= 0) {
+				log.debug(String.format("[T%d]tank[%d]cant move,no tick left", tick, tank.id));
+				return false;
+			}
+			moveTick--;
+			mMoveEvent.tick = moveTick;
 			int nowX = mDatabase.getNowX();
 			int nowY = mDatabase.getNowY();
-			
-			int dest = Utils.angleTo(nowX, nowY, x, y);
-			
-			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
-			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
-			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			log.debug(String.format("[Move]tank[%d]pos[%d,%d]r[%d]nextPos[%d,%d]heading[%d]", tank.id,nowX,nowY, dest, x,y,1));
 
+			// int dest = Utils.angleTo(nowX, nowY, x, y);
+			
+
+			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
+			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
+
+			TankGameInfo enemyTank = mAttackRadar.getTargetTank();
+			if(enemyTank != null) {
+				int angle = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
+				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, angle);
+			}
+			log.debug(String.format("[T%d][Command-Move]tank[%d]pos[%d,%d]r[%d]nextPos[%d,%d]heading[%d]movetick[%d]", tick,
+					tank.id, nowX, nowY, dest, x, y, dest, moveTick));
+			if (mMoveEvent.tick == 0) {
+				mMoveEvent = null;
+			}
 			return true;
 		}
 		log.debug(String.format("tank[%d]cant move,no moveEvent", tank.id));
@@ -177,13 +218,13 @@ public class CombatMovementHelper {
 
 	public boolean canMove() {
 		if (mMoveEvent != null) {
-			return true;
+			return mMoveEvent.tick > 0;
 		} else if (!mMoveQueue.isEmpty()) {
 			return true;
 		}
 		return false;
 	}
-
+	
 	public static class MoveEvent {
 		public int heading;
 		public int tick;
@@ -193,5 +234,6 @@ public class CombatMovementHelper {
 		public int x;
 		public int y;
 		public int heading;
+		public int tick;
 	}
 }

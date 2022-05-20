@@ -1,6 +1,7 @@
 package com.hisense.codewar.data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +27,14 @@ import com.jfinal.log.Log;
  *
  */
 public class CombatWarningRadar {
+	
+	public static void main(String[] args) {
+		
+		List<Integer> aList = Arrays.asList(90,270);
+		int s = getSuggestDodageAngle(aList);
+		System.out.print(s);
+	}
+	
 	private int mTick = 0;
 	// 威胁列表，敌人tankid,弹道数据等
 	private List<ThreatTarget> mThreatTargets;
@@ -62,7 +71,7 @@ public class CombatWarningRadar {
 			if (projectile.tankid == mDatabase.getMyTankId()) {
 				continue;
 			}
-			//bullet出界了也要考虑
+			// bullet出界了也要考虑
 			if (inScanRange(projectile)) {
 				scanBullets(projectile);
 			}
@@ -106,7 +115,7 @@ public class CombatWarningRadar {
 				if (isChild) {
 					bullet.currentX = projectile.x;
 					bullet.currentY = projectile.y;
-					bullet.updateTick = mTick;//刷新更新时间
+					bullet.updateTick = mTick;// 刷新更新时间
 					isExist = true;
 					break;
 				}
@@ -151,6 +160,7 @@ public class CombatWarningRadar {
 		// 最急需处理的bullet,即最小剩余时间
 		String urgentBulletId = null;
 		int totalDodgeAngle = 0;
+		List<Integer> bestDodgeAngle = new ArrayList<Integer>();
 		Iterator<Bullet> iterator2 = mDatabase.getBullets().iterator();
 		while (iterator2.hasNext()) {
 			Bullet bullet = (Bullet) iterator2.next();
@@ -203,9 +213,8 @@ public class CombatWarningRadar {
 //			}
 			// 此处求躲避方向
 			// 计算最佳躲避方向，按最佳方向闪避,闪避耗时约为10tick
-			// int dodgeAngle = Utils.getTargetRadius(p4.x, p4.y, nowX, nowY);
-			//int dodgeAngle = Utils.angleTo(nowX, nowY, p4.x, p4.y);
 			int dodgeAngle = Utils.angleTo(p4.x, p4.y, nowX, nowY);
+			bestDodgeAngle.add(dodgeAngle);
 			totalDodgeAngle += dodgeAngle;
 			// 所需移动距离
 			int dodgeDistance = AppConfig.TANK_WIDTH - a;
@@ -276,9 +285,13 @@ public class CombatWarningRadar {
 		} else if (targetUnhandle <= 0) {
 			return;
 		}
-
+		
+		
+		//todo排序？
+		
 		// 计算建议躲避方向，多个方向取平均值
-		int suggestAngle = totalDodgeAngle / targetUnhandle;
+		//int suggestAngle = totalDodgeAngle / targetUnhandle;
+		int suggestAngle = getSuggestDodageAngle(bestDodgeAngle);
 		// 是否有足够的时间去闪避
 		int span = maxHitLeftTick - totalDodageNeedTicks;
 		Iterator<Bullet> iterator3 = mDatabase.getBullets().iterator();
@@ -289,7 +302,6 @@ public class CombatWarningRadar {
 			}
 
 			if (bullet.suggestion != null) {
-
 				// 先处理最紧急的
 				if (bullet.id.equals(urgentBulletId) && targetUnhandle > 1) {
 					int leftTick = bullet.suggestion.leftTick;
@@ -301,17 +313,20 @@ public class CombatWarningRadar {
 					// 现在需要立刻躲避
 					if (leftTickEarly <= 2) {
 						bullet.handled = true;
-						//多弹道情况需要再考虑最佳方向 交叉火力需要算多条线的垂线
-//						int a = (int) Utils.a2r(suggestAngle);
-//						int suggestDodgeDistance = (int) (bullet.suggestion.dodgeBestDistance / Math.cos(a));
-//						int suggestTick = Utils.getTicks(suggestDodgeDistance, AppConfig.TANK_SPEED);
-						//时间不够怎么办
-						//if(suggestTick > bullet.suggestion.hitTickleft)
-						//mMoveHelper.addDodgeByDistance(suggestAngle, suggestDodgeDistance);
-						mMoveHelper.addDodgeByDistance(bullet.suggestion.dodgeBestAngle, bullet.suggestion.dodgeBestDistance);
+						// 多弹道情况需要再考虑最佳方向 交叉火力需要算多条线的垂线
+						int a = (int) Utils.a2r(suggestAngle);
+						int suggestDodgeDistance = (int) (bullet.suggestion.dodgeBestDistance / Math.cos(a));
+						int suggestTick = Utils.getTicks(suggestDodgeDistance, AppConfig.TANK_SPEED);
+						// 时间不够怎么办
+						// if(suggestTick > bullet.suggestion.hitTickleft)
+						mMoveHelper.addDodgeByDistance(suggestAngle, suggestDodgeDistance);
+
+						//
+						// mMoveHelper.addDodgeByDistance(bullet.suggestion.dodgeBestAngle,
+						// bullet.suggestion.dodgeBestDistance);
 						log.debug(String.format(
-								"[T%d][Dodge][urgent]angle[%d]dis[%d]earlyTick[%d]bestAngle[%d]bestDis[%d]", mTick,
-								suggestAngle, -1, leftTickEarly, bullet.suggestion.dodgeBestAngle,
+								"[T%d][Dodge][urgent]suggestAngle[%d]suggestDis[%d]earlyTick[%d]bestAngle[%d]bestDis[%d]", mTick,
+								suggestAngle, suggestDodgeDistance, leftTickEarly, bullet.suggestion.dodgeBestAngle,
 								bullet.suggestion.dodgeBestDistance));
 					}
 				} else {
@@ -330,188 +345,33 @@ public class CombatWarningRadar {
 		}
 	}
 
-	// 扫描威胁数据,进行计算
-	@Deprecated
-	protected void scanThreadTarget() {
-		int mTankId = mDatabase.getMyTankId();
-		int nowX = mDatabase.getNowX();
-		int nowY = mDatabase.getNowY();
-
-		Iterator<ThreatTarget> iterator = mThreatTargets.iterator();
-		// 是否有新数据
-		boolean hasNewData = false;
-		while (iterator.hasNext()) {
-			ThreatTarget target = iterator.next();
-			// 更新tank坐标
-			TankGameInfo tankGameInfo = mDatabase.getTankById(target.tankId);
-			target.tankX = tankGameInfo.x;
-			target.tankY = tankGameInfo.y;
-			target.tankHeading = tankGameInfo.r;
-			// 已处理过，不再计算
-			if (target.handled) {
-				int ticketLeft = target.ticketLeft;
-				ticketLeft--;
-				target.ticketLeft = ticketLeft;
-				// todo 是否还有威胁？能打到我或是已超时？更新tick
-				if (target.ticketLeft <= 0) {
-					iterator.remove();
+	public static int getSuggestDodageAngle(List<Integer> list) {
+		int lastAngle = 0;
+		int ret = 0;
+		for (int i = 0; i < list.size(); i++) {
+			int angle = list.get(i);
+			if (i == 0) {
+				lastAngle = angle;
+				ret = angle;
+			} else {
+				// 与上次结果求夹角
+				int inAngle = Math.abs(angle - lastAngle);
+				// 还是采用bestAngle
+				if (inAngle == 0 || inAngle == 180) {
+					ret = angle;
+				}
+				// 锐角，求平均值
+				else if (inAngle <= 90) {
+					ret = (angle + lastAngle) / 2;
+					lastAngle = ret;
 				} else {
-					boolean canHit = Utils.willHit(target.bulletX, target.bulletY, target.bulletR, nowX, nowY,
-							AppConfig.TANK_WIDTH);
-					if (!canHit) {
-						iterator.remove();
-					}
-				}
-				continue;
-			}
-			hasNewData = true;
-			// 计算剩余来袭时间
-
-			// 計算圓心到彈道的垂足 ，p1,p2为弹道 p3圆心
-			Position p1 = new Position(target.bulletX, target.bulletY);
-			Position p2 = Utils.getNextBulletByTick(target.bulletX, target.bulletY, target.bulletR, 2);
-			Position p3 = new Position(nowX, nowY);
-			// 垂足
-			Position p4 = Utils.getFoot(p1, p2, p3);
-
-			// 坦克半径
-			int c = AppConfig.TANK_WIDTH;
-			// 垂足到圆心距离
-			int a = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
-
-			int b = (int) Math.sqrt(c * c - a * a);
-
-			// 总距离
-			int dis = Utils.distanceTo(p4.x, p4.y, p1.x, p1.y);
-			// 子弹到我的距离
-			int distance = dis - b;
-			// 剩余来袭时间
-			int tick = distance / AppConfig.BULLET_SPEED;
-
-			target.ticketLeft = tick;
-			// 计算来袭时间结束
-
-			// 计算最佳躲避方向
-			int r = Utils.angleTo(nowX, nowY, p4.x, p4.y);
-			target.dodgeBestR = r;
-			target.dodgeBestDis = AppConfig.TANK_WIDTH - a;
-			target.dodgeBestTick = target.dodgeBestDis / AppConfig.BULLET_SPEED;
-		}
-
-		if (mThreatTargets.size() <= 0) {
-			log.debug(String.format("tankid[%d]pos[%d,%d] is safe now", mTankId, nowX, nowY));
-			return;
-		}
-		if (!hasNewData) {
-			log.debug(String.format("tankid[%d]pos[%d,%d] dont have new threatTarget", mTankId, nowX, nowY));
-			return;
-		}
-		// 按tick升序排序
-		Collections.sort(mThreatTargets);
-
-		// 计算最优闪避方向
-		List<Integer> angleList = new ArrayList<Integer>();
-		int sum = 0;
-		// 当前是否正在闪避，如果是取当前方向，否则重新计算
-		int currentDodgeR = 0;
-		int i = 0;
-		Iterator<ThreatTarget> iterator2 = mThreatTargets.iterator();
-		while (iterator2.hasNext()) {
-			ThreatTarget target = iterator2.next();
-			// 已处理过，不再计算
-			if (target.handled) {
-				continue;
-			}
-			int angle = target.dodgeBestR;
-//			if (i == 0) {
-//				//currentDodgeR = angle;
-//				angleList.add(angle);
-//				continue;
-//			}
-			angle = (int) Utils.normalAbsoluteAngleDegrees(angle);
-			// 获取当前夹角[0,180]
-			int span = Utils.bearing(currentDodgeR, angle);
-			// 不能为钝角，掉头180度
-			if (span > 90) {
-				// angle = (int) Utils.normalNearAbsoluteAngleDegrees(angle + 180);
-			}
-			angleList.add(angle);
-			sum += angle;
-			i++;
-
-		}
-		// 有新威胁数据需要计算，计算闪避方向和时间
-		if (angleList.size() > 0) {
-			// 应该向哪移动
-			int finalR = sum / angleList.size();
-			int maxTick = 20;
-			// 需要移动多少tick才安全
-			int tick = 0;
-			Iterator<ThreatTarget> iterator3 = mThreatTargets.iterator();
-			while (iterator3.hasNext()) {
-				ThreatTarget target = iterator3.next();
-				// 已处理过，不再计算
-				if (target.handled) {
-					continue;
-				}
-				target.dodgeFinalR = finalR;
-				// 一直模拟移动，直到威胁弹道无法命中，最大tick 3*20 = 60
-				for (int j = 0; j < maxTick; j++) {
-					// todo
-					int testTick = j * 3;
-					Position newPos = Utils.getNextPostion(nowX, nowY, finalR, testTick);
-					boolean willhit = Utils.willHit(target.bulletX, target.bulletY, target.bulletR, newPos.x, newPos.y,
-							AppConfig.TANK_WIDTH);
-					// 打不到
-					if (!willhit) {
-						if (testTick > tick) {
-							tick = testTick;
-						}
-						target.handled = true;
-						break;
-					}
+					// 如果是钝角，转成锐角
+					ret = (lastAngle + 180 + lastAngle) / 2;
+					ret = Utils.formatAngle(ret);
+					lastAngle = ret;
 				}
 			}
-
-			// 发送躲避数据
-			mMoveHelper.addMoveByTick(finalR, tick);
-			int tankid = mDatabase.getMyTankId();
-			printBulletData();
-			printThreatData();
-			log.debug(String.format("##Dodge##tank[%d]pos[%d,%d]r[%d]tick[%d]", tankid, nowX, nowY, finalR, tick));
 		}
-	}
-
-	protected ThreatTarget createThreatTarget(BulletInfo bulletInfo) {
-		ThreatTarget target = new ThreatTarget();
-		target.bulletInfoId = bulletInfo.getId();
-		target.tankId = bulletInfo.getTankId();
-
-		target.bulletX = bulletInfo.getStartX();
-		target.bulletY = bulletInfo.getStartY();
-		target.bulletR = bulletInfo.getR();
-		target.handled = false;
-		return target;
-
-	}
-
-	// 打印威胁数据
-	protected void printThreatData() {
-		log.debug("######ThreatData#########");
-		int mTankId = mDatabase.getMyTankId();
-		int nowX = mDatabase.getNowX();
-		int nowY = mDatabase.getNowY();
-		int r = mDatabase.getHeading();
-		log.debug(String.format("mytankid[%d]pos[%d,%d]r[%d]", mTankId, nowX, nowY, r));
-		for (ThreatTarget target : mThreatTargets) {
-			log.debug("####" + target.toString() + "##");
-		}
-	}
-
-	protected void printBulletData() {
-		log.debug("#########BulletData#########");
-		for (BulletInfo info : mBulletInfos) {
-			log.debug(info.toString());
-		}
+		return ret;
 	}
 }

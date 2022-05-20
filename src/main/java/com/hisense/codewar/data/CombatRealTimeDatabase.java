@@ -1,6 +1,8 @@
 package com.hisense.codewar.data;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -33,7 +35,7 @@ public class CombatRealTimeDatabase {
 
 	private List<TankGameInfo> mFriendTanks;
 	private List<Bullet> mBullets;
-	
+
 	private static final Logger log = LoggerFactory.getLogger(CombatRealTimeDatabase.class);
 
 	public CombatRealTimeDatabase() {
@@ -44,6 +46,7 @@ public class CombatRealTimeDatabase {
 		mBullets = new ArrayList<>();
 		initFriendTanks();
 	}
+
 	public List<TankGameInfo> getAllTanks() {
 		return mAllTanks;
 	}
@@ -72,11 +75,29 @@ public class CombatRealTimeDatabase {
 	public List<TankGameInfo> getFriendTanks() {
 		return mFriendTanks;
 	}
-	
+
+	public TankGameInfo getLeader() {
+		List<TankGameInfo> friends = getFriendTanks();
+		int tankid = getMyTankId();
+		Collections.sort(friends);
+		// 如果没有队友，自己就是leader,id最小的是leader
+		if (friends.size() > 1) {
+			tankid = Math.min(tankid, friends.get(0).id);
+		}
+		return getTankById(tankid);
+	}
+
+	public boolean isLeader() {
+		TankGameInfo info = getLeader();
+		if (info != null) {
+			return info.id == mTankId;
+		}
+		return false;
+	}
+
 	public List<Bullet> getBullets() {
 		return mBullets;
 	}
-
 
 	public int getNowX() {
 		return mNowX;

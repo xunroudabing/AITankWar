@@ -1,7 +1,6 @@
-package com.hisense.codewar.data;
+package com.hisense.codewar.algorithm;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -10,149 +9,32 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hisense.codewar.algorithm.DodageLvl1Algorithm;
-import com.hisense.codewar.algorithm.IDodageAlgorithm;
 import com.hisense.codewar.config.AppConfig;
+import com.hisense.codewar.data.CombatMovementHelper;
+import com.hisense.codewar.data.CombatRealTimeDatabase;
 import com.hisense.codewar.model.Bullet;
-import com.hisense.codewar.model.Bullet.DodgeSuggestion;
-import com.hisense.codewar.model.BulletInfo;
 import com.hisense.codewar.model.Position;
-import com.hisense.codewar.model.TankMapProjectile;
-import com.hisense.codewar.model.ThreatTarget;
+import com.hisense.codewar.model.Bullet.DodgeSuggestion;
 import com.hisense.codewar.utils.Utils;
-
 /**
- * 以自己为中心，扫描半径内的来袭子弹
- * 
+ * lvl1算法 躲多子弹有缺陷
  * @author hanzheng
  *
  */
-public class CombatWarningRadar {
-
-	public static void main(String[] args) {
-
-		List<Integer> aList = Arrays.asList(90, 270);
-		int s = getSuggestDodageAngle(aList);
-		System.out.print(s);
-	}
-
-	private int mTick = 0;
-	// 威胁列表，敌人tankid,弹道数据等
-	private List<ThreatTarget> mThreatTargets;
-	// 雷达范围内弹道数据
-	private List<BulletInfo> mBulletInfos;
+public class DodageLvl1Algorithm implements IDodageAlgorithm {
+	private CombatMovementHelper mMovementHelper;
 	private CombatRealTimeDatabase mDatabase;
-	private CombatMovementHelper mMoveHelper;
-	// 子弹躲避算法
-	private IDodageAlgorithm mDodageAlgorithm;
-	// 雷达扫描半径
-	private int SCAN_RADIUS = 400;
-	private static final Logger log = LoggerFactory.getLogger(CombatWarningRadar.class);
+	private static final Logger log = LoggerFactory.getLogger(DodageLvl1Algorithm.class);
 
-	public CombatWarningRadar(CombatRealTimeDatabase database, CombatMovementHelper helper) {
+	public DodageLvl1Algorithm(CombatRealTimeDatabase database,CombatMovementHelper helper) {
+		// TODO Auto-generated constructor stub
 		mDatabase = database;
-		mMoveHelper = helper;
-		mBulletInfos = new ArrayList<BulletInfo>();
-		mThreatTargets = new ArrayList<ThreatTarget>();
-		SCAN_RADIUS = AppConfig.RADAR_SCAN_RADIUS;
-		mDodageAlgorithm = new DodageLvl1Algorithm(mDatabase, mMoveHelper);
+		mMovementHelper = helper;
 	}
 
-	public void reset() {
-		mTick = 0;
-		mBulletInfos.clear();
-		mThreatTargets.clear();
-	}
-
-	public void scan(int tick) {
-		mTick = tick;
-		int mTankId = mDatabase.getMyTankId();
-		int nowX = mDatabase.getNowX();
-		int nowY = mDatabase.getNowY();
-		List<TankMapProjectile> list = mDatabase.geTankMapProjectiles();
-		// 扫描
-		for (TankMapProjectile projectile : list) {
-			log.debug(projectile.toString());
-			if (projectile.tankid == mDatabase.getMyTankId()) {
-				continue;
-			}
-			// bullet出界了也要考虑
-			if (inScanRange(projectile)) {
-				scanBullets(projectile);
-			}
-		}
-
-		// 扫描威胁数据
-		mDodageAlgorithm.scan(mDatabase.getBullets(), nowX, nowY, tick);
-		// scanThreatBullet();
-
-		// 扫描威胁目标
-		// scanThreadTarget();
-	}
-
-	/**
-	 * 获取威胁列表
-	 * 
-	 * @return
-	 */
-
-	public List<ThreatTarget> getThreatTarget() {
-		return mThreatTargets;
-	}
-
-	// 在雷达范围内
-	protected boolean inScanRange(TankMapProjectile projectile) {
-		int nowX = mDatabase.getNowX();
-		int nowY = mDatabase.getNowY();
-
-		int distance = Utils.distanceTo(nowX, nowY, projectile.x, projectile.y);
-		return distance <= SCAN_RADIUS;
-	}
-
-	// 扫描弹道
-	protected void scanBullets(TankMapProjectile projectile) {
-		Iterator<Bullet> iterator = mDatabase.getBullets().iterator();
-		boolean isExist = false;
-		while (iterator.hasNext()) {
-			Bullet bullet = (Bullet) iterator.next();
-			if (projectile.tankid == bullet.tankid && projectile.r == bullet.r) {
-				// 属于同一弹道,不处理
-				boolean isChild = bullet.isChild(projectile.x, projectile.y);
-				if (isChild) {
-					bullet.currentX = projectile.x;
-					bullet.currentY = projectile.y;
-					bullet.updateTick = mTick;// 刷新更新时间
-					isExist = true;
-					break;
-				}
-			}
-
-		}
-		if (!isExist) {
-			Bullet bullet = new Bullet();
-			bullet.startX = projectile.x;
-			bullet.startY = projectile.y;
-			bullet.currentX = projectile.x;
-			bullet.currentY = projectile.y;
-			bullet.r = projectile.r;
-			bullet.tankid = projectile.tankid;
-			bullet.createTick = mTick;
-			bullet.updateTick = mTick;
-			mDatabase.getBullets().add(bullet);
-			log.debug(String.format("[T%d][RadarWarning] %s", mTick, bullet.toString()));
-		}
-
-	}
-
-	protected void insertBulletsInfo(TankMapProjectile projectile) {
-		BulletInfo bulletInfo = new BulletInfo(projectile.tankid, projectile.x, projectile.y, projectile.r);
-		mBulletInfos.add(bulletInfo);
-	}
-
-	// 扫描威胁弹道
-	protected void scanThreatBullet() {
-		int nowX = mDatabase.getNowX();
-		int nowY = mDatabase.getNowY();
+	@Override
+	public void scan(List<Bullet> bulletList,int nowX,int nowY, int tick) {
+		// TODO Auto-generated method stub
 		int mHeading = mDatabase.getHeading();
 		int targetUnhandle = 0;// 未处理的且会击中我的目标
 		int lastDodgeCost = 0;// 上一个目标闪避耗时
@@ -168,10 +50,10 @@ public class CombatWarningRadar {
 		int totalDodgeAngle = 0;
 		List<Integer> bestDodgeAngle = new ArrayList<Integer>();
 		List<Bullet> toDoList = new ArrayList<>();
-		Iterator<Bullet> iterator2 = mDatabase.getBullets().iterator();
+		Iterator<Bullet> iterator2 = bulletList.iterator();
 		while (iterator2.hasNext()) {
 			Bullet bullet = (Bullet) iterator2.next();
-			if (!bullet.isActive(mTick)) {
+			if (!bullet.isActive(tick)) {
 				iterator2.remove();
 			}
 			if (bullet.handled) {
@@ -196,7 +78,7 @@ public class CombatWarningRadar {
 			if (a < c) {
 				canHit = true;
 			}
-
+			// 不会击中，忽略
 			if (!canHit) {
 				continue;
 			}
@@ -237,7 +119,7 @@ public class CombatWarningRadar {
 //				// 为了保险提前2个tick进行闪避
 //				dodgeNeedTick += 4;
 //			}
-			boolean dodgeIng = mMoveHelper.needDodge(mTick);
+			boolean dodgeIng = mMovementHelper.needDodge(tick);
 //			// 当前正在躲避
 //			if (dodgeIng) {
 //				int addTick = mMoveHelper.getCurrentDodgeCost();
@@ -273,8 +155,8 @@ public class CombatWarningRadar {
 			toDoList.add(bullet);
 			int dis = Utils.distanceTo(nowX, nowY, bullet.currentX, bullet.currentY);
 			log.debug(String.format(
-					"[T%d][HitWarning]tankid[%d]bulletDis[%d]hitTickLeft[%d]dodgeNeedTick[%d]tickleft[%d]dodgeDis[%d]dodgeAngle[%d]->%s--->me[%d,%d]r[%d]dodge[%b]currentBullet[%d]",
-					mTick, bullet.tankid, dis, hitTickleft, dodgeNeedTick, leftTick, dodgeDistance, dodgeAngle,
+					"[T%d][HitWarning]tankid[%d]bulletDis[%d]hitTickLeft[%d]dodgeNeedTick[%d]timer[%d]dodgeDis[%d]dodgeAngle[%d]->%s--->me[%d,%d]r[%d]dodge[%b]currentBullet[%d]",
+					tick, bullet.tankid, dis, hitTickleft, dodgeNeedTick, leftTick, dodgeDistance, dodgeAngle,
 					bullet.toString(), nowX, nowY, mHeading, dodgeIng, targetUnhandle));
 
 		}
@@ -325,23 +207,23 @@ public class CombatWarningRadar {
 						int suggestTick = Utils.getTicks(suggestDodgeDistance, AppConfig.TANK_SPEED);
 						// 时间不够怎么办
 						// if(suggestTick > bullet.suggestion.hitTickleft)
-						mMoveHelper.addDodgeByDistance(suggestAngle, suggestDodgeDistance);
+						mMovementHelper.addDodgeByDistance(suggestAngle, suggestDodgeDistance);
 
 						//
 						// mMoveHelper.addDodgeByDistance(bullet.suggestion.dodgeBestAngle,
 						// bullet.suggestion.dodgeBestDistance);
 						log.debug(String.format(
 								"[T%d][Dodge][urgent]suggestAngle[%d]suggestDis[%d]earlyTick[%d]bestAngle[%d]bestDis[%d]",
-								mTick, suggestAngle, suggestDodgeDistance, leftTickEarly,
+								tick, suggestAngle, suggestDodgeDistance, leftTickEarly,
 								bullet.suggestion.dodgeBestAngle, bullet.suggestion.dodgeBestDistance));
 					}
 				} else {
 					// 时间到，马上进行闪避
 					if (bullet.suggestion.coutdownTimer <= 2) {
 						bullet.handled = true;
-						mMoveHelper.addDodgeByDistance(bullet.suggestion.dodgeBestAngle,
+						mMovementHelper.addDodgeByDistance(bullet.suggestion.dodgeBestAngle,
 								bullet.suggestion.dodgeBestDistance);
-						log.debug(String.format("[T%d][Dodge]angle[%d]dis[%d]", mTick, bullet.suggestion.dodgeBestAngle,
+						log.debug(String.format("[T%d][Dodge]angle[%d]dis[%d]", tick, bullet.suggestion.dodgeBestAngle,
 								bullet.suggestion.dodgeBestDistance));
 					}
 
@@ -380,4 +262,5 @@ public class CombatWarningRadar {
 		}
 		return ret;
 	}
+
 }

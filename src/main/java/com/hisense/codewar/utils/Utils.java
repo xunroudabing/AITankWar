@@ -11,35 +11,36 @@ import org.slf4j.LoggerFactory;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.Position;
-import com.sun.scenario.effect.Blend;
+
+import net.sf.cglib.core.MethodWrapper;
 
 public class Utils {
 	private static final Logger log = LoggerFactory.getLogger(Utils.class);
 
 	public static void main(String[] args) {
-		// [389,686]
+		int x1 = 0;
+		int y1 = 0;
 
-//TankMapProjectile.bullet[399,769]r[83]->tankid[235]
-//TankMapProjectile.bullet[403,805]r[83]->tankid[235]
+		int x2 = 10;
+		int y2 = 0;
 
-		Bullet bullet = new Bullet();
-		bullet.startX = 389;
-		bullet.startY = 686;
-		bullet.r = 83;
+		int x3 = 5;
+		int y3 = 0;
 
-		int x1 = 399;
-		int y1 = 769;
+//		Position p4 = Utils.getFoot(new Position(x1, y1), new Position(x2, y2), new Position(x3, y3));
+//		System.out.println(p4);
 
-		int x2 = 403;
-		int y2 = 805;
-
-		boolean ischild = bullet.isChild(x2, y2);
-		// 358,372
-		int mx = 358;
-		int my = 372;
-		int dis = Utils.distanceTo(x1, y1, mx, my);
-		System.out.println(ischild);
-		System.out.println(dis);
+//		Position p1 = new Position(5, 5);
+//		Position p2 = new Position(0, 5);
+//
+//		Position p3 = new Position(10, 0);
+//		Position p4 = new Position(10, 10);
+//
+//		Position position = Utils.crossPoint(p1, p2, p3, p4);
+//		System.out.println(position);
+		
+		int bearing = Utils.bearing(180, 0);
+		System.out.println(bearing);
 
 	}
 
@@ -223,6 +224,27 @@ public class Utils {
 	private Utils() {
 	}
 
+	public static double normalNearAbsoluteAngleDegrees(double angle) {
+		angle = (angle %= 360) >= 0 ? angle : (angle + 360);
+
+		if (isNear(angle, 180)) {
+			return 180;
+		} else if (angle < 180) {
+			if (isNear(angle, 0)) {
+				return 0;
+			} else if (isNear(angle, 90)) {
+				return 90;
+			}
+		} else {
+			if (isNear(angle, 270)) {
+				return 270;
+			} else if (isNear(angle, 360)) {
+				return 0;
+			}
+		}
+		return angle;
+	}
+
 	/**
 	 * Normalizes an angle to an absolute angle. The normalized angle will be in the
 	 * range from 0 to 360, where 360 itself is not included.
@@ -334,9 +356,9 @@ public class Utils {
 
 	// 求夹角,返回[0,180]
 	public static int bearing(int angle1, int angle2) {
-		int a1 = (int) normalAbsoluteAngleDegrees(angle1);
-		int a2 = (int) normalAbsoluteAngleDegrees(angle2);
-		int ret = Math.abs(a1 - a2);
+		//int a1 = (int) normalAbsoluteAngleDegrees(angle1);
+		//int a2 = (int) normalAbsoluteAngleDegrees(angle2);
+		int ret = Math.abs(angle1 - angle2);
 		ret = (ret + 180) % 180;
 		return ret;
 	}
@@ -363,10 +385,10 @@ public class Utils {
 		return new Position(nx, ny);
 	}
 
-	public static boolean isOutRange(int x,int y) {
-		if(x > AppConfig.MAP_WITH - AppConfig.TANK_SIZE || x < AppConfig.TANK_SIZE) {
+	public static boolean isOutRange(int x, int y) {
+		if (x > AppConfig.MAP_WITH - AppConfig.TANK_SIZE || x < AppConfig.TANK_SIZE) {
 			return true;
-		}else if (y > AppConfig.MPA_HEIGHT - AppConfig.TANK_SIZE ||  y<AppConfig.TANK_SIZE) {
+		} else if (y > AppConfig.MPA_HEIGHT - AppConfig.TANK_SIZE || y < AppConfig.TANK_SIZE) {
 			return true;
 		}
 		return false;
@@ -384,6 +406,69 @@ public class Utils {
 		int distance = distanceTo(nowx, nowy, tx, ty);
 		double angle = Math.atan2(AppConfig.TARGET_RADIUS, distance);
 		return r2a(angle);
+	}
+
+	/**
+	 * 判断两条线是否相交 a 线段1起点坐标 b 线段1终点坐标 c 线段2起点坐标 d 线段2终点坐标 intersection 相交点坐标 reutrn
+	 * 是否相交: 0 : 两线平行 -1 : 不平行且未相交 1 : 两线相交
+	 */
+
+	public static Position crossPoint(Position a, Position b, Position c, Position d) {
+		Position intersection = new Position(0, 0);
+
+		if (Math.abs(b.y - a.y) + Math.abs(b.x - a.x) + Math.abs(d.y - c.y) + Math.abs(d.x - c.x) == 0) {
+			if ((c.x - a.x) + (c.y - a.y) == 0) {
+				//System.out.println("ABCD是同一个点！");
+			} else {
+				//System.out.println("AB是一个点，CD是一个点，且AC不同！");
+			}
+			// 0
+			return null;
+		}
+
+		if (Math.abs(b.y - a.y) + Math.abs(b.x - a.x) == 0) {
+			if ((a.x - d.x) * (c.y - d.y) - (a.y - d.y) * (c.x - d.x) == 0) {
+				//System.out.println("A、B是一个点，且在CD线段上！");
+			} else {
+				//System.out.println("A、B是一个点，且不在CD线段上！");
+			}
+			// return 0;
+			return null;
+		}
+		if (Math.abs(d.y - c.y) + Math.abs(d.x - c.x) == 0) {
+			if ((d.x - b.x) * (a.y - b.y) - (d.y - b.y) * (a.x - b.x) == 0) {
+				//System.out.println("C、D是一个点，且在AB线段上！");
+			} else {
+				//System.out.println("C、D是一个点，且不在AB线段上！");
+			}
+			// return 0;
+			return null;
+		}
+
+		if ((b.y - a.y) * (c.x - d.x) - (b.x - a.x) * (c.y - d.y) == 0) {
+			//System.out.println("线段平行，无交点！");
+			// return 0;
+			return null;
+		}
+
+		intersection.x = ((b.x - a.x) * (c.x - d.x) * (c.y - a.y) - c.x * (b.x - a.x) * (c.y - d.y)
+				+ a.x * (b.y - a.y) * (c.x - d.x)) / ((b.y - a.y) * (c.x - d.x) - (b.x - a.x) * (c.y - d.y));
+		intersection.y = ((b.y - a.y) * (c.y - d.y) * (c.x - a.x) - c.y * (b.y - a.y) * (c.x - d.x)
+				+ a.y * (b.x - a.x) * (c.y - d.y)) / ((b.x - a.x) * (c.y - d.y) - (b.y - a.y) * (c.x - d.x));
+
+		if ((intersection.x - a.x) * (intersection.x - b.x) <= 0 && (intersection.x - c.x) * (intersection.x - d.x) <= 0
+				&& (intersection.y - a.y) * (intersection.y - b.y) <= 0
+				&& (intersection.y - c.y) * (intersection.y - d.y) <= 0) {
+
+			//System.out.println("线段相交于点(" + intersection.x + "," + intersection.y + ")！");
+			// return 1; // '相交
+			return intersection;
+		} else {
+			//System.out.println("线段相交于虚交点(" + intersection.x + "," + intersection.y + ")！");
+			// return -1; // '相交但不在线段上
+			return intersection;
+		}
+
 	}
 
 }

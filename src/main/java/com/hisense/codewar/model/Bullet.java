@@ -107,6 +107,6 @@ public class Bullet {
 		// 闪避所需时间 dodgeDistance / AppConfig.TANK_SPEED;
 		public int dodgeNeedTick;
 		// 倒计时时间 剩余来袭时间减去闪避所需时间，hitTickleft - dodgeNeedTick
-		public int leftTick;
+		public int coutdownTimer;
 	}
 }

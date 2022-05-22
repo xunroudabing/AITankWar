@@ -57,7 +57,7 @@ public class BulletShootSimulation {
 
 	public void predict(int nowx, int nowy, int r, Bullet bullet, int tick) {
 
-		Position tanNextPos = Utils.getNextPostion(nowx, nowy, r, tick);
+		Position tanNextPos = Utils.getNextTankPostion(nowx, nowy, r, tick);
 
 		Position bulletNextPos = Utils.getNextBulletByTick(bullet.currentX, bullet.currentY, bullet.r, tick);
 		// if canhit

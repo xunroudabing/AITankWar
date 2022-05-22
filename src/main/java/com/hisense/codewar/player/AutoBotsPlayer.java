@@ -142,6 +142,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		mMoveMentRadar.reset();
 		mTick.set(0);
 		mCombatRealTimeDatabase.setBlocks(tank.getBlocks());
+		mPoisionCircleUtils.reset();
 	}
 
 	@Override

@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.ITtank;
-import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameActionType;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.Utils;
@@ -155,10 +154,10 @@ public class CombatMovementHelper {
 //				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 //				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 //			}
-			
+
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			
+
 			// 锁定
 			if (enemyTank != null) {
 				int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
@@ -202,9 +201,11 @@ public class CombatMovementHelper {
 			int y = mMoveEvent.y;
 			int dest = mMoveEvent.heading;
 			int moveTick = mMoveEvent.tick;
-
+			int speed = mMoveEvent.speed;
 			if (moveTick <= 0) {
 				log.debug(String.format("[T%d]tank[%d]cant move,no tick left", tick, tank.id));
+				return false;
+			} else if (tick % speed != 0) {
 				return false;
 			}
 			moveTick--;
@@ -224,7 +225,7 @@ public class CombatMovementHelper {
 			}
 			log.debug(String.format("[T%d][Command-Move]tank[%d]pos[%d,%d]r[%d]nextPos[%d,%d]heading[%d]movetick[%d]",
 					tick, tank.id, nowX, nowY, dest, x, y, dest, moveTick));
-			if (mMoveEvent.tick == 0) {
+			if (mMoveEvent.tick <= 0) {
 				mMoveEvent = null;
 			}
 			return true;
@@ -252,5 +253,7 @@ public class CombatMovementHelper {
 		public int y;
 		public int heading;
 		public int tick;
+		public int speed;
+
 	}
 }

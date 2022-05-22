@@ -3,7 +3,8 @@ package com.hisense.codewar.config;
 import com.jfinal.kit.PropKit;
 
 public class AppConfig {
-	public static final String APPVERSION = "1.0.0.1"; 
+	public static final String APPVERSION = "1.0.0.3"; 
+	public static int BLOCK_SIZE = 21;
 	public static int MAP_WITH = 1600;
 	public static int MAP_HEIGHT = 900;
 	public static int TANK_SIZE = 50;
@@ -45,5 +46,6 @@ public class AppConfig {
 		MAP_WITH = PropKit.getInt("battle.range.with");
 		MAP_HEIGHT = PropKit.getInt("battle.range.height");
 		TANK_SIZE = PropKit.getInt("battle.range.tanksize");
+		BLOCK_SIZE = PropKit.getInt("battle.block.size");
 	}
 }

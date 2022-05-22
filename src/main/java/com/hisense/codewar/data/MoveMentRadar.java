@@ -2,8 +2,6 @@ package com.hisense.codewar.data;
 
 import java.util.Random;
 
-import javax.xml.soap.MimeHeader;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

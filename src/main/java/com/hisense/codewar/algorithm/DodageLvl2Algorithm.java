@@ -121,16 +121,11 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 		});
 
 		int bulletCount = toDoList.size();
-		// 处理会击中我的子弹
-		Iterator<Bullet> iterator3 = toDoList.iterator();
-//		while (iterator3.hasNext()) {
-//			Bullet bullet = (Bullet) iterator3.next();
-//
-//		}
+		// 处理会击中我的子弹,目前只处理前2个
 		if (bulletCount == 1) {
 			handleBullet1(toDoList.get(0));
 
-		} else if (bulletCount == 2) {
+		} else if (bulletCount >= 2) {
 			Bullet bullet1 = toDoList.get(0);
 			Bullet bullet2 = toDoList.get(1);
 			handleBullet2(bullet1, bullet2, nowX, nowY);
@@ -167,7 +162,6 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 
 		} else {
 			if (angleBullet > 90) {
-				log.debug("11111111111111111111111111111111111111");
 			}
 			// 有交点
 			// 從交點到移動到內切圓圓心的距離

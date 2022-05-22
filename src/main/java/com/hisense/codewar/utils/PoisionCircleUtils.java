@@ -42,10 +42,17 @@ public class PoisionCircleUtils {
 		maxY = AppConfig.MAP_HEIGHT - ySize;
 	}
 
+	public boolean isOut(int x, int y) {
+		if (x > maxX - AppConfig.TANK_SIZE || x < minX + AppConfig.TANK_SIZE) {
+			return true;
+		} else if (y > maxY - AppConfig.TANK_SIZE || y < minY + AppConfig.TANK_SIZE) {
+			return true;
+		}
+		return false;
+	}
+
 	public boolean inLeft(int x, int y) {
 		if (x <= minX + AppConfig.TANK_SIZE) {
-			log.debug(String.format("[inleft][%d,%d][Map][%d,%d-%d,%d-%d,%d-%d,%d]", x, y, minX, minY, minX, maxY, maxX,
-					maxY, maxX, minY));
 			return true;
 		}
 		return false;
@@ -62,8 +69,6 @@ public class PoisionCircleUtils {
 
 	public boolean inTop(int x, int y) {
 		if (y >= maxY - AppConfig.TANK_WIDTH) {
-			log.debug(String.format("[inTop][%d,%d][Map][%d,%d-%d,%d-%d,%d-%d,%d]", x, y, minX, minY, minX, maxY, maxX,
-					maxY, maxX, minY));
 			return true;
 		}
 		return false;
@@ -71,8 +76,6 @@ public class PoisionCircleUtils {
 
 	public boolean inBottom(int x, int y) {
 		if (y <= minY + AppConfig.TANK_WIDTH) {
-			log.debug(String.format("[inBottom][%d,%d][Map][%d,%d-%d,%d-%d,%d-%d,%d]", x, y, minX, minY, minX, maxY,
-					maxX, maxY, maxX, minY));
 			return true;
 		}
 		return false;
@@ -121,61 +124,4 @@ public class PoisionCircleUtils {
 		return array;
 	}
 
-	public static boolean inLeftBorder(int x, int y, int tick) {
-		int seed = tick % 15;
-		int minX = (int) (0 + seed * X_less / 2);
-		int maxX = (int) (AppConfig.MAP_WITH - seed * X_less / 2);
-
-		int minY = (int) (0 + seed * Y_LESS / 2);
-		int maxY = (int) (AppConfig.MAP_HEIGHT - seed * Y_LESS / 2);
-		log.debug(String.format("[inLeftBorder][%d,%d][Map][%d,%d-%d,%d-%d,%d-%d,%d]", x, y, minX, minY, minX, maxY,
-				maxX, maxY, maxX, minY));
-		if (x <= minX + AppConfig.TANK_SIZE) {
-			return true;
-		}
-		return false;
-	}
-
-	public static boolean inRightBorder(int x, int y, int tick) {
-		int seed = tick % 15;
-		int minX = (int) (0 + seed * X_less / 2);
-		int maxX = (int) (AppConfig.MAP_WITH - seed * X_less / 2);
-		int minY = (int) (0 + seed * Y_LESS / 2);
-		int maxY = (int) (AppConfig.MAP_HEIGHT - seed * Y_LESS / 2);
-		log.debug(String.format("[inRightBorder][%d,%d][Map][%d,%d-%d,%d-%d,%d-%d,%d]", x, y, minX, minY, minX, maxY,
-				maxX, maxY, maxX, minY));
-		if (x >= maxX - AppConfig.TANK_SIZE) {
-			return true;
-		}
-		return false;
-	}
-
-	public static boolean inTopBorder(int x, int y, int tick) {
-		int seed = tick % 15;
-		int minX = (int) (0 + seed * X_less / 2);
-		int maxX = (int) (AppConfig.MAP_WITH - seed * X_less / 2);
-		int minY = (int) (0 + seed * Y_LESS / 2);
-		int maxY = (int) (AppConfig.MAP_HEIGHT - seed * Y_LESS / 2);
-		log.debug(String.format("[inTopBorder][%d,%d][Map][%d,%d-%d,%d-%d,%d-%d,%d]", x, y, minX, minY, minX, maxY,
-				maxX, maxY, maxX, minY));
-		if (y >= maxY - AppConfig.TANK_WIDTH) {
-			return true;
-		}
-		return false;
-	}
-
-	public static boolean inBottomBorder(int x, int y, int tick) {
-		int seed = tick % 15;
-		int minX = (int) (0 + seed * X_less / 2);
-		int maxX = (int) (AppConfig.MAP_WITH - seed * X_less / 2);
-		int minY = (int) (0 + seed * Y_LESS / 2);
-		int maxY = (int) (AppConfig.MAP_HEIGHT - seed * Y_LESS / 2);
-
-		log.debug(String.format("[inRightBorder][%d,%d][Map][%d,%d-%d,%d-%d,%d-%d,%d]", x, y, minX, minY, minX, maxY,
-				maxX, maxY, maxX, minY));
-		if (y <= minY + AppConfig.TANK_WIDTH) {
-			return true;
-		}
-		return false;
-	}
 }

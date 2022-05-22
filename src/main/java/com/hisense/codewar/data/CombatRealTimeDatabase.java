@@ -12,7 +12,6 @@ import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankMapBlock;
 import com.hisense.codewar.model.TankMapProjectile;
-import com.hisense.codewar.player.DemoPlayer;
 import com.jfinal.kit.PropKit;
 
 /**
@@ -35,6 +34,7 @@ public class CombatRealTimeDatabase {
 	private List<TankMapProjectile> mProjectiles;
 	private List<TankGameInfo> mAllTanks;
 	private List<TankMapBlock> mBlocks;
+
 	private List<TankGameInfo> mFriendTanks;
 	private List<Bullet> mBullets;
 
@@ -66,6 +66,10 @@ public class CombatRealTimeDatabase {
 
 	public void setThreatBulletsCount(int count) {
 		mThreadBulletsCount = count;
+	}
+
+	public List<TankMapBlock> getBlocks() {
+		return mBlocks;
 	}
 
 	public void setBlocks(List<TankMapBlock> blocks) {

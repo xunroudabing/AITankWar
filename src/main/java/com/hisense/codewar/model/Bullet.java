@@ -42,19 +42,6 @@ public class Bullet {
 		return span <= 74;
 	}
 
-	@Deprecated
-	public boolean isChild2(int x, int y) {
-		long start = System.currentTimeMillis();
-		Position p2 = Utils.getNextPostion(startX, startY, r, 2);
-		Position p3 = new Position(x, y);
-		Position p4 = Utils.getFoot(new Position(startX, startY), p2, p3);
-
-		long end = System.currentTimeMillis();
-		long cost = end - start;
-		log.debug("2.cost:" + cost);
-		return Utils.isNear(p4, p3);
-	}
-
 	public boolean isChild(int x, int y) {
 		for (int i = 0; i < MAX_TICK; i++) {
 			Position position = Utils.getNextBulletByTick(startX, startY, r, i);

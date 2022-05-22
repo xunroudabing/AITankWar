@@ -2,17 +2,15 @@ package com.hisense.codewar.utils;
 
 import static java.lang.Math.PI;
 
-import java.awt.Point;
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
-import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.Position;
-
-import net.sf.cglib.core.MethodWrapper;
+import com.hisense.codewar.model.TankMapBlock;
 
 public class Utils {
 	private static final Logger log = LoggerFactory.getLogger(Utils.class);
@@ -38,7 +36,7 @@ public class Utils {
 //
 //		Position position = Utils.crossPoint(p1, p2, p3, p4);
 //		System.out.println(position);
-		
+
 		int bearing = Utils.bearing(180, 0);
 		System.out.println(bearing);
 
@@ -296,24 +294,6 @@ public class Utils {
 		return new Position(x, y);
 	}
 
-//	public static void getNextBulletByTick2(int nowX, int nowY, int r, int tick) {
-//		float rr = Utils.a2r(r);
-//		// startx + kProjectileSpeed * cosf(rr) * elapsed;
-//		BigDecimal dx = new BigDecimal(String.valueOf(Math.cos(rr)));
-//		BigDecimal x = dx.multiply(BigDecimal.valueOf(tick)).multiply(BigDecimal.valueOf(AppConfig.BULLET_SPEED))
-//				.add(BigDecimal.valueOf(nowX)).setScale(1, BigDecimal.ROUND_DOWN);
-//		// double x = (nowX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick);
-//
-//		// starty + kProjectileSpeed * sinf(rr) * elapsed;
-//		BigDecimal dy = new BigDecimal(String.valueOf(Math.sin(rr)));
-//		BigDecimal y= dy.multiply(BigDecimal.valueOf(tick)).multiply(BigDecimal.valueOf(AppConfig.BULLET_SPEED))
-//				.add(BigDecimal.valueOf(nowY)).setScale(0, BigDecimal.ROUND_HALF_DOWN);
-//		// double y = (nowY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick);
-//		System.out
-//				.println(String.format("[%s,%s]",String.valueOf(x.doubleValue()),String.valueOf(y.doubleValue())));
-//		// return new Position(x, y);
-//	}
-
 	/**
 	 * 计算当前弹道是否会打到目标 目标是一个以targetwidth为半径的圆，如果垂足长度小于该半径，则会击中目标
 	 * 
@@ -356,15 +336,15 @@ public class Utils {
 
 	// 求夹角,返回[0,180]
 	public static int bearing(int angle1, int angle2) {
-		//int a1 = (int) normalAbsoluteAngleDegrees(angle1);
-		//int a2 = (int) normalAbsoluteAngleDegrees(angle2);
+		// int a1 = (int) normalAbsoluteAngleDegrees(angle1);
+		// int a2 = (int) normalAbsoluteAngleDegrees(angle2);
 		int ret = Math.abs(angle1 - angle2);
 		ret = (ret + 180) % 180;
 		return ret;
 	}
 
 	// 坦克移动位置
-	public static Position getNextPostion(int x, int y, int r, int tick) {
+	public static Position getNextTankPostion(int x, int y, int r, int tick) {
 		float angle = a2r(r);
 		int dy = (int) (AppConfig.TANK_SPEED * tick * Math.sin(angle));
 		int dx = (int) (AppConfig.TANK_SPEED * tick * Math.cos(angle));
@@ -418,9 +398,9 @@ public class Utils {
 
 		if (Math.abs(b.y - a.y) + Math.abs(b.x - a.x) + Math.abs(d.y - c.y) + Math.abs(d.x - c.x) == 0) {
 			if ((c.x - a.x) + (c.y - a.y) == 0) {
-				//System.out.println("ABCD是同一个点！");
+				// System.out.println("ABCD是同一个点！");
 			} else {
-				//System.out.println("AB是一个点，CD是一个点，且AC不同！");
+				// System.out.println("AB是一个点，CD是一个点，且AC不同！");
 			}
 			// 0
 			return null;
@@ -428,25 +408,25 @@ public class Utils {
 
 		if (Math.abs(b.y - a.y) + Math.abs(b.x - a.x) == 0) {
 			if ((a.x - d.x) * (c.y - d.y) - (a.y - d.y) * (c.x - d.x) == 0) {
-				//System.out.println("A、B是一个点，且在CD线段上！");
+				// System.out.println("A、B是一个点，且在CD线段上！");
 			} else {
-				//System.out.println("A、B是一个点，且不在CD线段上！");
+				// System.out.println("A、B是一个点，且不在CD线段上！");
 			}
 			// return 0;
 			return null;
 		}
 		if (Math.abs(d.y - c.y) + Math.abs(d.x - c.x) == 0) {
 			if ((d.x - b.x) * (a.y - b.y) - (d.y - b.y) * (a.x - b.x) == 0) {
-				//System.out.println("C、D是一个点，且在AB线段上！");
+				// System.out.println("C、D是一个点，且在AB线段上！");
 			} else {
-				//System.out.println("C、D是一个点，且不在AB线段上！");
+				// System.out.println("C、D是一个点，且不在AB线段上！");
 			}
 			// return 0;
 			return null;
 		}
 
 		if ((b.y - a.y) * (c.x - d.x) - (b.x - a.x) * (c.y - d.y) == 0) {
-			//System.out.println("线段平行，无交点！");
+			// System.out.println("线段平行，无交点！");
 			// return 0;
 			return null;
 		}
@@ -460,15 +440,32 @@ public class Utils {
 				&& (intersection.y - a.y) * (intersection.y - b.y) <= 0
 				&& (intersection.y - c.y) * (intersection.y - d.y) <= 0) {
 
-			//System.out.println("线段相交于点(" + intersection.x + "," + intersection.y + ")！");
+			// System.out.println("线段相交于点(" + intersection.x + "," + intersection.y + ")！");
 			// return 1; // '相交
 			return intersection;
 		} else {
-			//System.out.println("线段相交于虚交点(" + intersection.x + "," + intersection.y + ")！");
+			// System.out.println("线段相交于虚交点(" + intersection.x + "," + intersection.y +
+			// ")！");
 			// return -1; // '相交但不在线段上
 			return intersection;
 		}
 
 	}
 
+	public static boolean inBlocks(int x, int y, int mWidth, List<TankMapBlock> blocks, int blockWidth) {
+		for (TankMapBlock block : blocks) {
+			boolean ret = inBlock(x, y, mWidth, block.x, block.y, blockWidth);
+			if (ret) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean inBlock(int x, int y, int width, int blockX, int blockY, int blockWidth) {
+		int totalR = width + blockWidth;
+		int distance = Utils.distanceTo(x, y, blockX, blockY);
+
+		return distance < totalR;
+	}
 }

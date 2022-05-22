@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
+import com.hisense.codewar.utils.PoisionCircleUtils;
 import com.hisense.codewar.utils.Utils;
 
 public class MoveMentRadar {
@@ -33,13 +34,14 @@ public class MoveMentRadar {
 
 	public void scan(int tick) {
 		mTick = tick;
-		if( (mTick%5) != 0) {
+		if ((mTick % 5) != 0) {
 			return;
 		}
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
 		int heading = mDatabase.getHeading();
-
+		
+		avoidPoisionCircle(nowX, nowY, tick);
 		TankGameInfo target = mAttackRadar.getTargetTank();
 		if (target == null) {
 			return;
@@ -54,14 +56,14 @@ public class MoveMentRadar {
 			int seed = b ? 1 : -1;
 			// 避开射界
 			int angleCantHit = angle + seed * (fireRange + 45);
-			caculatePosByTarget(target);
+			//caculatePosByTarget(target);
 
 		} else if (distance >= AppConfig.COMBAT_MIN_DISTANCE && distance <= AppConfig.COMBAT_MAX_DISTANCE) {
 			// doNothing
 		}
 		// 拉开距离
 		else if (distance < AppConfig.COMBAT_MIN_DISTANCE) {
-			caculatePosByTarget(target);
+			//caculatePosByTarget(target);
 
 		}
 	}
@@ -129,6 +131,22 @@ public class MoveMentRadar {
 			i++;
 		}
 		return null;
+	}
+
+	private void avoidPoisionCircle(int x, int y, int tick) {
+		if (PoisionCircleUtils.inLeftBorder(x, y, tick)) {
+			log.debug(String.format("##LEFTBORDER##%d,%d,%d", x,y,tick));
+			mHelper.addMoveByDistance(0, AppConfig.TANK_SIZE);
+		} else if (PoisionCircleUtils.inRightBorder(x, y, tick)) {
+			log.debug(String.format("##LEFTBORDER##%d,%d,%d", x,y,tick));
+			mHelper.addMoveByDistance(180, AppConfig.TANK_SIZE);
+		} else if (PoisionCircleUtils.inTopBorder(x, y, tick)) {
+			log.debug(String.format("##LEFTBORDER##%d,%d,%d", x,y,tick));
+			mHelper.addMoveByDistance(270, AppConfig.TANK_SIZE);
+		} else if (PoisionCircleUtils.inBottomBorder(x, y, tick)) {
+			log.debug(String.format("##LEFTBORDER##%d,%d,%d", x,y,tick));
+			mHelper.addMoveByDistance(90, AppConfig.TANK_SIZE);
+		}
 	}
 
 }

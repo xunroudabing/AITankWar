@@ -34,7 +34,7 @@ public class Bullet {
 
 	public boolean isActive(int currentTick) {
 		int timeNoUpdate = currentTick - updateTick;// 数据很久没更新了
-		//2个tick周期没有数据，直接移除掉该数据
+		// 2个tick周期没有数据，直接移除掉该数据
 		if (timeNoUpdate >= 2) {
 			return false;
 		}
@@ -58,6 +58,7 @@ public class Bullet {
 	public boolean isChild(int x, int y) {
 		for (int i = 0; i < MAX_TICK; i++) {
 			Position position = Utils.getNextBulletByTick(startX, startY, r, i);
+			System.out.println(position + "===" + x + "," + y);
 			if (Utils.isNear(x, y, position.x, position.y)) {
 				return true;
 			}
@@ -85,8 +86,9 @@ public class Bullet {
 //			sb.append(String.format("(%d,%d)", p.x, p.y));
 //		}
 		String shortId = id.substring(id.length() - 5, id.length());
-		return String.format("tankid[%d]->Bullet-[%s]start[%d,%d]current[%d,%d]r[%d]t[%d]", tankid, shortId, startX,
-				startY, currentX, currentY, r, createTick);
+		String suggeStr = suggestion != null ? suggestion.toString() : "";
+		return String.format("tankid[%d]->Bullet-[%s]start[%d,%d]current[%d,%d]r[%d]t[%d]-%s", tankid, shortId, startX,
+				startY, currentX, currentY, r, createTick,suggeStr);
 	}
 
 	public static class DodgeSuggestion {
@@ -108,5 +110,13 @@ public class Bullet {
 		public int dodgeNeedTick;
 		// 倒计时时间 剩余来袭时间减去闪避所需时间，hitTickleft - dodgeNeedTick
 		public int coutdownTimer;
+
+		@Override
+		public String toString() {
+			// TODO Auto-generated method stub
+			return String.format(
+					"-Suggest-bulletToMeDis[%d]hitleft[%d]bestAngle[%d]bestDis[%d]dodageNeedTick[%d]timer[%d]",
+					distance, hitTickleft, dodgeBestAngle, dodgeBestDistance, dodgeNeedTick, coutdownTimer);
+		}
 	}
 }

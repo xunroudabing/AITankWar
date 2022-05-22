@@ -33,7 +33,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 	public void scan(List<Bullet> bulletList, int nowX, int nowY, int tick) {
 		// TODO Auto-generated method stub
 		mTick = tick;
-		int count = 0;
+		int count = bulletList.size();
 		List<Bullet> toDoList = new ArrayList<>();
 		Iterator<Bullet> iterator2 = bulletList.iterator();
 		while (iterator2.hasNext()) {
@@ -99,7 +99,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			bullet.suggestion = suggestion;
 
 			if (timer <= 0) {
-				log.debug(String.format("[Danger]%s not time left", bullet.toString()));
+				//log.debug(String.format("[Danger]%s not time left", bullet.toString()));
 			}
 
 			toDoList.add(bullet);
@@ -108,8 +108,6 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 					"[T%d][HitWarning]tankid[%d]bulletDis[%d]hitTickLeft[%d]dodgeNeedTick[%d]timer[%d]dodgeDis[%d]dodgeAngle[%d]->%s--->me[%d,%d]r[%d]dodge[%b]currentBullet[%d]",
 					tick, bullet.tankid, dis, hitTickleft, dodgeBestNeedTick, timer, dodgeBestDistance, dodgeBestAngle,
 					bullet.toString(), nowX, nowY, mDatabase.getHeading(), dodgeIng, count));
-			count++;
-
 		}
 
 		// 排序,hitTickleft升序排列，小的在前
@@ -145,7 +143,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 		if (bullet.suggestion.coutdownTimer <= AppConfig.DODGE_TICK) {
 			bullet.handled = true;
 			mMovementHelper.addDodgeByDistance(bullet.suggestion.dodgeBestAngle, bullet.suggestion.dodgeBestDistance);
-			log.debug(String.format("[T%d][Dodge]angle[%d]dis[%d]", mTick, bullet.suggestion.dodgeBestAngle,
+			log.debug(String.format("[T%d][DodgeAI][1-PlanB]angle[%d]dis[%d]", mTick, bullet.suggestion.dodgeBestAngle,
 					bullet.suggestion.dodgeBestDistance));
 		}
 	}
@@ -186,27 +184,40 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			Position positionB = Utils.getNextPositionByDistance(crossPos.x, crossPos.y, rB, disB);
 
 			int suggestDisA = Utils.distanceTo(nowX, nowY, positionA.x, positionA.y);
-
 			int suggestDisB = Utils.distanceTo(nowX, nowY, positionB.x, positionB.y);
 
 			int suggestDis = Math.min(suggestDisA, suggestDisB);
-			int suggestNeedTick = suggestDis / AppConfig.TANK_SPEED;
+			int suggestNeedTick = Utils.getTicks(suggestDis, AppConfig.TANK_SPEED);
+			int suggestAngle = 0;
+			if (suggestDisA < suggestDisB) {
+				suggestAngle = Utils.angleTo(nowX, nowY, positionA.x, positionA.y);
+			} else {
+				suggestAngle = Utils.angleTo(nowX, nowY, positionB.x, positionB.y);
+			}
+
 			// 和hitlefttick作比较，看能否来的及移动到该位置,来的及就进入内切圆圆心位置
 			int hitTickleft = bullet1.suggestion.hitTickleft;
+			log.debug(String.format("[T%d][DodgeAI][2-PlanA]suggestAngle[%d]suggestDis[%d]suggestNeedTick[%d]hitTick[%d]", mTick,
+					suggestAngle, suggestDis, suggestNeedTick,hitTickleft));
 			if (hitTickleft >= suggestNeedTick) {
 				int countDownTimer = hitTickleft - suggestNeedTick;
 				bullet1.suggestion.coutdownTimer = countDownTimer;
 				if (countDownTimer <= AppConfig.DODGE_TICK) {
-					mMovementHelper.addDodgeByDistance(bullet1.suggestion.dodgeBestAngle,
-							bullet1.suggestion.dodgeBestDistance);
-					log.debug(String.format("[T%d][Dodge]angle[%d]dis[%d]", mTick, bullet1.suggestion.dodgeBestAngle,
-							bullet1.suggestion.dodgeBestDistance));
+//					mMovementHelper.addDodgeByDistance(bullet1.suggestion.dodgeBestAngle,
+//							bullet1.suggestion.dodgeBestDistance);
+					mMovementHelper.addDodgeByDistance(suggestAngle, suggestDis);
+					log.debug(String.format("[T%d][DodgeAI][2-PlanA]angle[%d]dis[%d]", mTick, suggestAngle, suggestDis));
 					bullet1.handled = true;
 				}
 
 			} else {
 				// 来不及躲避,转换角度
-				angleBullet = Math.abs(180 - angleBullet);
+				// angleBullet = Math.abs(180 - angleBullet);
+				bullet1.handled = true;
+				mMovementHelper.addDodgeByDistance(bullet1.suggestion.dodgeBestAngle,
+						bullet1.suggestion.dodgeBestDistance);
+				log.debug(String.format("[T%d][DodgeAI][2-PlanB]angle[%d]dis[%d]", mTick,
+						bullet1.suggestion.dodgeBestAngle, bullet1.suggestion.dodgeBestDistance));
 			}
 
 		}

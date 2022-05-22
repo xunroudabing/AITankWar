@@ -86,7 +86,7 @@ public class CombatAttackRadar {
 
 		mTargetTankId = enemyId;
 		TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
-		mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r);
+		mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r,tank.hp);
 		log.debug(String.format("[T%d][AttackTarget]->%s", mTick, mTargetTank.toString()));
 	}
 

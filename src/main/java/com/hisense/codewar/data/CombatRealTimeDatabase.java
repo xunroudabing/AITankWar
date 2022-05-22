@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.TankGameInfo;
+import com.hisense.codewar.model.TankMapBlock;
 import com.hisense.codewar.model.TankMapProjectile;
 import com.hisense.codewar.player.DemoPlayer;
 import com.jfinal.kit.PropKit;
@@ -25,6 +26,7 @@ public class CombatRealTimeDatabase {
 		CombatRealTimeDatabase database = new CombatRealTimeDatabase();
 	}
 
+	private int mThreadBulletsCount;
 	private int mTankId;
 	private int mNowX;
 	private int mNowY;
@@ -32,7 +34,7 @@ public class CombatRealTimeDatabase {
 	private int[] mFriendTanksID;
 	private List<TankMapProjectile> mProjectiles;
 	private List<TankGameInfo> mAllTanks;
-
+	private List<TankMapBlock> mBlocks;
 	private List<TankGameInfo> mFriendTanks;
 	private List<Bullet> mBullets;
 
@@ -44,6 +46,7 @@ public class CombatRealTimeDatabase {
 		mProjectiles = new ArrayList<>();
 		mFriendTanks = new ArrayList<>();
 		mBullets = new ArrayList<>();
+		mBlocks = new ArrayList<TankMapBlock>();
 		initFriendTanks();
 	}
 
@@ -55,6 +58,22 @@ public class CombatRealTimeDatabase {
 		mAllTanks.clear();
 		mProjectiles.clear();
 		mBullets.clear();
+	}
+
+	public int getThreatBulletsCount() {
+		return mThreadBulletsCount;
+	}
+
+	public void setThreatBulletsCount(int count) {
+		mThreadBulletsCount = count;
+	}
+
+	public void setBlocks(List<TankMapBlock> blocks) {
+		mBlocks.clear();
+		mBlocks.addAll(blocks);
+		for (TankMapBlock block : blocks) {
+			log.debug(block.toString());
+		}
 	}
 
 	public void setMyTankId(int tankid) {

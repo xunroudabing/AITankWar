@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.hisense.codewar.*;
+import com.hisense.codewar.model.HitInfo;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
 import com.hisense.codewar.model.TankGameActionType;
@@ -17,7 +18,8 @@ class DemoBoardGame implements TankGamePlayInterface {
     public int nowy = -1;
     public int round = 0;
     @Override
-    public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles) {
+	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles, int r,
+			List<HitInfo> hits) {
 
         int id = tank.getId();
         // System.out.println("Tankid:" + id);
@@ -95,6 +97,16 @@ class DemoBoardGame implements TankGamePlayInterface {
         }
     }
 
+    @Override
+    public void gamestart(ITtank tank) {    
+        System.out.println("game start");
+    }
+
+    @Override
+    public void gameend(ITtank tank) {    
+        System.out.println("game end");
+    }
+
     public static void main(String[] args) {
         // write your code here
         String recorddir = "E:\\code";
@@ -102,15 +114,9 @@ class DemoBoardGame implements TankGamePlayInterface {
         TankGame game = new TankGame();
         DemoBoardGame player = new DemoBoardGame();
 
-        String token = "56a4314c53183dedfa442eb96f6decf6";
+        String token = "ABC";
         ITtank tank = game.tank_init("10.18.224.205", 22222, token, player, null);
         game.tank_loop(tank);
     }
 
-
-	@Override
-	public void onstart(int i) {
-		// TODO Auto-generated method stub
-		
-	}
 }

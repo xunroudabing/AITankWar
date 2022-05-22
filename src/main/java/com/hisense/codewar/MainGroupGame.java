@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
+import com.hisense.codewar.model.HitInfo;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
 import com.hisense.codewar.model.TankGameInfo;
@@ -50,12 +51,6 @@ public class MainGroupGame implements TankGamePlayInterface {
 	}
 
 	@Override
-	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles) {
-		// TODO Auto-generated method stub
-		log.debug("updatemap");
-	}
-
-	@Override
 	public void gametick(ITtank tank) {
 		// TODO Auto-generated method stub
 		log.debug("gametick");
@@ -63,9 +58,22 @@ public class MainGroupGame implements TankGamePlayInterface {
 	}
 
 	@Override
-	public void onstart(int i) {
+	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles, int r,
+			List<HitInfo> hits) {
 		// TODO Auto-generated method stub
+		
+	}
 
+	@Override
+	public void gamestart(ITtank tank) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void gameend(ITtank tank) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

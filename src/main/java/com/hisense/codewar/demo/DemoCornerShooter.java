@@ -3,6 +3,7 @@ package com.hisense.codewar.demo;
 import java.util.List;
 import java.util.Random;
 
+import com.hisense.codewar.model.HitInfo;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
 import com.hisense.codewar.model.TankGameActionType;
@@ -31,7 +32,8 @@ public class DemoCornerShooter implements TankGamePlayInterface {
 	}
 
 	@Override
-	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles) {
+	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles, int r,
+			List<HitInfo> hits) {
 		boolean canmove = true;
 		int id = tank.getId();
 		// System.out.println("Tankid:" + id);
@@ -185,8 +187,15 @@ public class DemoCornerShooter implements TankGamePlayInterface {
 		game.tank_loop(tank);
 	}
 
+
 	@Override
-	public void onstart(int i) {
+	public void gamestart(ITtank tank) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void gameend(ITtank tank) {
 		// TODO Auto-generated method stub
 		
 	}

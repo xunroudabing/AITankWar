@@ -23,6 +23,7 @@ public class CombatMovementHelper {
 		System.out.println(tick);
 	}
 
+	private FireHelper mFireHelper;
 	private CombatAttackRadar mAttackRadar;
 	private CombatRealTimeDatabase mDatabase;
 	private PostionEvent mMoveEvent;
@@ -31,11 +32,12 @@ public class CombatMovementHelper {
 	private BlockingQueue<MoveEvent> mDodgeQueue;
 	private static final Logger log = LoggerFactory.getLogger(CombatMovementHelper.class);
 
-	public CombatMovementHelper(CombatRealTimeDatabase database, CombatAttackRadar radar) {
+	public CombatMovementHelper(CombatRealTimeDatabase database, CombatAttackRadar radar, FireHelper fireHelper) {
 		mDodgeQueue = new LinkedBlockingQueue<>();
 		mMoveQueue = new LinkedBlockingQueue<>();
 		mDatabase = database;
 		mAttackRadar = radar;
+		mFireHelper = fireHelper;
 	}
 
 	public void reset() {
@@ -142,11 +144,25 @@ public class CombatMovementHelper {
 			int nowY = mDatabase.getNowY();
 			int currentHeading = mDatabase.getHeading();
 			TankGameInfo enemyTank = mAttackRadar.getTargetTank();
+
+			// 先开火再闪避
+//			boolean canFire = mFireHelper.canFire();
+//			if (canFire) {
+//				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
+//				mFireHelper.fireAndDodage(tank);
+//				return true;
+//			} else {
+//				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
+//				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
+//			}
+			
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
+			
 			// 锁定
 			if (enemyTank != null) {
 				int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
+				int range = Utils.getFireRange(nowX, nowY, enemyTank.x, enemyTank.y);
 				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
 			} else {
 				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
@@ -162,12 +178,14 @@ public class CombatMovementHelper {
 		log.debug(String.format("[T%d]tank[%d]cant dodge,no dodgeEvent", tick, tank.id));
 		return false;
 	}
-	//停止移动
+
+	// 停止移动
 	public void stop(ITtank tank) {
 		mMoveEvent = null;
 		mMoveQueue.clear();
 	}
-	//移动
+
+	// 移动
 	public boolean move(ITtank tank, int tick) {
 		if (mMoveEvent == null) {
 			try {
@@ -195,18 +213,17 @@ public class CombatMovementHelper {
 			int nowY = mDatabase.getNowY();
 
 			// int dest = Utils.angleTo(nowX, nowY, x, y);
-			
 
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
 
 			TankGameInfo enemyTank = mAttackRadar.getTargetTank();
-			if(enemyTank != null) {
+			if (enemyTank != null) {
 				int angle = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
 				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, angle);
 			}
-			log.debug(String.format("[T%d][Command-Move]tank[%d]pos[%d,%d]r[%d]nextPos[%d,%d]heading[%d]movetick[%d]", tick,
-					tank.id, nowX, nowY, dest, x, y, dest, moveTick));
+			log.debug(String.format("[T%d][Command-Move]tank[%d]pos[%d,%d]r[%d]nextPos[%d,%d]heading[%d]movetick[%d]",
+					tick, tank.id, nowX, nowY, dest, x, y, dest, moveTick));
 			if (mMoveEvent.tick == 0) {
 				mMoveEvent = null;
 			}
@@ -224,7 +241,7 @@ public class CombatMovementHelper {
 		}
 		return false;
 	}
-	
+
 	public static class MoveEvent {
 		public int heading;
 		public int tick;

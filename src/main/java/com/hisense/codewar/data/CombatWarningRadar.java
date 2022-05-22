@@ -37,6 +37,7 @@ public class CombatWarningRadar {
 		System.out.print(s);
 	}
 
+	private int mThreatBullets = 0;
 	private int mTick = 0;
 	// 威胁列表，敌人tankid,弹道数据等
 	private List<ThreatTarget> mThreatTargets;
@@ -61,6 +62,7 @@ public class CombatWarningRadar {
 
 	public void reset() {
 		mTick = 0;
+		mThreatBullets = 0;
 		mBulletInfos.clear();
 		mThreatTargets.clear();
 	}
@@ -84,13 +86,15 @@ public class CombatWarningRadar {
 		}
 
 		// 扫描威胁数据
-		mDodageAlgorithm.scan(mDatabase.getBullets(), nowX, nowY, tick);
+		int threatBulletSize = mDodageAlgorithm.scan(mDatabase.getBullets(), nowX, nowY, tick);
 		// scanThreatBullet();
 
 		// 扫描威胁目标
 		// scanThreadTarget();
 	}
-
+	public int getThreatBullets() {
+		return mThreatBullets;
+	}
 	/**
 	 * 获取威胁列表
 	 * 

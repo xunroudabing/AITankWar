@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.MainGroupGame;
+import com.hisense.codewar.model.HitInfo;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGameActionType;
 import com.hisense.codewar.model.TankGameInfo;
@@ -39,30 +40,6 @@ public class DemoPlayer implements TankGamePlayInterface {
 	private int id = 0;
 	int nowx, nowy = 0;
 	private Random mRandom = new Random();
-
-	@Override
-	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles) {
-		// TODO Auto-generated method stub
-		// log.debug("updatemap");
-		id = tank.getId();
-		nowx = 0;
-		nowy = 0;
-		TankGameState state = tank.getState();
-		for (TankGameInfo t : tanks) {
-			if (t.getId() == id) {
-				nowx = t.x;
-				nowy = t.y;
-				heading = t.getR();
-			
-				break;
-			}
-		}
-		
-		// print1(tanks);
-		// print2(projectiles);
-		
-	}
-
 	@Override
 	public void gametick(ITtank tank) {
 		// TODO Auto-generated method stub
@@ -91,15 +68,7 @@ public class DemoPlayer implements TankGamePlayInterface {
 		}
 	}
 
-	@Override
-	public void onstart(int i) {
-		// TODO Auto-generated method stub
-		if (i == 3) {
-			log.debug("********************start********************");
-		} else if (i == 2) {
-			log.debug("######################start######################");
-		}
-	}
+	
 
 	private void printLog1(List<TankGameInfo> tanks) {
 		for (TankGameInfo info : tanks) {
@@ -112,5 +81,37 @@ public class DemoPlayer implements TankGamePlayInterface {
 		for (TankMapProjectile p : projectiles) {
 			log.debug("#projectiles#" + p.toString());
 		}
+	}
+
+	@Override
+	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles, int r,
+			List<HitInfo> hits) {
+		// TODO Auto-generated method stub
+		id = tank.getId();
+		nowx = 0;
+		nowy = 0;
+		TankGameState state = tank.getState();
+		for (TankGameInfo t : tanks) {
+			if (t.getId() == id) {
+				nowx = t.x;
+				nowy = t.y;
+				heading = t.getR();
+			
+				break;
+			}
+		}
+		
+	}
+
+	@Override
+	public void gamestart(ITtank tank) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void gameend(ITtank tank) {
+		// TODO Auto-generated method stub
+		
 	}
 }

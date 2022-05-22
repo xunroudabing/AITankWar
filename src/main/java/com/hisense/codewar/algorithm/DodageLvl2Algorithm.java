@@ -30,7 +30,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 	}
 
 	@Override
-	public void scan(List<Bullet> bulletList, int nowX, int nowY, int tick) {
+	public int scan(List<Bullet> bulletList, int nowX, int nowY, int tick) {
 		// TODO Auto-generated method stub
 		mTick = tick;
 		int count = bulletList.size();
@@ -99,7 +99,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			bullet.suggestion = suggestion;
 
 			if (timer <= 0) {
-				//log.debug(String.format("[Danger]%s not time left", bullet.toString()));
+				// log.debug(String.format("[Danger]%s not time left", bullet.toString()));
 			}
 
 			toDoList.add(bullet);
@@ -135,6 +135,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			Bullet bullet2 = toDoList.get(1);
 			handleBullet2(bullet1, bullet2, nowX, nowY);
 		}
+		return toDoList.size();
 
 	}
 
@@ -197,8 +198,9 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 
 			// 和hitlefttick作比较，看能否来的及移动到该位置,来的及就进入内切圆圆心位置
 			int hitTickleft = bullet1.suggestion.hitTickleft;
-			log.debug(String.format("[T%d][DodgeAI][2-PlanA]suggestAngle[%d]suggestDis[%d]suggestNeedTick[%d]hitTick[%d]", mTick,
-					suggestAngle, suggestDis, suggestNeedTick,hitTickleft));
+			log.debug(
+					String.format("[T%d][DodgeAI][2-PlanA]suggestAngle[%d]suggestDis[%d]suggestNeedTick[%d]hitTick[%d]",
+							mTick, suggestAngle, suggestDis, suggestNeedTick, hitTickleft));
 			if (hitTickleft >= suggestNeedTick) {
 				int countDownTimer = hitTickleft - suggestNeedTick;
 				bullet1.suggestion.coutdownTimer = countDownTimer;
@@ -206,7 +208,8 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 //					mMovementHelper.addDodgeByDistance(bullet1.suggestion.dodgeBestAngle,
 //							bullet1.suggestion.dodgeBestDistance);
 					mMovementHelper.addDodgeByDistance(suggestAngle, suggestDis);
-					log.debug(String.format("[T%d][DodgeAI][2-PlanA]angle[%d]dis[%d]", mTick, suggestAngle, suggestDis));
+					log.debug(
+							String.format("[T%d][DodgeAI][2-PlanA]angle[%d]dis[%d]", mTick, suggestAngle, suggestDis));
 					bullet1.handled = true;
 				}
 

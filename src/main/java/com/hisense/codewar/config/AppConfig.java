@@ -5,7 +5,7 @@ import com.jfinal.kit.PropKit;
 public class AppConfig {
 	public static final String APPVERSION = "1.0.0.1"; 
 	public static int MAP_WITH = 1600;
-	public static int MPA_HEIGHT = 900;
+	public static int MAP_HEIGHT = 900;
 	public static int TANK_SIZE = 50;
 	public static int COMBAT_MAX_DISTANCE = 500;
 	public static int COMBAT_MIN_DISTANCE = 170;
@@ -43,7 +43,7 @@ public class AppConfig {
 		COMBAT_MIN_DISTANCE = PropKit.getInt("battle.combatMinDistance");
 		COMBAT_CIRCLE_RADIUS = PropKit.getInt("battle.combatCircleRadius"); 
 		MAP_WITH = PropKit.getInt("battle.range.with");
-		MPA_HEIGHT = PropKit.getInt("battle.range.height");
+		MAP_HEIGHT = PropKit.getInt("battle.range.height");
 		TANK_SIZE = PropKit.getInt("battle.range.tanksize");
 	}
 }

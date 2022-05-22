@@ -33,7 +33,7 @@ public class DodageLvl1Algorithm implements IDodageAlgorithm {
 	}
 
 	@Override
-	public void scan(List<Bullet> bulletList,int nowX,int nowY, int tick) {
+	public int scan(List<Bullet> bulletList,int nowX,int nowY, int tick) {
 		// TODO Auto-generated method stub
 		int mHeading = mDatabase.getHeading();
 		int targetUnhandle = 0;// 未处理的且会击中我的目标
@@ -162,9 +162,9 @@ public class DodageLvl1Algorithm implements IDodageAlgorithm {
 		}
 
 		if (urgentBulletId == null) {
-			return;
+			return 0;
 		} else if (targetUnhandle <= 0) {
-			return;
+			return 0;
 		}
 
 		// 排序
@@ -231,6 +231,7 @@ public class DodageLvl1Algorithm implements IDodageAlgorithm {
 
 			}
 		}
+		return toDoList.size();
 	}
 
 	public static int getSuggestDodageAngle(List<Integer> list) {

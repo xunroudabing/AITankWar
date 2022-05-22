@@ -16,15 +16,18 @@ import com.hisense.codewar.utils.Utils;
 public class MoveMentRadar {
 	private int mTick = 0;
 	private Random mRandom = new Random();
+	private PoisionCircleUtils mPoisionCircleUtils;
 	private CombatMovementHelper mHelper;
 	private CombatAttackRadar mAttackRadar;
 	private CombatRealTimeDatabase mDatabase;
 	private static final Logger log = LoggerFactory.getLogger(MoveMentRadar.class);
 
-	public MoveMentRadar(CombatRealTimeDatabase database, CombatAttackRadar radar, CombatMovementHelper helper) {
+	public MoveMentRadar(CombatRealTimeDatabase database, CombatAttackRadar radar, CombatMovementHelper helper,
+			PoisionCircleUtils poisionCircleUtils) {
 		mDatabase = database;
 		mAttackRadar = radar;
 		mHelper = helper;
+		mPoisionCircleUtils = poisionCircleUtils;
 	}
 
 	public void reset() {
@@ -34,14 +37,12 @@ public class MoveMentRadar {
 
 	public void scan(int tick) {
 		mTick = tick;
-		if ((mTick % 5) != 0) {
-			return;
-		}
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
 		int heading = mDatabase.getHeading();
-		
-		avoidPoisionCircle(nowX, nowY, tick);
+
+		avoidPoisionCircle(nowX, nowY, mTick);
+
 		TankGameInfo target = mAttackRadar.getTargetTank();
 		if (target == null) {
 			return;
@@ -56,14 +57,14 @@ public class MoveMentRadar {
 			int seed = b ? 1 : -1;
 			// 避开射界
 			int angleCantHit = angle + seed * (fireRange + 45);
-			//caculatePosByTarget(target);
+			// caculatePosByTarget(target);
 
 		} else if (distance >= AppConfig.COMBAT_MIN_DISTANCE && distance <= AppConfig.COMBAT_MAX_DISTANCE) {
 			// doNothing
 		}
 		// 拉开距离
 		else if (distance < AppConfig.COMBAT_MIN_DISTANCE) {
-			//caculatePosByTarget(target);
+			// caculatePosByTarget(target);
 
 		}
 	}
@@ -134,18 +135,30 @@ public class MoveMentRadar {
 	}
 
 	private void avoidPoisionCircle(int x, int y, int tick) {
-		if (PoisionCircleUtils.inLeftBorder(x, y, tick)) {
-			log.debug(String.format("##LEFTBORDER##%d,%d,%d", x,y,tick));
-			mHelper.addMoveByDistance(0, AppConfig.TANK_SIZE);
-		} else if (PoisionCircleUtils.inRightBorder(x, y, tick)) {
-			log.debug(String.format("##LEFTBORDER##%d,%d,%d", x,y,tick));
-			mHelper.addMoveByDistance(180, AppConfig.TANK_SIZE);
-		} else if (PoisionCircleUtils.inTopBorder(x, y, tick)) {
-			log.debug(String.format("##LEFTBORDER##%d,%d,%d", x,y,tick));
-			mHelper.addMoveByDistance(270, AppConfig.TANK_SIZE);
-		} else if (PoisionCircleUtils.inBottomBorder(x, y, tick)) {
-			log.debug(String.format("##LEFTBORDER##%d,%d,%d", x,y,tick));
-			mHelper.addMoveByDistance(90, AppConfig.TANK_SIZE);
+
+//		int speed = tick % 15;
+//		if (speed != 0) {
+//			return;
+//		}
+		int bulletCount = mDatabase.getThreatBulletsCount();
+		if (bulletCount > 0) {
+			log.debug("avoidPoisionCircle have " + bulletCount + " bullet wont move");
+			return;
+		}
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int tankid = mDatabase.getMyTankId();
+		int heading = mDatabase.getHeading();
+		if (mPoisionCircleUtils.inLeft(x, y)) {
+			mHelper.addMoveByTick(0, 1);
+		} else if (mPoisionCircleUtils.inRight(x, y)) {
+			mHelper.addMoveByTick(180, 1);
+		} else if (mPoisionCircleUtils.inTop(x, y)) {
+			mHelper.addMoveByTick(270, 1);
+		} else if (mPoisionCircleUtils.inBottom(x, y)) {
+			mHelper.addMoveByTick(90, 1);
+		} else {
+			log.debug(String.format("[PoisionCircle]tank[%d]pos[%d,%d] do no nothing", tankid, nowX, nowY));
 		}
 	}
 

@@ -2,6 +2,7 @@ package com.hisense.codewar.demo;
 
 import java.util.List;
 
+import com.hisense.codewar.model.HitInfo;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
 import com.hisense.codewar.model.TankGameActionType;
@@ -18,7 +19,7 @@ public class DemoCircleGame implements TankGamePlayInterface{
 
 
     @Override
-    public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles) {
+    public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles, int r, List<HitInfo> hits) {
         // TODO Auto-generated method stub
         
     }
@@ -38,22 +39,25 @@ public class DemoCircleGame implements TankGamePlayInterface{
         
     }
 
+    @Override
+    public void gamestart(ITtank tank) {    
+        System.out.println("game start");
+    }
+
+    @Override
+    public void gameend(ITtank tank) {    
+        System.out.println("game end");
+    }    
+
     public static void main(String[] args) {
         // write your code here
         System.out.println("Hello World!!");
         TankGame game = new TankGame();
         DemoCircleGame player = new DemoCircleGame();
 
-        String token = "c9d55dd569553ce1b1703cc9999e362a";
+        String token = "ABC";
         ITtank tank = game.tank_init("10.18.224.205", 22222, token, player, null);
         game.tank_loop(tank);
-    }
-
-
-	@Override
-	public void onstart(int i) {
-		// TODO Auto-generated method stub
-		
-	}    
+    }    
 
 }

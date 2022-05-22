@@ -388,7 +388,7 @@ public class Utils {
 	public static boolean isOutRange(int x, int y) {
 		if (x > AppConfig.MAP_WITH - AppConfig.TANK_SIZE || x < AppConfig.TANK_SIZE) {
 			return true;
-		} else if (y > AppConfig.MPA_HEIGHT - AppConfig.TANK_SIZE || y < AppConfig.TANK_SIZE) {
+		} else if (y > AppConfig.MAP_HEIGHT - AppConfig.TANK_SIZE || y < AppConfig.TANK_SIZE) {
 			return true;
 		}
 		return false;

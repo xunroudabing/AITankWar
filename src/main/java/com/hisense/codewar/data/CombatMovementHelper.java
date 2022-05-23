@@ -7,6 +7,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.algorithm.ITrackingAlgorithm;
+import com.hisense.codewar.algorithm.SimpleTracker;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGameActionType;
@@ -21,7 +23,7 @@ public class CombatMovementHelper {
 		int tick = b.divide(BigDecimal.valueOf(AppConfig.TANK_SPEED), 0, BigDecimal.ROUND_CEILING).intValue();
 		System.out.println(tick);
 	}
-
+	
 	private FireHelper mFireHelper;
 	private CombatAttackRadar mAttackRadar;
 	private CombatRealTimeDatabase mDatabase;
@@ -204,10 +206,12 @@ public class CombatMovementHelper {
 			int speed = mMoveEvent.speed;
 			if (moveTick <= 0) {
 				log.debug(String.format("[T%d]tank[%d]cant move,no tick left", tick, tank.id));
-				return false;
-			} else if (tick % speed != 0) {
+				mMoveEvent = null;
 				return false;
 			}
+//			else if (tick % speed != 0) {
+//				return false;
+//			}
 			moveTick--;
 			mMoveEvent.tick = moveTick;
 			int nowX = mDatabase.getNowX();

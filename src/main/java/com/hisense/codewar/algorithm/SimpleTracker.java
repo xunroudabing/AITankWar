@@ -1,9 +1,9 @@
 package com.hisense.codewar.algorithm;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.w3c.dom.ls.LSInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.CombatMovementHelper;
@@ -15,6 +15,7 @@ import com.hisense.codewar.utils.Utils;
 public class SimpleTracker implements ITrackingAlgorithm {
 	private CombatRealTimeDatabase mDatabase;
 	private CombatMovementHelper mHelper;
+	private static final Logger log = LoggerFactory.getLogger(SimpleTracker.class);
 
 	public SimpleTracker(CombatRealTimeDatabase database, CombatMovementHelper helper) {
 		// TODO Auto-generated constructor stub
@@ -22,72 +23,72 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		mHelper = helper;
 	}
 
-	public List<Position> track(int nowX, int nowY, int targetX, int targetY, int tick) {
+	public Position track(int nowX, int nowY, int targetX, int targetY, int tick) {
 		// TODO Auto-generated method stub
-		List<Position> list = new ArrayList<Position>();
-		Position positionX = null;
-		Position positionY = null;
-		int xR = -1;
-		int yR = -1;
-		if (targetX > nowX) {
-			Position position = Utils.getNextTankPostion(nowX, nowY, 0, 1);
-			if (!inBlocks(position)) {
-				positionX = position;
-				xR = 0;
-				list.add(positionX);
-			}
-		} else {
-			Position position = Utils.getNextTankPostion(nowX, nowY, 180, 1);
-			if (!inBlocks(position)) {
-				positionX = position;
-				xR = 180;
-				list.add(positionX);
-			}
-		}
-
-		if (targetY > nowY) {
-			Position position = Utils.getNextTankPostion(nowX, nowY, 90, 1);
-			if (!inBlocks(position)) {
-				positionY = position;
-				yR = 90;
-				list.add(positionY);
-				if (xR < 0) {
-					Position positionYNext = Utils.getNextTankPostion(positionY.x, positionY.y, 90, 1);
-					if (!inBlocks(positionYNext)) {
-						list.add(positionYNext);
-					}
+		// 偶数处理x坐标 奇数处理y坐标
+		int seed = tick / AppConfig.MOVE_CHASE_SPEED;
+		boolean direction = seed % 2 == 0;
+		log.debug("track + " + seed);
+		Position position = null;
+		int moveTick = 2;
+		if (direction) {
+			if (targetX > nowX) {
+				Position p = Utils.getNextTankPostion(nowX, nowY, 0, moveTick);
+				if (isValid(p)) {
+					position = p;
 				}
-			}else {
-				
+			} else {
+				Position p = Utils.getNextTankPostion(nowX, nowY, 180, moveTick);
+				if (isValid(p)) {
+					position = p;
+				}
 			}
-		} else {
-			Position position = Utils.getNextTankPostion(nowX, nowY, 270, 1);
-			if (!inBlocks(positionY)) {
-				positionY = position;
-				list.add(positionY);
-				if (positionX == null) {
-					Position positionYNext = Utils.getNextTankPostion(positionY.x, positionY.y, 270, 1);
-					if (!inBlocks(positionYNext)) {
-						list.add(positionYNext);
+
+			if (position == null) {
+				if (targetY > nowY) {
+					Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+					if (isValid(p)) {
+						position = p;
+					}
+				} else {
+					Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+					if (isValid(p)) {
+						position = p;
 					}
 				}
 			}
-		}
-
-		if (targetX > nowX) {
-			Position position = Utils.getNextTankPostion(nowX, nowY, 0, 1);
-			if (!inBlocks(position)) {
-				positionX = position;
-				list.add(positionX);
-			}
 		} else {
-			Position position = Utils.getNextTankPostion(nowX, nowY, 180, 1);
-			if (!inBlocks(position)) {
-				positionX = position;
-				list.add(positionX);
+			if (targetY > nowY) {
+				Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+				if (isValid(p)) {
+					position = p;
+				}
+			} else {
+				Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+				if (isValid(p)) {
+					position = p;
+				}
+			}
+
+			if (position == null) {
+				if (targetX > nowX) {
+					Position p = Utils.getNextTankPostion(nowX, nowY, 0, moveTick);
+					if (isValid(p)) {
+						position = p;
+					}
+				} else {
+					Position p = Utils.getNextTankPostion(nowX, nowY, 180, moveTick);
+					if (isValid(p)) {
+						position = p;
+					}
+				}
 			}
 		}
-		return list;
+		if (position != null) {
+			int r = Utils.angleTo(nowX, nowY, position.x, position.y);
+			mHelper.addMoveByTick(r, 1);
+		}
+		return position;
 	}
 
 	public boolean inBlocks(Position position) {
@@ -95,9 +96,78 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		return Utils.inBlocks(position.x, position.y, AppConfig.BLOCK_SIZE, blocks, AppConfig.BLOCK_SIZE);
 	}
 
+	public boolean isValid(Position position) {
+		List<TankMapBlock> blocks = mDatabase.getBlocks();
+		boolean inBlock = Utils.inBlocks(position.x, position.y, AppConfig.BLOCK_SIZE, blocks, AppConfig.BLOCK_SIZE);
+		boolean outOfRange = mDatabase.isOutRange(position.x, position.y);
+		return !inBlock && !outOfRange;
+	}
+
 	@Override
-	public List<Position> antitrack(int nowX, int nowY, int targetX, int targetY, int tick) {
+	public Position antitrack(int nowX, int nowY, int targetX, int targetY, int tick) {
 		// TODO Auto-generated method stub
-		return null;
+		// 偶数处理x坐标 奇数处理y坐标
+		int seed = tick / AppConfig.MOVE_CHASE_SPEED;
+		boolean direction = seed % 2 == 0;
+		int moveTick = 2;
+		Position position = null;
+		if (direction) {
+			if (targetX > nowX) {
+				Position p = Utils.getNextTankPostion(nowX, nowY, 180, moveTick);
+				if (isValid(p)) {
+					position = p;
+				}
+			} else {
+				Position p = Utils.getNextTankPostion(nowX, nowY, 0, moveTick);
+				if (isValid(p)) {
+					position = p;
+				}
+			}
+
+			if (position == null) {
+				if (targetY > nowY) {
+					Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+					if (isValid(p)) {
+						position = p;
+					}
+				} else {
+					Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+					if (isValid(p)) {
+						position = p;
+					}
+				}
+			}
+		} else {
+			if (targetY > nowY) {
+				Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+				if (isValid(p)) {
+					position = p;
+				}
+			} else {
+				Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+				if (isValid(p)) {
+					position = p;
+				}
+			}
+
+			if (position == null) {
+				if (targetX > nowX) {
+					Position p = Utils.getNextTankPostion(nowX, nowY, 180, moveTick);
+					if (isValid(p)) {
+						position = p;
+					}
+				} else {
+					Position p = Utils.getNextTankPostion(nowX, nowY, 0, moveTick);
+					if (isValid(p)) {
+						position = p;
+					}
+				}
+			}
+		}
+		if (position != null) {
+			int r = Utils.angleTo(nowX, nowY, position.x, position.y);
+			mHelper.addMoveByTick(r, 1);
+		}
+		return position;
 	}
 }

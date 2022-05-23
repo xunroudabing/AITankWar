@@ -4,6 +4,8 @@ import com.jfinal.kit.PropKit;
 
 public class AppConfig {
 	public static final String APPVERSION = "1.0.0.3"; 
+	public static int MOVE_CHASE_SPEED = 5;
+	public static int MOVE_ESCAPE_SPEED = 3;
 	public static int BLOCK_SIZE = 21;
 	public static int MAP_WITH = 1600;
 	public static int MAP_HEIGHT = 900;
@@ -47,5 +49,7 @@ public class AppConfig {
 		MAP_HEIGHT = PropKit.getInt("battle.range.height");
 		TANK_SIZE = PropKit.getInt("battle.range.tanksize");
 		BLOCK_SIZE = PropKit.getInt("battle.block.size");
+		MOVE_CHASE_SPEED = PropKit.getInt("battle.chase.speed");
+		MOVE_ESCAPE_SPEED = PropKit.getInt("battle.escape.speed");
 	}
 }

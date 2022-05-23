@@ -42,10 +42,9 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		mCombatRealTimeDatabase = new CombatRealTimeDatabase();
 		mAttackRadar = new CombatAttackRadar(mCombatRealTimeDatabase);
 		mFireHelper = new FireHelper(mCombatRealTimeDatabase, mAttackRadar);
-		mMovementHelper = new CombatMovementHelper(mCombatRealTimeDatabase, mAttackRadar,mFireHelper);
+		mMovementHelper = new CombatMovementHelper(mCombatRealTimeDatabase, mAttackRadar, mFireHelper);
 		mCombatWarningRadar = new CombatWarningRadar(mCombatRealTimeDatabase, mMovementHelper);
-		mMoveMentRadar = new MoveMentRadar(mCombatRealTimeDatabase, mAttackRadar, mMovementHelper,mPoisionCircleUtils);
-		
+		mMoveMentRadar = new MoveMentRadar(mCombatRealTimeDatabase, mAttackRadar, mMovementHelper, mPoisionCircleUtils);
 
 	}
 
@@ -59,20 +58,28 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			log.debug(String.format("[T%d][Status] canFire[%b]needDodge[%b]", mTick.get(), canFire, needDodge));
 			if (needDodge) {
 				boolean dodgeDone = mMovementHelper.dodge(tank, mTick.get());
-				if (!dodgeDone) {
-					// 没有闪躲，可以移动或攻击
-					// randomMove(tank);
-					if (canFire) {
-						mFireHelper.fire(tank);
-					}
+				if (!dodgeDone&&canMove) {
+					mMovementHelper.move(tank, mTick.get());
 				}
 			} else if (canFire) {
 				// randomMove(tank);
-				mFireHelper.fire(tank);
+				boolean fireBlock = false;
+				TankGameInfo enemyTank = mAttackRadar.getTargetTank();
+				int nowX = mCombatRealTimeDatabase.getNowX();
+				int nowY = mCombatRealTimeDatabase.getNowY();
+				if (enemyTank != null) {
+					fireBlock = mCombatRealTimeDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
+					if (fireBlock && canMove) {
+						mMovementHelper.move(tank, mTick.get());
+					} else {
+						mFireHelper.fire(tank);
+					}
+				}
+
 			} else if (canMove) {
 				mMovementHelper.move(tank, mTick.get());
 				// mMovementHelper.lock(tank, mTick.get());
-			}else {
+			} else {
 				mMovementHelper.lock(tank, mTick.get());
 			}
 

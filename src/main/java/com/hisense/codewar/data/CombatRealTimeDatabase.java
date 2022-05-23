@@ -8,10 +8,13 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankMapBlock;
 import com.hisense.codewar.model.TankMapProjectile;
+import com.hisense.codewar.utils.PoisionCircleUtils;
+import com.hisense.codewar.utils.Utils;
 import com.jfinal.kit.PropKit;
 
 /**
@@ -25,6 +28,7 @@ public class CombatRealTimeDatabase {
 		CombatRealTimeDatabase database = new CombatRealTimeDatabase();
 	}
 
+	private PoisionCircleUtils mPoisionUtils;
 	private int mThreadBulletsCount;
 	private int mTankId;
 	private int mNowX;
@@ -47,6 +51,7 @@ public class CombatRealTimeDatabase {
 		mFriendTanks = new ArrayList<>();
 		mBullets = new ArrayList<>();
 		mBlocks = new ArrayList<TankMapBlock>();
+		mPoisionUtils = new PoisionCircleUtils();
 		initFriendTanks();
 	}
 
@@ -58,6 +63,9 @@ public class CombatRealTimeDatabase {
 		mAllTanks.clear();
 		mProjectiles.clear();
 		mBullets.clear();
+		mFriendTanks.clear();
+		mBlocks.clear();
+		mPoisionUtils.reset();
 	}
 
 	public int getThreatBulletsCount() {
@@ -82,6 +90,15 @@ public class CombatRealTimeDatabase {
 
 	public void setMyTankId(int tankid) {
 		mTankId = tankid;
+	}
+
+	/**
+	 * 刷新毒圈半径
+	 * 
+	 * @param r
+	 */
+	public void updatePoisionR(int r) {
+		mPoisionUtils.updateR(r);
 	}
 
 	public void updateAllTanks(List<TankGameInfo> list) {
@@ -151,6 +168,18 @@ public class CombatRealTimeDatabase {
 			}
 		}
 		return ret;
+	}
+
+	public boolean inBlocks(int x, int y) {
+		return Utils.inBlocks(x, y, AppConfig.BLOCK_SIZE, getBlocks(), AppConfig.BLOCK_SIZE);
+	}
+
+	public boolean isOutRange(int x, int y) {
+		return mPoisionUtils.isOut(x, y);
+	}
+
+	public boolean fireInBlocks(int nowX, int nowY, int tx, int ty) {
+		return Utils.fireInBlock(nowX, nowY, tx, ty, getBlocks(), AppConfig.BLOCK_SIZE);
 	}
 
 	private void loopAllTanks() {

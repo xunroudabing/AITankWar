@@ -101,5 +101,9 @@ public class CombatAttackRadar {
 	public int getTargetTankId() {
 		return mTargetTankId;
 	}
+	
+	public TankGameInfo getNearestTank() {
+		return mTargetTank;
+	}
 
 }

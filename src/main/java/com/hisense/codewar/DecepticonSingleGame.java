@@ -10,7 +10,7 @@ import com.hisense.codewar.player.DecepticonPlayer;
 import com.jfinal.kit.PropKit;
 
 public class DecepticonSingleGame {
-	private static final Logger log = LoggerFactory.getLogger(AutoBotsSingleGame.class);
+	private static final Logger log = LoggerFactory.getLogger(DecepticonSingleGame.class);
 
 	public static void main(String[] args) {
 		PropKit.use("tank.properties");
@@ -18,14 +18,13 @@ public class DecepticonSingleGame {
 		String server = PropKit.get("server.ip");
 		int port = PropKit.getInt("server.port");
 		System.out.println("server is " + server + ":" + port);
-		// final String token3 = PropKit.get("tank3.token");
-		final String token3 = "c6b67c8bac3f803de75ed99edb814eb2";
+		final String token4 = PropKit.get("tank4.token");
 		// log.info("token is " + token3);
 		AppConfig.init();
 		TankGame game3 = new TankGame();
 
-		DecepticonPlayer player3 = new DecepticonPlayer();
-		ITtank tank3 = game3.tank_init("10.18.224.205", 22222, token3, player3, null);
+		DecepticonPlayer player4 = new DecepticonPlayer();
+		ITtank tank3 = game3.tank_init("10.18.224.205", 22222, token4, player4, null);
 
 		new Thread(new Runnable() {
 

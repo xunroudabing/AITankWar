@@ -34,12 +34,14 @@ public class PoisionCircleUtils {
 	public void updateR(int r) {
 		radius = r;
 		int xSize = (AppConfig.MAP_WITH - radius * 2) / 2;
-		int ySize = xSize * 9 / 16;
+		int ySize = (xSize * 9 / 16);
 
 		minX = xSize;
 		maxX = AppConfig.MAP_WITH - xSize;
 		minY = ySize;
 		maxY = AppConfig.MAP_HEIGHT - ySize;
+		log.debug(String.format("[Map][%d,%d-%d,%d-%d,%d-%d,%d]",minX, minY, minX, maxY,
+					maxX, maxY, maxX, minY));
 	}
 
 	public boolean isOut(int x, int y) {

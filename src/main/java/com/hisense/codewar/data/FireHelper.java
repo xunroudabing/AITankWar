@@ -6,6 +6,7 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.FireRange;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGameActionType;
@@ -14,7 +15,7 @@ import com.hisense.codewar.utils.Utils;
 
 public class FireHelper {
 	private Random mRandom = new Random();
-	private int mTick = 30;
+	private int mTick = 60;
 	CombatRealTimeDatabase mDatabase;
 	CombatAttackRadar mAttackRadar;
 	private static final Logger log = LoggerFactory.getLogger(FireHelper.class);
@@ -22,10 +23,11 @@ public class FireHelper {
 	public FireHelper(CombatRealTimeDatabase database, CombatAttackRadar attackRadar) {
 		mDatabase = database;
 		mAttackRadar = attackRadar;
+		mTick = AppConfig.FIRE_SPAN;
 	}
 
 	public void reset() {
-		mTick = 30;
+		mTick = AppConfig.FIRE_SPAN;
 	}
 
 	// 装弹，满30或可以射击
@@ -34,10 +36,11 @@ public class FireHelper {
 	}
 
 	public boolean canFire() {
-		return mTick >= 30;
+		return mTick >= AppConfig.FIRE_SPAN;
 	}
 
-	public boolean fireAndDodage(ITtank tank) {
+	public boolean fire(ITtank tank) {
+
 		TankGameInfo target = mAttackRadar.getTargetTank();
 		if (target == null) {
 			log.debug("[Fire]not target!!");
@@ -51,7 +54,6 @@ public class FireHelper {
 		int dest = Utils.angleTo(nowX, nowY, target.x, target.y);
 		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
 		int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
-
 		// 避免误伤
 		if (willHitFriends(dest)) {
 			// boolean b = mRandom.nextBoolean();
@@ -60,6 +62,7 @@ public class FireHelper {
 		if (Math.abs(dest - heading) <= range) {
 			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		} else {
+			// 射界内加随机数
 			if (distance > 500) {
 				boolean b = mRandom.nextBoolean();
 				int seed = b ? 1 : -1;
@@ -82,40 +85,6 @@ public class FireHelper {
 				int ranRange = mRandom.nextInt(range);
 				dest = dest + seed * ranRange;
 			}
-			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
-		}
-
-		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
-		return true;
-	}
-
-	public boolean fire(ITtank tank) {
-
-		TankGameInfo target = mAttackRadar.getTargetTank();
-		if (target == null) {
-			log.debug("[Fire]not target!!");
-			return false;
-		}
-		int mtankid = mDatabase.getMyTankId();
-		int nowX = mDatabase.getNowX();
-		int nowY = mDatabase.getNowY();
-		int heading = mDatabase.getHeading();
-
-		int dest = Utils.angleTo(nowX, nowY, target.x, target.y);
-		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
-		// 避免误伤
-		if (willHitFriends(dest)) {
-			// boolean b = mRandom.nextBoolean();
-		}
-		// 射界内，不需要转向，直接开火
-		if (Math.abs(dest - heading) <= range) {
-			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
-		} else {
-			// 射界内加随机数
-			boolean b = mRandom.nextBoolean();
-			int seed = b ? 1 : -1;
-			int ranRange = mRandom.nextInt(range);
-			dest = dest + seed * ranRange;
 			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
 		}
 

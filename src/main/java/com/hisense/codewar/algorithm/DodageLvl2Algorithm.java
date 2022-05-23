@@ -81,6 +81,15 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			int dodgeBestAngle = Utils.angleTo(p4.x, p4.y, nowX, nowY);
 			// 所需移动距离
 			int dodgeBestDistance = AppConfig.TANK_WIDTH - a;
+			// ****判断最佳方向上有无block或出界，出界则选择反方向****
+			Position endPosition = Utils.getNextPositionByDistance(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
+			if (mDatabase.inBlocks(endPosition.x, endPosition.y)
+					|| mDatabase.isOutRange(endPosition.x, endPosition.y)) {
+				dodgeBestAngle += 180;
+				dodgeBestAngle = Utils.formatAngle(dodgeBestAngle);
+				dodgeBestDistance = AppConfig.TANK_WIDTH + a;
+			}
+
 			// 闪避所需时间 dodgeDistance / AppConfig.TANK_SPEED;
 			int dodgeBestNeedTick = Utils.getTicks(dodgeBestDistance, AppConfig.TANK_SPEED);
 			// 行动倒计时

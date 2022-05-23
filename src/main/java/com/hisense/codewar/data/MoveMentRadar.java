@@ -5,6 +5,8 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.algorithm.ITrackingAlgorithm;
+import com.hisense.codewar.algorithm.SimpleTracker;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
@@ -14,6 +16,7 @@ import com.hisense.codewar.utils.Utils;
 public class MoveMentRadar {
 	private int mTick = 0;
 	private Random mRandom = new Random();
+	private ITrackingAlgorithm mTrackerAI;
 	private PoisionCircleUtils mPoisionCircleUtils;
 	private CombatMovementHelper mHelper;
 	private CombatAttackRadar mAttackRadar;
@@ -26,6 +29,7 @@ public class MoveMentRadar {
 		mAttackRadar = radar;
 		mHelper = helper;
 		mPoisionCircleUtils = poisionCircleUtils;
+		mTrackerAI = new SimpleTracker(mDatabase, mHelper);
 	}
 
 	public void reset() {
@@ -39,6 +43,7 @@ public class MoveMentRadar {
 		int nowY = mDatabase.getNowY();
 		int heading = mDatabase.getHeading();
 
+		trackTarget();
 		avoidPoisionCircle(nowX, nowY, mTick);
 
 		TankGameInfo target = mAttackRadar.getTargetTank();
@@ -46,24 +51,83 @@ public class MoveMentRadar {
 			return;
 		}
 
-		int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
-		// 拉近距离
-		if (distance > AppConfig.COMBAT_MAX_DISTANCE) {
-			int angle = Utils.angleTo(target.x, target.y, nowX, nowY);
-			int fireRange = Utils.getFireRange(target.x, target.y, nowX, nowY);
-			boolean b = mRandom.nextBoolean();
-			int seed = b ? 1 : -1;
-			// 避开射界
-			int angleCantHit = angle + seed * (fireRange + 45);
-			// caculatePosByTarget(target);
+//		int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
+//		// 拉近距离
+//		if (distance > AppConfig.COMBAT_MAX_DISTANCE) {
+//			int angle = Utils.angleTo(target.x, target.y, nowX, nowY);
+//			int fireRange = Utils.getFireRange(target.x, target.y, nowX, nowY);
+//			boolean b = mRandom.nextBoolean();
+//			int seed = b ? 1 : -1;
+//			// 避开射界
+//			int angleCantHit = angle + seed * (fireRange + 45);
+//			// caculatePosByTarget(target);
+//			
+//
+//		} else if (distance >= AppConfig.COMBAT_MIN_DISTANCE && distance <= AppConfig.COMBAT_MAX_DISTANCE) {
+//			// doNothing
+//		}
+//		// 拉开距离
+//		else if (distance < AppConfig.COMBAT_MIN_DISTANCE) {
+//			// caculatePosByTarget(target);
+//
+//		}
+	}
 
-		} else if (distance >= AppConfig.COMBAT_MIN_DISTANCE && distance <= AppConfig.COMBAT_MAX_DISTANCE) {
-			// doNothing
+	protected void track(int nowX, int nowY, int targetX, int targetY, int tick) {
+
+		mTrackerAI.track(nowX, nowY, targetX, targetY, tick);
+
+	}
+
+	protected void antitrack(int nowX, int nowY, int targetX, int targetY, int tick) {
+
+		mTrackerAI.antitrack(nowX, nowY, targetX, targetY, tick);
+
+	}
+
+	protected void trackTarget() {
+		int speed = mTick % AppConfig.MOVE_CHASE_SPEED;
+		if (speed != 0) {
+			return;
 		}
-		// 拉开距离
-		else if (distance < AppConfig.COMBAT_MIN_DISTANCE) {
-			// caculatePosByTarget(target);
+		log.debug("#########trackTarget############");
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int mTankId = mDatabase.getMyTankId();
+		TankGameInfo target = null;
+		if (mDatabase.isLeader()) {
+			target = mAttackRadar.getTargetTank();
+		} else {
+			target = mDatabase.getLeader();
+		}
 
+		if (target == null) {
+			target = mAttackRadar.getTargetTank();
+		}
+		// 目标到我的角度
+		int r = Utils.angleTo(nowX, nowY, target.x, target.y);
+		// 目标为圆心，到我方向200米上的点
+		Position moveToPosition = Utils.getNextPositionByDistance(nowX, nowY, r, AppConfig.COMBAT_CIRCLE_RADIUS);
+		// 我距目標距離
+		int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
+		// 移动方向 todo 需要判斷障礙物
+		int heading = Utils.angleTo(nowX, nowY, target.x, target.y);
+		log.debug(String.format("*********distance[%d]r[%d]me[%d,%d]target[%d,%d]", distance, r, nowX, nowY, target.x,
+				target.y));
+		boolean fireBlock = false;
+		TankGameInfo enemyTank = mAttackRadar.getTargetTank();
+		if (enemyTank != null) {
+			fireBlock = mDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
+			if(fireBlock) {
+				track(nowX, nowY, enemyTank.x, enemyTank.y, mTick);
+			}
+		}
+		if (distance > AppConfig.COMBAT_MAX_DISTANCE) {
+			track(nowX, nowY, target.x, target.y, mTick);
+			log.debug(String.format("track to [%d,%d]", target.x, target.y));
+		} else if (distance <= AppConfig.COMBAT_MIN_DISTANCE) {
+			antitrack(nowX, nowY, target.x, target.y, mTick);
+			log.debug(String.format("antitrack to [%d,%d]", target.x, target.y));
 		}
 	}
 
@@ -134,10 +198,10 @@ public class MoveMentRadar {
 
 	private void avoidPoisionCircle(int x, int y, int tick) {
 
-//		int speed = tick % 15;
-//		if (speed != 0) {
-//			return;
-//		}
+		int speed = tick % 8;
+		if (speed != 0) {
+			return;
+		}
 		int bulletCount = mDatabase.getThreatBulletsCount();
 		if (bulletCount > 0) {
 			log.debug("avoidPoisionCircle have " + bulletCount + " bullet wont move");

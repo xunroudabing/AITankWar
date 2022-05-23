@@ -452,6 +452,16 @@ public class Utils {
 
 	}
 
+	/**
+	 * 对于给定的一个坦克中心坐标，判断是否在障碍物中
+	 * 
+	 * @param x
+	 * @param y
+	 * @param mWidth
+	 * @param blocks
+	 * @param blockWidth
+	 * @return
+	 */
 	public static boolean inBlocks(int x, int y, int mWidth, List<TankMapBlock> blocks, int blockWidth) {
 		for (TankMapBlock block : blocks) {
 			boolean ret = inBlock(x, y, mWidth, block.x, block.y, blockWidth);
@@ -467,5 +477,22 @@ public class Utils {
 		int distance = Utils.distanceTo(x, y, blockX, blockY);
 
 		return distance < totalR;
+	}
+	//射界被遮挡
+	public static boolean fireInBlock(int x, int y, int tx, int ty, List<TankMapBlock> blocks, int blockWidth) {
+		// 以我到目标为直线 ，Block向该直线做垂线，如果垂线距离小于半径则说明与block相交
+		Position p1 = new Position(x, y);
+		Position p2 = new Position(tx, ty);
+		for (TankMapBlock block : blocks) {
+			Position p3 = new Position(block.x, block.y);
+			// 垂足
+			Position p4 = Utils.getFoot(p1, p2, p3);
+			// 垂足到圆心距离
+			int c = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
+			if (c < blockWidth) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

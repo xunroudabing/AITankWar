@@ -38,7 +38,7 @@ public class FireHelper {
 	public boolean canFire() {
 		return mTick >= AppConfig.FIRE_SPAN;
 	}
-
+	
 	public boolean fire(ITtank tank) {
 
 		TankGameInfo target = mAttackRadar.getTargetTank();

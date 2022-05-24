@@ -14,6 +14,7 @@ import com.hisense.codewar.utils.Utils;
 
 public class CombatAttackRadar {
 	int mTick = 0;
+	private int mNearestTankId;
 	private int mTargetTankId;
 	private TankGameInfo mTargetTank;
 	private List<FireRange> mFriendsFireRange;
@@ -33,6 +34,7 @@ public class CombatAttackRadar {
 		mTargets.clear();
 		mTick = 0;
 		mTargetTankId = -1;
+		mNearestTankId = -1;
 		mTargetTank = null;
 	}
 
@@ -60,6 +62,8 @@ public class CombatAttackRadar {
 		int enemyId = -1;
 		int minDistance = -1;
 		mFriendsFireRange.clear();
+		int nearEnemyId = -1;
+		int nearMinDistance = -1;
 		while (iterator.hasNext()) {
 			TankGameInfo enemyTank = (TankGameInfo) iterator.next();
 			int tankid = enemyTank.id;
@@ -70,12 +74,20 @@ public class CombatAttackRadar {
 				continue;
 			}
 			int distance = Utils.distanceTo(leader.x, leader.y, enemyTank.x, enemyTank.y);
+			int nearDis = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
 			if (minDistance < 0) {
 				minDistance = distance;
 				enemyId = enemyTank.getId();
 			} else if (distance < minDistance) {
 				minDistance = distance;
 				enemyId = enemyTank.getId();
+			}
+
+			if (nearMinDistance < 0) {
+				nearMinDistance = nearDis;
+			} else if (nearDis < nearMinDistance) {
+				nearMinDistance = nearDis;
+				nearEnemyId = enemyTank.id;
 			}
 		}
 
@@ -85,8 +97,9 @@ public class CombatAttackRadar {
 		}
 
 		mTargetTankId = enemyId;
+		mNearestTankId = nearEnemyId;
 		TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
-		mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r,tank.hp);
+		mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
 		log.debug(String.format("[T%d][AttackTarget]->%s", mTick, mTargetTank.toString()));
 	}
 
@@ -101,9 +114,12 @@ public class CombatAttackRadar {
 	public int getTargetTankId() {
 		return mTargetTankId;
 	}
-	
+
 	public TankGameInfo getNearestTank() {
-		return mTargetTank;
+		if (mNearestTankId < 0) {
+			return null;
+		}
+		return mDatabase.getTankById(mNearestTankId);
 	}
 
 }

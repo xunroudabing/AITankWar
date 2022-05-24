@@ -1,5 +1,6 @@
 package com.hisense.codewar.data;
 
+import java.util.List;
 import java.util.Random;
 
 import org.slf4j.Logger;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.hisense.codewar.algorithm.ITrackingAlgorithm;
 import com.hisense.codewar.algorithm.SimpleTracker;
 import com.hisense.codewar.config.AppConfig;
+import com.hisense.codewar.data.CombatMovementHelper.PollingAction;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.PoisionCircleUtils;
@@ -17,18 +19,15 @@ public class MoveMentRadar {
 	private int mTick = 0;
 	private Random mRandom = new Random();
 	private ITrackingAlgorithm mTrackerAI;
-	private PoisionCircleUtils mPoisionCircleUtils;
 	private CombatMovementHelper mHelper;
 	private CombatAttackRadar mAttackRadar;
 	private CombatRealTimeDatabase mDatabase;
 	private static final Logger log = LoggerFactory.getLogger(MoveMentRadar.class);
 
-	public MoveMentRadar(CombatRealTimeDatabase database, CombatAttackRadar radar, CombatMovementHelper helper,
-			PoisionCircleUtils poisionCircleUtils) {
+	public MoveMentRadar(CombatRealTimeDatabase database, CombatAttackRadar radar, CombatMovementHelper helper) {
 		mDatabase = database;
 		mAttackRadar = radar;
 		mHelper = helper;
-		mPoisionCircleUtils = poisionCircleUtils;
 		mTrackerAI = new SimpleTracker(mDatabase, mHelper);
 	}
 
@@ -44,7 +43,7 @@ public class MoveMentRadar {
 		int heading = mDatabase.getHeading();
 
 		trackTarget();
-		avoidPoisionCircle(nowX, nowY, mTick);
+		handlePosition(tick);
 
 		TankGameInfo target = mAttackRadar.getTargetTank();
 		if (target == null) {
@@ -73,13 +72,15 @@ public class MoveMentRadar {
 //		}
 	}
 
-	protected void track(int nowX, int nowY, int targetX, int targetY, int tick) {
+	// 拉近距离
+	public void track(int nowX, int nowY, int targetX, int targetY, int tick) {
 
 		mTrackerAI.track(nowX, nowY, targetX, targetY, tick);
 
 	}
 
-	protected void antitrack(int nowX, int nowY, int targetX, int targetY, int tick) {
+	// 拉远距离
+	public void antitrack(int nowX, int nowY, int targetX, int targetY, int tick) {
 
 		mTrackerAI.antitrack(nowX, nowY, targetX, targetY, tick);
 
@@ -118,16 +119,17 @@ public class MoveMentRadar {
 		TankGameInfo enemyTank = mAttackRadar.getTargetTank();
 		if (enemyTank != null) {
 			fireBlock = mDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
-			if(fireBlock) {
-				track(nowX, nowY, enemyTank.x, enemyTank.y, mTick);
-			}
 		}
-		if (distance > AppConfig.COMBAT_MAX_DISTANCE) {
+		String des = mDatabase.isLeader() ? "leader" : "partner";
+		if (fireBlock) {
+			track(nowX, nowY, enemyTank.x, enemyTank.y, mTick);
+			log.debug(String.format("tankid[%d][%s]fireblock track to [%d,%d]", mTankId, des, target.x, target.y));
+		} else if (distance > AppConfig.COMBAT_MAX_DISTANCE) {
 			track(nowX, nowY, target.x, target.y, mTick);
-			log.debug(String.format("track to [%d,%d]", target.x, target.y));
+			log.debug(String.format("tankid[%d][%s]track to [%d,%d]", mTankId, des, target.x, target.y));
 		} else if (distance <= AppConfig.COMBAT_MIN_DISTANCE) {
 			antitrack(nowX, nowY, target.x, target.y, mTick);
-			log.debug(String.format("antitrack to [%d,%d]", target.x, target.y));
+			log.debug(String.format("tankid[%d][%s]antitrack to [%d,%d]", mTankId, des, target.x, target.y));
 		}
 	}
 
@@ -138,66 +140,45 @@ public class MoveMentRadar {
 	 * @param angle
 	 */
 	private void caculatePosByTarget(TankGameInfo target) {
-		int nowX = mDatabase.getNowX();
-		int nowY = mDatabase.getNowY();
-		int mTankId = mDatabase.getMyTankId();
-		if (mDatabase.isLeader()) {
-			// 目标到我的角度
-			int r = Utils.angleTo(target.x, target.y, nowX, nowY);
-			// 目标为圆心，到我方向500米上的点
-			Position moveToPosition = Utils.getNextPositionByDistance(nowX, nowY, r, AppConfig.COMBAT_CIRCLE_RADIUS);
-			// 我距目標距離
-			int distance = Utils.distanceTo(nowX, nowY, moveToPosition.x, moveToPosition.y);
-			// 移动方向 todo 需要判斷障礙物
-			int heading = Utils.angleTo(nowX, nowY, target.x, target.y);
-			int needTick = Utils.getTicks(distance, AppConfig.TANK_SPEED);
-			mHelper.addMoveByDistance(heading, distance);
-			log.debug(String.format("[Move]leader[%d]head[%d]needtick[%d]distance[%d]-->enemy[%d]pos[%d,%d]", mTankId,
-					heading, needTick, distance, target.id, target.x, target.y));
-		} else {
-			TankGameInfo leader = mDatabase.getLeader();
-			// 目标与leader的角度
-			int r = Utils.angleTo(target.x, target.y, leader.x, leader.y);
-			// 偶数顺时针，奇数逆时针
-			boolean clockWise = mTankId % 2 == 0;
-			Position moveToPosition = getParterPosition(target, clockWise, r);
-			if (moveToPosition != null) {
-				// 我距目標距離
-				int distance = Utils.distanceTo(nowX, nowY, moveToPosition.x, moveToPosition.y);
-				// 移动方向 todo 需要判斷障礙物
-				int heading = Utils.angleTo(nowX, nowY, moveToPosition.x, moveToPosition.y);
-				mHelper.addMoveByDistance(heading, distance);
-				int needTick = Utils.getTicks(distance, AppConfig.TANK_SPEED);
-				log.debug(String.format("[Move]leader[%d]head[%d]needtick[%d]distance[%d]-->enemy[%d]pos[%d,%d]",
-						mTankId, heading, needTick, distance, target.id, target.x, target.y));
-			}
-
-		}
+//		int nowX = mDatabase.getNowX();
+//		int nowY = mDatabase.getNowY();
+//		int mTankId = mDatabase.getMyTankId();
+//		if (mDatabase.isLeader()) {
+//			// 目标到我的角度
+//			int r = Utils.angleTo(target.x, target.y, nowX, nowY);
+//			// 目标为圆心，到我方向500米上的点
+//			Position moveToPosition = Utils.getNextPositionByDistance(nowX, nowY, r, AppConfig.COMBAT_CIRCLE_RADIUS);
+//			// 我距目標距離
+//			int distance = Utils.distanceTo(nowX, nowY, moveToPosition.x, moveToPosition.y);
+//			// 移动方向 todo 需要判斷障礙物
+//			int heading = Utils.angleTo(nowX, nowY, target.x, target.y);
+//			int needTick = Utils.getTicks(distance, AppConfig.TANK_SPEED);
+//			mHelper.addMoveByDistance(heading, distance);
+//			log.debug(String.format("[Move]leader[%d]head[%d]needtick[%d]distance[%d]-->enemy[%d]pos[%d,%d]", mTankId,
+//					heading, needTick, distance, target.id, target.x, target.y));
+//		} else {
+//			TankGameInfo leader = mDatabase.getLeader();
+//			// 目标与leader的角度
+//			int r = Utils.angleTo(target.x, target.y, leader.x, leader.y);
+//			// 偶数顺时针，奇数逆时针
+//			boolean clockWise = mTankId % 2 == 0;
+//			Position moveToPosition = getParterPosition(target, clockWise, r);
+//			if (moveToPosition != null) {
+//				// 我距目標距離
+//				int distance = Utils.distanceTo(nowX, nowY, moveToPosition.x, moveToPosition.y);
+//				// 移动方向 todo 需要判斷障礙物
+//				int heading = Utils.angleTo(nowX, nowY, moveToPosition.x, moveToPosition.y);
+//				mHelper.addMoveByDistance(heading, distance);
+//				int needTick = Utils.getTicks(distance, AppConfig.TANK_SPEED);
+//				log.debug(String.format("[Move]leader[%d]head[%d]needtick[%d]distance[%d]-->enemy[%d]pos[%d,%d]",
+//						mTankId, heading, needTick, distance, target.id, target.x, target.y));
+//			}
+//
+//		}
 
 	}
 
-	private Position getParterPosition(TankGameInfo target, boolean clockwise, int r) {
-		int angle = -1;
-		int i = 0;
-		while (i < 6) {
-			int b = clockwise ? 1 : -1;
-			angle = r + b * 60 * (i + 1);
-			angle = Utils.formatAngle(angle);
-			int x = target.x;
-			int y = target.y;
-
-			int x1 = (int) (x * Math.cos(Utils.r2a(angle)) - y * Math.sin(Utils.r2a(angle)));
-			int y1 = (int) (x * Math.cos(Utils.r2a(angle)) + y * Math.cos(Utils.r2a(angle)));
-			if (!Utils.isOutRange(x1, y1)) {
-				return new Position(x1, y1);
-			}
-			i++;
-		}
-		return null;
-	}
-
-	private void avoidPoisionCircle(int x, int y, int tick) {
-
+	private void handlePosition(int tick) {
 		int speed = tick % 8;
 		if (speed != 0) {
 			return;
@@ -209,19 +190,33 @@ public class MoveMentRadar {
 		}
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
-		int tankid = mDatabase.getMyTankId();
-		int heading = mDatabase.getHeading();
-		if (mPoisionCircleUtils.inLeft(x, y)) {
-			mHelper.addMoveByTick(0, 1);
-		} else if (mPoisionCircleUtils.inRight(x, y)) {
-			mHelper.addMoveByTick(180, 1);
-		} else if (mPoisionCircleUtils.inTop(x, y)) {
-			mHelper.addMoveByTick(270, 1);
-		} else if (mPoisionCircleUtils.inBottom(x, y)) {
-			mHelper.addMoveByTick(90, 1);
+		boolean isOut = mDatabase.getPoisionCircle().isOut(nowX, nowY);
+		if (isOut) {
+			mHelper.addPollingEventByAction(PollingAction.AVOID_POISION, 3);
 		} else {
-			log.debug(String.format("[PoisionCircle]tank[%d]pos[%d,%d] do no nothing", tankid, nowX, nowY));
+			farFromFriends();
 		}
+	}
+
+	private void farFromFriends() {
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int tankId = mDatabase.getMyTankId();
+		List<TankGameInfo> friendTanks = mDatabase.getFriendTanks();
+		for (TankGameInfo tank : friendTanks) {
+			int distance = Utils.distanceTo(nowX, nowY, tank.x, tank.y);
+			// 离得太近，拉开距离
+			if (distance < AppConfig.COMBAT_MIN_DISTANCE) {
+				antitrack(nowX, nowY, tank.x, tank.y, mTick);
+				log.debug(
+						String.format("tankid[%d]pos[%d,%d]antitrack to [%d,%d]", tankId, nowX, nowY, tank.x, tank.y));
+				return;
+			}
+		}
+	}
+
+	private void avoidPoisionCircle(int x, int y, int tick) {
+
 	}
 
 }

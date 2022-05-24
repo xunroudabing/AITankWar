@@ -8,17 +8,18 @@ import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
 import com.hisense.codewar.player.AutoBotsPlayer;
 import com.hisense.codewar.player.DecepticonPlayer;
+import com.hisense.codewar.player.TrackerPlayer;
 import com.jfinal.kit.PropKit;
 
 public class DecepticonGroupGame {
 	private static final Logger log = LoggerFactory.getLogger(DecepticonGroupGame.class);
 	public static void main(String[] args) {
 		PropKit.use("tank.properties");
-		System.out.println("App version " + AppConfig.APPVERSION);
-		System.out.println("AITank AutoBots Group Game start...");
+		log.info("App version " + AppConfig.APPVERSION);
+		log.info("AITank Decepticon Group Game start...");
 		String server = PropKit.get("server.ip");
 		int port = PropKit.getInt("server.port");
-		System.out.println("server is " + server + ":" + port);
+		log.info("server is " + server + ":" + port);
 		
 		final String token4 = PropKit.get("tank4.token");
 		final String token5 = PropKit.get("tank5.token");

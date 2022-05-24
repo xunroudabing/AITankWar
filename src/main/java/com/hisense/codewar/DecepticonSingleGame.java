@@ -7,6 +7,7 @@ import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
 import com.hisense.codewar.player.DecepticonPlayer;
+import com.hisense.codewar.player.TrackerPlayer;
 import com.jfinal.kit.PropKit;
 
 public class DecepticonSingleGame {
@@ -23,7 +24,7 @@ public class DecepticonSingleGame {
 		AppConfig.init();
 		TankGame game3 = new TankGame();
 
-		DecepticonPlayer player4 = new DecepticonPlayer();
+		TrackerPlayer player4 = new TrackerPlayer();
 		ITtank tank3 = game3.tank_init("10.18.224.205", 22222, token4, player4, null);
 
 		new Thread(new Runnable() {

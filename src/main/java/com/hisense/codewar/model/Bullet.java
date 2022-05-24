@@ -45,7 +45,6 @@ public class Bullet {
 	public boolean isChild(int x, int y) {
 		for (int i = 0; i < MAX_TICK; i++) {
 			Position position = Utils.getNextBulletByTick(startX, startY, r, i);
-			System.out.println(position + "===" + x + "," + y);
 			if (Utils.isNear(x, y, position.x, position.y)) {
 				return true;
 			}

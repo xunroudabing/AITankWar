@@ -82,9 +82,11 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			// 所需移动距离
 			int dodgeBestDistance = AppConfig.TANK_WIDTH - a;
 			// ****判断最佳方向上有无block或出界，出界则选择反方向****
-			Position endPosition = Utils.getNextPositionByDistance(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
-			if (mDatabase.inBlocks(endPosition.x, endPosition.y)
-					|| mDatabase.isOutRange(endPosition.x, endPosition.y)) {
+			boolean hitBlocks = mDatabase.isCrossBlocksByDistance(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
+			boolean outRange = mDatabase.isOutRangeByDistance(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
+			if (hitBlocks || outRange) {
+				log.debug(String.format("[HitWarning-Error]will out of range or in block %s change angle 180",
+						bullet.toString()));
 				dodgeBestAngle += 180;
 				dodgeBestAngle = Utils.formatAngle(dodgeBestAngle);
 				dodgeBestDistance = AppConfig.TANK_WIDTH + a;
@@ -197,6 +199,23 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 				suggestAngle = Utils.angleTo(nowX, nowY, positionA.x, positionA.y);
 			} else {
 				suggestAngle = Utils.angleTo(nowX, nowY, positionB.x, positionB.y);
+			}
+			// ****判断最佳方向上有无block或出界，有则采用PlanB****
+			boolean haveBlocks = mDatabase.isCrossBlocksByDistance(nowX, nowY, suggestAngle, suggestDis);
+			boolean outRange = mDatabase.isOutRangeByDistance(nowX, nowY, suggestAngle, suggestDis);
+			if (haveBlocks || outRange) {
+				// 提前躲避，给bullet2留出时间,todo这里需要考虑移动带来的位置改变
+				int needMoreTick = bullet2.suggestion.dodgeNeedTick;
+				// 时间到，马上进行闪避
+				if (bullet1.suggestion.coutdownTimer <= AppConfig.DODGE_TICK + needMoreTick) {
+					
+					mMovementHelper.addDodgeByDistance(bullet1.suggestion.dodgeBestAngle,
+							bullet1.suggestion.dodgeBestDistance);
+					bullet1.handled = true;
+					log.debug(String.format("[T%d][DodgeAI][2-PlanB-Block]angle[%d]dis[%d]", mTick,
+							bullet1.suggestion.dodgeBestAngle, bullet1.suggestion.dodgeBestDistance));
+					return;
+				}
 			}
 
 			// 和hitlefttick作比较，看能否来的及移动到该位置,来的及就进入内切圆圆心位置

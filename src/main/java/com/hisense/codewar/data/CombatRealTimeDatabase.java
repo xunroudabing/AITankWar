@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Bullet;
+import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankMapBlock;
 import com.hisense.codewar.model.TankMapProjectile;
@@ -116,6 +117,15 @@ public class CombatRealTimeDatabase {
 		return mFriendTanks;
 	}
 
+	public TankGameInfo getFriend(int tankId) {
+		for (TankGameInfo tank : mFriendTanks) {
+			if (tank.id == tankId) {
+				return tank;
+			}
+		}
+		return null;
+	}
+
 	public TankGameInfo getLeader() {
 		List<TankGameInfo> friends = getFriendTanks();
 		int tankid = getMyTankId();
@@ -174,12 +184,25 @@ public class CombatRealTimeDatabase {
 		return Utils.inBlocks(x, y, AppConfig.BLOCK_SIZE, getBlocks(), AppConfig.BLOCK_SIZE);
 	}
 
+	public boolean isOutRangeByDistance(int nowX, int nowY, int r, int distance) {
+		Position endPosition = Utils.getNextPositionByDistance(nowX, nowY, r, distance);
+		return isOutRange(endPosition.x, endPosition.y);
+	}
+
 	public boolean isOutRange(int x, int y) {
 		return mPoisionUtils.isOut(x, y);
 	}
 
+	public PoisionCircleUtils getPoisionCircle() {
+		return mPoisionUtils;
+	}
+
+	public boolean isCrossBlocksByDistance(int nowX, int nowY, int r, int distance) {
+		return Utils.isCrossBlockByDistance(nowX, nowY, r, distance, getBlocks(), AppConfig.BLOCK_SIZE);
+	}
+
 	public boolean fireInBlocks(int nowX, int nowY, int tx, int ty) {
-		return Utils.fireInBlock(nowX, nowY, tx, ty, getBlocks(), AppConfig.BLOCK_SIZE);
+		return Utils.isCrossBlock(nowX, nowY, tx, ty, getBlocks(), AppConfig.BLOCK_SIZE);
 	}
 
 	private void loopAllTanks() {

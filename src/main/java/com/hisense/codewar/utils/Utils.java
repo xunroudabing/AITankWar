@@ -365,14 +365,14 @@ public class Utils {
 		return new Position(nx, ny);
 	}
 
-	public static boolean isOutRange(int x, int y) {
-		if (x > AppConfig.MAP_WITH - AppConfig.TANK_SIZE || x < AppConfig.TANK_SIZE) {
-			return true;
-		} else if (y > AppConfig.MAP_HEIGHT - AppConfig.TANK_SIZE || y < AppConfig.TANK_SIZE) {
-			return true;
-		}
-		return false;
-	}
+//	public static boolean isOutRange(int x, int y) {
+//		if (x > AppConfig.MAP_WITH - AppConfig.TANK_SIZE || x < AppConfig.TANK_SIZE) {
+//			return true;
+//		} else if (y > AppConfig.MAP_HEIGHT - AppConfig.TANK_SIZE || y < AppConfig.TANK_SIZE) {
+//			return true;
+//		}
+//		return false;
+//	}
 
 	public static boolean isNear(Position p1, Position p2) {
 		return (Math.abs(p1.x - p2.x) <= 1) && (Math.abs(p1.y - p2.y) <= 1);
@@ -463,6 +463,9 @@ public class Utils {
 	 * @return
 	 */
 	public static boolean inBlocks(int x, int y, int mWidth, List<TankMapBlock> blocks, int blockWidth) {
+		if (blocks == null) {
+			return false;
+		}
 		for (TankMapBlock block : blocks) {
 			boolean ret = inBlock(x, y, mWidth, block.x, block.y, blockWidth);
 			if (ret) {
@@ -476,21 +479,56 @@ public class Utils {
 		int totalR = width + blockWidth;
 		int distance = Utils.distanceTo(x, y, blockX, blockY);
 
-		return distance < totalR;
+		return distance <= totalR;
 	}
-	//射界被遮挡
-	public static boolean fireInBlock(int x, int y, int tx, int ty, List<TankMapBlock> blocks, int blockWidth) {
+
+	/**
+	 * 是否穿过Block
+	 * 
+	 * @param x
+	 * @param y
+	 * @param r
+	 * @param distance
+	 * @param blocks
+	 * @param blockWidth
+	 * @return
+	 */
+	public static boolean isCrossBlockByDistance(int x, int y, int r, int distance, List<TankMapBlock> blocks,
+			int blockWidth) {
+		Position endPostion = Utils.getNextPositionByDistance(x, y, r, distance);
+		return isCrossBlock(x, y, endPostion.x, endPostion.y, blocks, blockWidth);
+	}
+
+	/**
+	 * 两点的直线是否穿过Block
+	 * 
+	 * @param x
+	 * @param y
+	 * @param tx
+	 * @param ty
+	 * @param blocks
+	 * @param blockWidth
+	 * @return
+	 */
+	public static boolean isCrossBlock(int x, int y, int tx, int ty, List<TankMapBlock> blocks, int blockWidth) {
 		// 以我到目标为直线 ，Block向该直线做垂线，如果垂线距离小于半径则说明与block相交
 		Position p1 = new Position(x, y);
 		Position p2 = new Position(tx, ty);
+
+		int distance = Utils.distanceTo(x, y, tx, ty);
 		for (TankMapBlock block : blocks) {
 			Position p3 = new Position(block.x, block.y);
 			// 垂足
 			Position p4 = Utils.getFoot(p1, p2, p3);
 			// 垂足到圆心距离
 			int c = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
-			if (c < blockWidth) {
-				return true;
+			// 会打中block
+			if (c <= blockWidth) {
+				// 我到垂足的距离
+				int d = Utils.distanceTo(x, y, p4.x, p4.y);
+				if (d < distance) {
+					return true;
+				}
 			}
 		}
 		return false;

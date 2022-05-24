@@ -15,13 +15,11 @@ import com.hisense.codewar.data.FireHelper;
 import com.hisense.codewar.data.MoveMentRadar;
 import com.hisense.codewar.model.HitInfo;
 import com.hisense.codewar.model.ITtank;
-import com.hisense.codewar.model.TankGameActionType;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankGamePlayInterface;
 import com.hisense.codewar.model.TankMapProjectile;
-import com.hisense.codewar.utils.PoisionCircleUtils;
 
-public class AutoBotsPlayer implements TankGamePlayInterface {
+public class TrackerPlayer implements TankGamePlayInterface {
 
 	private Random mRandom = new Random();
 	private AtomicInteger mTick;
@@ -32,9 +30,9 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	private CombatAttackRadar mAttackRadar;
 	private CombatWarningRadar mCombatWarningRadar;
 	private CombatRealTimeDatabase mCombatRealTimeDatabase;
-	private static final Logger log = LoggerFactory.getLogger(AutoBotsPlayer.class);
+	private static final Logger log = LoggerFactory.getLogger(TrackerPlayer.class);
 
-	public AutoBotsPlayer() {
+	public TrackerPlayer() {
 		// TODO Auto-generated constructor stub
 		mTick = new AtomicInteger();
 		mCombatRealTimeDatabase = new CombatRealTimeDatabase();
@@ -47,73 +45,6 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	}
 
 	@Override
-	public void gametick(ITtank tank) {
-		// TODO Auto-generated method stub
-		try {
-			boolean canPolling = mMovementHelper.canPolling();
-			boolean canFire = mFireHelper.canFire();
-			boolean needDodge = mMovementHelper.needDodge(mTick.get());
-			boolean canMove = mMovementHelper.canMove();
-			log.debug(String.format("[T%d][Status] canFire[%b]needDodge[%b]", mTick.get(), canFire, needDodge));
-			if (needDodge) {
-				boolean dodgeDone = mMovementHelper.dodge(tank, mTick.get());
-				if (!dodgeDone && canMove) {
-					mMovementHelper.move(tank, mTick.get());
-				}
-			} else if (canFire) {
-				// randomMove(tank);
-				boolean fireBlock = false;
-				TankGameInfo enemyTank = mAttackRadar.getTargetTank();
-				int nowX = mCombatRealTimeDatabase.getNowX();
-				int nowY = mCombatRealTimeDatabase.getNowY();
-				if (enemyTank != null) {
-					fireBlock = mCombatRealTimeDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
-					if (fireBlock) {
-						if (canMove) {
-							mMovementHelper.move(tank, mTick.get());
-						}
-					} else {
-						mFireHelper.fire(tank);
-					}
-				}
-
-			} else if (canMove) {
-				mMovementHelper.move(tank, mTick.get());
-				// mMovementHelper.lock(tank, mTick.get());
-			} else if (canPolling) {
-				mMovementHelper.polling(tank, mTick.get());
-			}else {
-				mMovementHelper.lock(tank, mTick.get());
-			}
-
-		} catch (Exception e) {
-			// TODO: handle exception
-			log.error(e.fillInStackTrace().getLocalizedMessage());
-		}
-
-	}
-
-	protected void randomMove(ITtank tank) {
-		int rr = 0;
-		if (mTick.get() % 100 == 0) {
-
-			rr = mRandom.nextInt(360);
-
-		}
-
-		mMovementHelper.addMoveByTick(rr, 1);
-
-		if (mTick.get() % 5 == 0) {
-			Random random = new Random();
-			int r = random.nextInt(360);
-			mMovementHelper.addMoveByTick(rr, 1);
-			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, 0);
-		} else {
-			mMovementHelper.addMoveByTick(rr, 2);
-		}
-	}
-
-	@Override
 	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles, int r,
 			List<HitInfo> hits) {
 		// TODO Auto-generated method stub
@@ -121,7 +52,6 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			long start = System.currentTimeMillis();
 			mTick.getAndIncrement();
 			mTankId = tank.id;
-
 			mFireHelper.reload(mTick.get());
 			mCombatRealTimeDatabase.setMyTankId(mTankId);
 			mCombatRealTimeDatabase.updateAllTanks(tanks);
@@ -133,6 +63,28 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			long end = System.currentTimeMillis();
 			long cost = end - start;
 			log.debug(String.format("[ScanCost]PoisionR[%d][%d]cost %d ms", r, mTick.get(), cost));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.error(e.toString());
+		}
+
+	}
+
+	@Override
+	public void gametick(ITtank tank) {
+		// TODO Auto-generated method stub
+		try {
+			boolean canFire = mFireHelper.canFire();
+			boolean needDodge = mMovementHelper.needDodge(mTick.get());
+			boolean canMove = mMovementHelper.canMove();
+			log.debug("needDodge " + needDodge + " canMove " + canMove + " canfire " + canFire);
+			log.debug(String.format("[T%d][Status] canFire[%b]needDodge[%b]", mTick.get(), canFire, needDodge));
+			if (needDodge) {
+				boolean dodgeDone = mMovementHelper.dodge(tank, mTick.get());
+			}  else {
+				mMovementHelper.move(tank, mTick.get());
+			} 
 
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -158,14 +110,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	@Override
 	public void gameend(ITtank tank) {
 		// TODO Auto-generated method stub
-		log.info(String.format("###########TANK[%d][%d]BattleEND############", mTankId, 1));
-		mCombatRealTimeDatabase.reset();
-		mCombatWarningRadar.reset();
-		mAttackRadar.reset();
-		mMovementHelper.reset();
-		mFireHelper.reset();
-		mMoveMentRadar.reset();
-		mTick.set(0);
+
 	}
 
 }

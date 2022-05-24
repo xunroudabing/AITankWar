@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.CombatMovementHelper;
+import com.hisense.codewar.data.CombatMovementHelper.PollingAction;
+import com.hisense.codewar.data.CombatMovementHelper.PostionEvent;
 import com.hisense.codewar.data.CombatRealTimeDatabase;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankMapBlock;
@@ -31,6 +33,7 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		log.debug("track + " + seed);
 		Position position = null;
 		int moveTick = 2;
+
 		if (direction) {
 			if (targetX > nowX) {
 				Position p = Utils.getNextTankPostion(nowX, nowY, 0, moveTick);
@@ -86,7 +89,11 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		}
 		if (position != null) {
 			int r = Utils.angleTo(nowX, nowY, position.x, position.y);
-			mHelper.addMoveByTick(r, 1);
+			mHelper.addMoveByTick(r, moveTick);
+			//mHelper.addPollingEventByPos(PollingAction.CLOSETO, position.x, position.y, r, moveTick);
+			log.debug("track angle is " + r);
+		} else {
+			log.debug("nULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
 		}
 		return position;
 	}
@@ -100,6 +107,7 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		List<TankMapBlock> blocks = mDatabase.getBlocks();
 		boolean inBlock = Utils.inBlocks(position.x, position.y, AppConfig.BLOCK_SIZE, blocks, AppConfig.BLOCK_SIZE);
 		boolean outOfRange = mDatabase.isOutRange(position.x, position.y);
+		log.debug("inblock=" + inBlock + ",outof=" + outOfRange);
 		return !inBlock && !outOfRange;
 	}
 
@@ -166,7 +174,10 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		}
 		if (position != null) {
 			int r = Utils.angleTo(nowX, nowY, position.x, position.y);
-			mHelper.addMoveByTick(r, 1);
+			mHelper.addMoveByTick(r, moveTick);
+			//mHelper.addPollingEventByPos(PollingAction.CLOSETO, position.x, position.y, r, moveTick);
+		} else {
+			log.debug("nULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
 		}
 		return position;
 	}

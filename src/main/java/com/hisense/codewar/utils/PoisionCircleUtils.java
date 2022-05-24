@@ -40,14 +40,13 @@ public class PoisionCircleUtils {
 		maxX = AppConfig.MAP_WITH - xSize;
 		minY = ySize;
 		maxY = AppConfig.MAP_HEIGHT - ySize;
-		log.debug(String.format("[Map][%d,%d-%d,%d-%d,%d-%d,%d]",minX, minY, minX, maxY,
-					maxX, maxY, maxX, minY));
+		log.debug(String.format("[Map][%d,%d-%d,%d-%d,%d-%d,%d]", minX, minY, minX, maxY, maxX, maxY, maxX, minY));
 	}
 
 	public boolean isOut(int x, int y) {
-		if (x > maxX - AppConfig.TANK_SIZE || x < minX + AppConfig.TANK_SIZE) {
+		if (x > maxX - AppConfig.TANK_WIDTH || x < minX + AppConfig.TANK_WIDTH) {
 			return true;
-		} else if (y > maxY - AppConfig.TANK_SIZE || y < minY + AppConfig.TANK_SIZE) {
+		} else if (y > maxY - AppConfig.TANK_WIDTH || y < minY + AppConfig.TANK_WIDTH) {
 			return true;
 		}
 		return false;

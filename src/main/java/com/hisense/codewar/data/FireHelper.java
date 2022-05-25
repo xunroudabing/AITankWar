@@ -57,6 +57,7 @@ public class FireHelper {
 		// 避免误伤
 		if (willHitFriends(dest)) {
 			// boolean b = mRandom.nextBoolean();
+			return false;
 		}
 		// 射界内，不需要转向，直接开火
 		if (Math.abs(dest - heading) <= range) {
@@ -74,10 +75,10 @@ public class FireHelper {
 				int ranRange = mRandom.nextInt(range + 20);
 				dest = dest + seed * ranRange;
 			} else if (distance > 300 && distance <= 400) {
-				boolean b = mRandom.nextBoolean();
-				int seed = b ? 1 : -1;
-				int ranRange = mRandom.nextInt(range + 10);
-				dest = dest + seed * ranRange;
+//				boolean b = mRandom.nextBoolean();
+//				int seed = b ? 1 : -1;
+//				int ranRange = mRandom.nextInt(range + 10);
+//				dest = dest + seed * ranRange;
 			} else {
 				// 射界内加随机数
 				boolean b = mRandom.nextBoolean();

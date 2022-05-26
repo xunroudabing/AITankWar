@@ -96,12 +96,15 @@ public class MoveMentRadar {
 		int nowY = mDatabase.getNowY();
 		int mTankId = mDatabase.getMyTankId();
 		TankGameInfo target = null;
+		TankGameInfo nearestTank = mAttackRadar.getNearestTank();
 		if (mDatabase.isLeader()) {
 			target = mAttackRadar.getTargetTank();
 		} else {
 			target = mDatabase.getLeader();
+			if(mTick > 500) {
+				target = nearestTank;
+			}
 		}
-
 		if (target == null) {
 			target = mAttackRadar.getTargetTank();
 		}
@@ -190,7 +193,7 @@ public class MoveMentRadar {
 		}
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
-		boolean isOut = mDatabase.getPoisionCircle().isOut(nowX, nowY);
+		boolean isOut = mDatabase.getPoisionCircle().isInBorder(nowX, nowY);
 		if (isOut) {
 			mHelper.addPollingEventByAction(PollingAction.AVOID_POISION, 3);
 		} else {

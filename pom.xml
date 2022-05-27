@@ -82,7 +82,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>com.hisense.codewar.AutoBotsGroupGame</mainClass>
+							<mainClass>com.hisense.codewar.AutoBotsSingleGame</mainClass>
 						</manifest>
 						<manifestEntries>
 							<Class-Path>config/</Class-Path>

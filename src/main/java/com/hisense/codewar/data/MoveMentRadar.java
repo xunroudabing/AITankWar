@@ -190,7 +190,7 @@ public class MoveMentRadar {
 		}
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
-		boolean isOut = mDatabase.getPoisionCircle().isOut(nowX, nowY);
+		boolean isOut = mDatabase.isOut(nowX, nowY);
 		if (isOut) {
 			mHelper.addPollingEventByAction(PollingAction.AVOID_POISION, 3);
 		} else {

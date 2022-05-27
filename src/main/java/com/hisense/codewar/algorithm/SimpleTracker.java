@@ -106,7 +106,7 @@ public class SimpleTracker implements ITrackingAlgorithm {
 	public boolean isValid(Position position) {
 		List<TankMapBlock> blocks = mDatabase.getBlocks();
 		boolean inBlock = Utils.inBlocks(position.x, position.y, AppConfig.BLOCK_SIZE, blocks, AppConfig.BLOCK_SIZE);
-		boolean outOfRange = mDatabase.isOutRange(position.x, position.y);
+		boolean outOfRange = mDatabase.isOut(position.x, position.y);
 		log.debug("inblock=" + inBlock + ",outof=" + outOfRange);
 		return !inBlock && !outOfRange;
 	}

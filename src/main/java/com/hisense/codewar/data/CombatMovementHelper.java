@@ -232,7 +232,7 @@ public class CombatMovementHelper {
 //			}
 			// 判断出界
 			Position nextPosition = Utils.getNextTankPostion(nowX, nowY, heading, 2);
-			if (mDatabase.isOutRange(nextPosition.x, nextPosition.y)) {
+			if (mDatabase.isOut(nextPosition.x, nextPosition.y)) {
 				// 出界，不执行此次命令
 				log.debug(String.format(
 						"[Command-Dodge-Ignore][T%d]tank[%d]pos[%d,%d]r[%d]nextpos[%d,%d] will out of range", tick,
@@ -303,7 +303,7 @@ public class CombatMovementHelper {
 			// int dest = Utils.angleTo(nowX, nowY, x, y);
 			// 判断出界
 			Position nextPosition = Utils.getNextTankPostion(nowX, nowY, dest, 2);
-			if (mDatabase.isOutRange(nextPosition.x, nextPosition.y)) {
+			if (mDatabase.isOut(nextPosition.x, nextPosition.y)) {
 				// 出界，不执行此次命令
 				log.debug(String.format(
 						"[Command-Move-Ignore][T%d]tank[%d]pos[%d,%d]r[%d]nextpos[%d,%d] will out of range", tick,
@@ -353,13 +353,13 @@ public class CombatMovementHelper {
 		int tankid = mDatabase.getMyTankId();
 		int x = mDatabase.getNowX();
 		int y = mDatabase.getNowY();
-		if (mDatabase.getPoisionCircle().inLeft(x, y)) {
+		if (mDatabase.inLeft(x, y)) {
 			ret = 0;
-		} else if (mDatabase.getPoisionCircle().inRight(x, y)) {
+		} else if (mDatabase.inRight(x, y)) {
 			ret = 180;
-		} else if (mDatabase.getPoisionCircle().inTop(x, y)) {
+		} else if (mDatabase.inTop(x, y)) {
 			ret = 270;
-		} else if (mDatabase.getPoisionCircle().inBottom(x, y)) {
+		} else if (mDatabase.inBottom(x, y)) {
 			ret = 90;
 		} else {
 			log.debug(String.format("[PoisionCircle]tank[%d]pos[%d,%d] do no nothing", tankid, x, y));

@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Position;
-
+@Deprecated
 public class PoisionCircleUtils {
 	static final double X_less = 1d;
 	static final double Y_LESS = 0.57d;
@@ -16,6 +16,8 @@ public class PoisionCircleUtils {
 	private int minY;
 	private int maxY;
 	private int radius;
+	private int battleFieldWidth;
+	private int battleFieldHeight;
 
 	public PoisionCircleUtils() {
 		minX = 0;
@@ -40,7 +42,19 @@ public class PoisionCircleUtils {
 		maxX = AppConfig.MAP_WITH - xSize;
 		minY = ySize;
 		maxY = AppConfig.MAP_HEIGHT - ySize;
-		log.debug(String.format("[Map][%d,%d-%d,%d-%d,%d-%d,%d]", minX, minY, minX, maxY, maxX, maxY, maxX, minY));
+
+		battleFieldWidth = radius * 2;
+		battleFieldHeight = battleFieldWidth * 9 / 16;
+		log.debug(String.format("[Map][%d,%d]-[%d,%d]-[%d,%d]-[%d,%d]width[%d]height[%d]", minX, minY, minX, maxY, maxX,
+				maxY, maxX, minY, battleFieldWidth, battleFieldHeight));
+	}
+
+	public int getBattleFieldWidth() {
+		return battleFieldWidth;
+	}
+
+	public int getBattleFieldHeight() {
+		return battleFieldHeight;
 	}
 
 	public boolean isOut(int x, int y) {

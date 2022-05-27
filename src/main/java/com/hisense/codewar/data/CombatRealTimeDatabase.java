@@ -29,7 +29,15 @@ public class CombatRealTimeDatabase {
 		CombatRealTimeDatabase database = new CombatRealTimeDatabase();
 	}
 
-	private PoisionCircleUtils mPoisionUtils;
+	private int minX;
+	private int maxX;
+	private int minY;
+	private int maxY;
+	// 毒圈半径
+	private int radius;
+	private int battleFieldWidth;
+	private int battleFieldHeight;
+
 	private int mThreadBulletsCount;
 	private int mTankId;
 	private int mNowX;
@@ -40,6 +48,7 @@ public class CombatRealTimeDatabase {
 	private List<TankGameInfo> mAllTanks;
 	private List<TankMapBlock> mBlocks;
 
+	private List<TankGameInfo> mEnemyTanks;
 	private List<TankGameInfo> mFriendTanks;
 	private List<Bullet> mBullets;
 
@@ -50,9 +59,14 @@ public class CombatRealTimeDatabase {
 		mAllTanks = new ArrayList<>();
 		mProjectiles = new ArrayList<>();
 		mFriendTanks = new ArrayList<>();
+		mEnemyTanks = new ArrayList<>();
 		mBullets = new ArrayList<>();
 		mBlocks = new ArrayList<TankMapBlock>();
-		mPoisionUtils = new PoisionCircleUtils();
+
+		minX = 0;
+		maxX = AppConfig.MAP_WITH;
+		minY = 0;
+		maxY = AppConfig.MAP_HEIGHT;
 		initFriendTanks();
 	}
 
@@ -65,8 +79,13 @@ public class CombatRealTimeDatabase {
 		mProjectiles.clear();
 		mBullets.clear();
 		mFriendTanks.clear();
+		mEnemyTanks.clear();
 		mBlocks.clear();
-		mPoisionUtils.reset();
+		minX = 0;
+		maxX = AppConfig.MAP_WITH;
+		minY = 0;
+		maxY = AppConfig.MAP_HEIGHT;
+		radius = AppConfig.MAP_WITH / 2;
 	}
 
 	public int getThreatBulletsCount() {
@@ -99,7 +118,19 @@ public class CombatRealTimeDatabase {
 	 * @param r
 	 */
 	public void updatePoisionR(int r) {
-		mPoisionUtils.updateR(r);
+		radius = r;
+		int xSize = (AppConfig.MAP_WITH - radius * 2) / 2;
+		int ySize = (xSize * 9 / 16);
+
+		minX = xSize;
+		maxX = AppConfig.MAP_WITH - xSize;
+		minY = ySize;
+		maxY = AppConfig.MAP_HEIGHT - ySize;
+
+		battleFieldWidth = radius * 2;
+		battleFieldHeight = battleFieldWidth * 9 / 16;
+		log.debug(String.format("[Map][%d,%d]-[%d,%d]-[%d,%d]-[%d,%d]width[%d]height[%d]", minX, minY, minX, maxY, maxX,
+				maxY, maxX, minY, battleFieldWidth, battleFieldHeight));
 	}
 
 	public void updateAllTanks(List<TankGameInfo> list) {
@@ -115,6 +146,10 @@ public class CombatRealTimeDatabase {
 
 	public List<TankGameInfo> getFriendTanks() {
 		return mFriendTanks;
+	}
+
+	public List<TankGameInfo> getEnemyTanks() {
+		return mEnemyTanks;
 	}
 
 	public TankGameInfo getFriend(int tankId) {
@@ -186,15 +221,7 @@ public class CombatRealTimeDatabase {
 
 	public boolean isOutRangeByDistance(int nowX, int nowY, int r, int distance) {
 		Position endPosition = Utils.getNextPositionByDistance(nowX, nowY, r, distance);
-		return isOutRange(endPosition.x, endPosition.y);
-	}
-
-	public boolean isOutRange(int x, int y) {
-		return mPoisionUtils.isOut(x, y);
-	}
-
-	public PoisionCircleUtils getPoisionCircle() {
-		return mPoisionUtils;
+		return isOut(endPosition.x, endPosition.y);
 	}
 
 	public boolean isCrossBlocksByDistance(int nowX, int nowY, int r, int distance) {
@@ -205,18 +232,67 @@ public class CombatRealTimeDatabase {
 		return Utils.isCrossBlock(nowX, nowY, tx, ty, getBlocks(), AppConfig.BLOCK_SIZE);
 	}
 
+	public int getBattleFieldWidth() {
+		return battleFieldWidth;
+	}
+
+	public int getBattleFieldHeight() {
+		return battleFieldHeight;
+	}
+
+	public boolean isOut(int x, int y) {
+		if (x > maxX - AppConfig.TANK_WIDTH || x < minX + AppConfig.TANK_WIDTH) {
+			return true;
+		} else if (y > maxY - AppConfig.TANK_WIDTH || y < minY + AppConfig.TANK_WIDTH) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean inLeft(int x, int y) {
+		if (x <= minX + AppConfig.TANK_SIZE) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean inRight(int x, int y) {
+		if (x >= maxX - AppConfig.TANK_SIZE) {
+			log.debug(String.format("[inRight][%d,%d][Map][%d,%d-%d,%d-%d,%d-%d,%d]", x, y, minX, minY, minX, maxY,
+					maxX, maxY, maxX, minY));
+			return true;
+		}
+		return false;
+	}
+
+	public boolean inBottom(int x, int y) {
+		if (y >= maxY - AppConfig.TANK_WIDTH) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean inTop(int x, int y) {
+		if (y <= minY + AppConfig.TANK_WIDTH) {
+			return true;
+		}
+		return false;
+	}
+
 	private void loopAllTanks() {
 		mFriendTanks.clear();
+		mEnemyTanks.clear();
 		for (TankGameInfo tank : mAllTanks) {
 			if (tank.id == mTankId) {
 				mNowX = tank.x;
 				mNowY = tank.y;
 				mHeading = tank.r;
 				continue;
-			}
-			if (isFriend(tank.id)) {
+			} else if (isFriend(tank.id)) {
 				mFriendTanks.add(tank);
 				continue;
+			} else {
+				mEnemyTanks.add(tank);
 			}
 		}
 	}

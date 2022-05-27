@@ -19,20 +19,18 @@ public class WaveSurfing {
 		mDatabase = database;
 		mWaveList = new ArrayList<Wave>();
 	}
-	
+
 	public void scan(int tick) {
 		mTick = tick;
-		
+
 	}
-	
+
 	public void createWave(TankGameInfo enemyTank) {
-		
+
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
 		int tankid = mDatabase.getMyTankId();
-		
-		
-		
+
 		Wave wave = new Wave();
 		wave.setStartTick(mTick);
 		wave.setMyStartPos(null);

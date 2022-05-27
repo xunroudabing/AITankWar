@@ -43,17 +43,10 @@ public class PoisionCircleUtils {
 		log.debug(String.format("[Map][%d,%d-%d,%d-%d,%d-%d,%d]", minX, minY, minX, maxY, maxX, maxY, maxX, minY));
 	}
 
-	public boolean isInBorder(int x, int y) {
-		if (inLeft(x, y) || inRight(x, y) || inTop(x, y) || inBottom(x, y)) {
-			return true;
-		}
-		return false;
-	}
-
 	public boolean isOut(int x, int y) {
-		if (x >= maxX || x <= minX) {
+		if (x > maxX - AppConfig.TANK_WIDTH || x < minX + AppConfig.TANK_WIDTH) {
 			return true;
-		} else if (y >= maxY || y <= minY) {
+		} else if (y > maxY - AppConfig.TANK_WIDTH || y < minY + AppConfig.TANK_WIDTH) {
 			return true;
 		}
 		return false;

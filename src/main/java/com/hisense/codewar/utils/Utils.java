@@ -40,37 +40,6 @@ public class Utils {
 		int bearing = Utils.bearing(180, 0);
 		System.out.println(bearing);
 
-		// ]pos[732,786]chead[-20]r[-201]tick[2]
-		// [Command-Dodge]tank[130]pos[738,786]chead[-21]r[-201]tick[1]
-		// [Command-Dodge]tank[130]pos[730,790]chead[-21]r[-201]tick[0]
-
-		int x5 = 738;
-		int y5 = 786;
-
-		int x6 = 730;
-		int y6 = 790;
-
-		int dis = Utils.distanceTo(x5, y5, x6, y6);
-		System.out.println("dis=" + dis);
-
-		Position position = Utils.getNextTankPostion(x5, y5, -21, 1);
-		// 730,790
-		//
-		// 741 785
-		// 746 783
-
-		System.out.println("pos=" + position);
-
-		int bx1 = 1209;
-		int by1 = 531;
-		for (int i = 0; i < 10; i++) {
-			Position p = Utils.getNextBulletByTick(bx1, by1, 252	, i);
-			System.out.println(p);
-		}
-	}
-
-	static {
-		AppConfig.init();
 	}
 
 	/**
@@ -304,15 +273,7 @@ public class Utils {
 	}
 
 	public static int distanceTo(int x, int y, int tx, int ty) {
-		return doubleToInt(Math.hypot(x - tx, y - ty));
-	}
-
-	public static int doubleToInt(double value) {
-		BigDecimal bigDecimal = BigDecimal.valueOf(value);
-		// 解决double精度缺失问题，向上取整
-		BigDecimal result = bigDecimal.setScale(0, BigDecimal.ROUND_CEILING);
-		//System.out.println("double=" + bigDecimal.doubleValue() + ",int=" + result.intValue());
-		return result.intValue();
+		return (int) Math.hypot(x - tx, y - ty);
 	}
 
 	/**
@@ -327,9 +288,9 @@ public class Utils {
 	public static Position getNextBulletByTick(int nowX, int nowY, int r, int tick) {
 		float rr = Utils.a2r(r);
 		// startx + kProjectileSpeed * cosf(rr) * elapsed;
-		int x = doubleToInt(nowX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick);
+		int x = (int) (nowX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick);
 		// starty + kProjectileSpeed * sinf(rr) * elapsed;
-		int y = doubleToInt(nowY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick);
+		int y = (int) (nowY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick);
 		return new Position(x, y);
 	}
 
@@ -387,6 +348,7 @@ public class Utils {
 		float angle = a2r(r);
 		int dy = (int) (AppConfig.TANK_SPEED * tick * Math.sin(angle));
 		int dx = (int) (AppConfig.TANK_SPEED * tick * Math.cos(angle));
+
 		int nx = x + dx;
 		int ny = y + dy;
 		return new Position(nx, ny);
@@ -397,6 +359,7 @@ public class Utils {
 		float angle = a2r(r);
 		int dy = (int) (distance * Math.sin(angle));
 		int dx = (int) (distance * Math.cos(angle));
+
 		int nx = x + dx;
 		int ny = y + dy;
 		return new Position(nx, ny);

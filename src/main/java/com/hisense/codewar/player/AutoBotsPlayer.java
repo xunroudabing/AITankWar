@@ -83,7 +83,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			} else if (canPolling) {
 				mMovementHelper.polling(tank, mTick.get());
 			}else {
-				mMovementHelper.move(tank, mTick.get());
+				mMovementHelper.lock(tank, mTick.get());
 			}
 
 		} catch (Exception e) {

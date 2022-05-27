@@ -1,7 +1,6 @@
 package com.hisense.codewar.algorithm;
 
 import java.util.List;
-import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +15,6 @@ import com.hisense.codewar.model.TankMapBlock;
 import com.hisense.codewar.utils.Utils;
 
 public class SimpleTracker implements ITrackingAlgorithm {
-	Random mRandom = new Random();
 	private CombatRealTimeDatabase mDatabase;
 	private CombatMovementHelper mHelper;
 	private static final Logger log = LoggerFactory.getLogger(SimpleTracker.class);
@@ -92,16 +90,10 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		if (position != null) {
 			int r = Utils.angleTo(nowX, nowY, position.x, position.y);
 			mHelper.addMoveByTick(r, moveTick);
-			// mHelper.addPollingEventByPos(PollingAction.CLOSETO, position.x, position.y,
-			// r, moveTick);
+			//mHelper.addPollingEventByPos(PollingAction.CLOSETO, position.x, position.y, r, moveTick);
 			log.debug("track angle is " + r);
 		} else {
-			int i = mRandom.nextInt(4);
-			int[] array = { 45, 135, 225, 315 };
-			if (i < array.length) {
-				mHelper.addMoveByTick(array[i], moveTick);
-			}
-			log.debug("track angle is " + array[i]);
+			log.debug("nULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
 		}
 		return position;
 	}
@@ -116,8 +108,7 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		boolean inBlock = Utils.inBlocks(position.x, position.y, AppConfig.BLOCK_SIZE, blocks, AppConfig.BLOCK_SIZE);
 		boolean outOfRange = mDatabase.isOutRange(position.x, position.y);
 		log.debug("inblock=" + inBlock + ",outof=" + outOfRange);
-		//return !inBlock && !outOfRange;
-		return !inBlock; 
+		return !inBlock && !outOfRange;
 	}
 
 	@Override
@@ -184,15 +175,9 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		if (position != null) {
 			int r = Utils.angleTo(nowX, nowY, position.x, position.y);
 			mHelper.addMoveByTick(r, moveTick);
-			// mHelper.addPollingEventByPos(PollingAction.CLOSETO, position.x, position.y,
-			// r, moveTick);
+			//mHelper.addPollingEventByPos(PollingAction.CLOSETO, position.x, position.y, r, moveTick);
 		} else {
-			int i = mRandom.nextInt(4);
-			int[] array = { 45, 135, 225, 315 };
-			if (i < array.length) {
-				mHelper.addMoveByTick(array[i], moveTick);
-			}
-			log.debug("track angle is " + array[i]);
+			log.debug("nULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
 		}
 		return position;
 	}

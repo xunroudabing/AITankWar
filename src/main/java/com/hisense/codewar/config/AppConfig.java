@@ -21,7 +21,7 @@ public class AppConfig {
 	 * 子弹速度
 	 */
 	public static int BULLET_SPEED = 12;
-	public static int TANK_SPEED = 9;
+	public static int TANK_SPEED = 3;
 	/**
 	 * 开火间隔
 	 */

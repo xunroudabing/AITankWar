@@ -35,26 +35,10 @@ public class FireHelper {
 		mTick++;
 	}
 
-	public boolean inFireDistance() {
-		TankGameInfo target = mAttackRadar.getTargetTank();
-		if (target != null) {
-			int nowX = mDatabase.getNowX();
-			int nowY = mDatabase.getNowY();
-			int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
-			if (distance <= 590) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	public boolean canFire() {
-		if (!inFireDistance()) {
-			return false;
-		}
 		return mTick >= AppConfig.FIRE_SPAN;
 	}
-
+	
 	public boolean fire(ITtank tank) {
 
 		TankGameInfo target = mAttackRadar.getTargetTank();

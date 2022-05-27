@@ -244,13 +244,13 @@ public class CombatMovementHelper {
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 
 			// 锁定
-			if (enemyTank != null) {
-				int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
-				int range = Utils.getFireRange(nowX, nowY, enemyTank.x, enemyTank.y);
-				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
-			} else {
-				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-			}
+//			if (enemyTank != null) {
+//				int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
+//				int range = Utils.getFireRange(nowX, nowY, enemyTank.x, enemyTank.y);
+//				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+//			} else {
+//				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
+//			}
 
 			log.debug(String.format("[Command-Dodge]tank[%d]pos[%d,%d]chead[%d]r[%d]tick[%d]", tank.id, nowX, nowY,
 					currentHeading, heading, dodgeTick));

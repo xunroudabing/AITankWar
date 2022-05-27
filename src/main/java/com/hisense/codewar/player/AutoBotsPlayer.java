@@ -50,10 +50,10 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	public void gametick(ITtank tank) {
 		// TODO Auto-generated method stub
 		try {
-			boolean canPolling = mMovementHelper.canPolling();
+			boolean canPolling = mMovementHelper.canPolling(mTick.get());
 			boolean canFire = mFireHelper.canFire();
 			boolean needDodge = mMovementHelper.needDodge(mTick.get());
-			boolean canMove = mMovementHelper.canMove();
+			boolean canMove = mMovementHelper.canMove(mTick.get());
 			log.debug(String.format("[T%d][Status] canFire[%b]needDodge[%b]", mTick.get(), canFire, needDodge));
 			if (needDodge) {
 				boolean dodgeDone = mMovementHelper.dodge(tank, mTick.get());
@@ -83,7 +83,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			} else if (canPolling) {
 				mMovementHelper.polling(tank, mTick.get());
 			}else {
-				mMovementHelper.lock(tank, mTick.get());
+				mMovementHelper.move(tank, mTick.get());
 			}
 
 		} catch (Exception e) {

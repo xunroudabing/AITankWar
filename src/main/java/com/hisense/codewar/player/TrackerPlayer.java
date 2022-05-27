@@ -77,7 +77,7 @@ public class TrackerPlayer implements TankGamePlayInterface {
 		try {
 			boolean canFire = mFireHelper.canFire();
 			boolean needDodge = mMovementHelper.needDodge(mTick.get());
-			boolean canMove = mMovementHelper.canMove();
+			boolean canMove = mMovementHelper.canMove(mTick.get());
 			log.debug("needDodge " + needDodge + " canMove " + canMove + " canfire " + canFire);
 			log.debug(String.format("[T%d][Status] canFire[%b]needDodge[%b]", mTick.get(), canFire, needDodge));
 			if (needDodge) {

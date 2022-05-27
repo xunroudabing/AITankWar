@@ -35,10 +35,26 @@ public class FireHelper {
 		mTick++;
 	}
 
+	public boolean inFireDistance() {
+		TankGameInfo target = mAttackRadar.getTargetTank();
+		if (target != null) {
+			int nowX = mDatabase.getNowX();
+			int nowY = mDatabase.getNowY();
+			int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
+			if (distance <= 590) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public boolean canFire() {
+		if (!inFireDistance()) {
+			return false;
+		}
 		return mTick >= AppConfig.FIRE_SPAN;
 	}
-	
+
 	public boolean fire(ITtank tank) {
 
 		TankGameInfo target = mAttackRadar.getTargetTank();
@@ -57,6 +73,7 @@ public class FireHelper {
 		// 避免误伤
 		if (willHitFriends(dest)) {
 			// boolean b = mRandom.nextBoolean();
+			return false;
 		}
 		// 射界内，不需要转向，直接开火
 		if (Math.abs(dest - heading) <= range) {
@@ -74,10 +91,10 @@ public class FireHelper {
 				int ranRange = mRandom.nextInt(range + 20);
 				dest = dest + seed * ranRange;
 			} else if (distance > 300 && distance <= 400) {
-				boolean b = mRandom.nextBoolean();
-				int seed = b ? 1 : -1;
-				int ranRange = mRandom.nextInt(range + 10);
-				dest = dest + seed * ranRange;
+//				boolean b = mRandom.nextBoolean();
+//				int seed = b ? 1 : -1;
+//				int ranRange = mRandom.nextInt(range + 10);
+//				dest = dest + seed * ranRange;
 			} else {
 				// 射界内加随机数
 				boolean b = mRandom.nextBoolean();

@@ -25,6 +25,9 @@ public class CombatMovementHelper {
 		System.out.println(tick);
 	}
 
+	private int mTick = 0;
+	// 记录上次躲闪时间，躲闪5个tick内不做move动作
+	private int mLastDodageTick = 0;
 	private FireHelper mFireHelper;
 	private CombatAttackRadar mAttackRadar;
 	private CombatRealTimeDatabase mDatabase;
@@ -34,6 +37,7 @@ public class CombatMovementHelper {
 	private BlockingQueue<PollingEvent> mPollingQueue;
 	private BlockingQueue<PostionEvent> mMoveQueue;
 	private BlockingQueue<MoveEvent> mDodgeQueue;
+	private static final int WONT_MOVE_DODAGEING = 5;
 	private static final Logger log = LoggerFactory.getLogger(CombatMovementHelper.class);
 
 	public CombatMovementHelper(CombatRealTimeDatabase database, CombatAttackRadar radar, FireHelper fireHelper) {
@@ -53,6 +57,8 @@ public class CombatMovementHelper {
 		mMoveEvent = null;
 		mDodgeEvent = null;
 		mPollingEvent = null;
+		mTick = 0;
+		mLastDodageTick = 0;
 	}
 
 	public boolean needDodge(int tick) {
@@ -134,6 +140,7 @@ public class CombatMovementHelper {
 	}
 
 	public boolean polling(ITtank tank, int tick) {
+		mTick = tick;
 		// 控制速度
 		if (tick % AppConfig.MOVE_ESCAPE_SPEED != 0) {
 			return false;
@@ -155,8 +162,8 @@ public class CombatMovementHelper {
 				log.debug(String.format("[T%d]tank[%d]cant polling,no tick left", tick, tank.id));
 				return false;
 			}
-			log.debug(String.format("[Command-Polling]action[%d]r[%d]xy[%d,%d]tick[%d]", mPollingEvent.action, mPollingEvent.r,
-					mPollingEvent.tx, mPollingEvent.ty,mPollingEvent.tick));
+			log.debug(String.format("[Command-Polling]action[%d]r[%d]xy[%d,%d]tick[%d]", mPollingEvent.action,
+					mPollingEvent.r, mPollingEvent.tx, mPollingEvent.ty, mPollingEvent.tick));
 			i--;
 			mPollingEvent.tick = i;
 			switch (mPollingEvent.action) {
@@ -177,13 +184,13 @@ public class CombatMovementHelper {
 			default:
 				break;
 			}
-		
-			
+
 		}
 		return false;
 	}
 
 	public void lock(ITtank tank, int tick) {
+		mTick = tick;
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
 		int currentHeading = mDatabase.getHeading();
@@ -197,6 +204,8 @@ public class CombatMovementHelper {
 	}
 
 	public boolean dodge(ITtank tank, int tick) {
+		mTick = tick;
+		mLastDodageTick = tick;
 		if (mDodgeEvent == null) {
 			try {
 				mDodgeEvent = mDodgeQueue.take();
@@ -244,13 +253,13 @@ public class CombatMovementHelper {
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 
 			// 锁定
-//			if (enemyTank != null) {
-//				int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
-//				int range = Utils.getFireRange(nowX, nowY, enemyTank.x, enemyTank.y);
-//				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
-//			} else {
-//				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-//			}
+			if (enemyTank != null) {
+				int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
+				int range = Utils.getFireRange(nowX, nowY, enemyTank.x, enemyTank.y);
+				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+			} else {
+				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
+			}
 
 			log.debug(String.format("[Command-Dodge]tank[%d]pos[%d,%d]chead[%d]r[%d]tick[%d]", tank.id, nowX, nowY,
 					currentHeading, heading, dodgeTick));
@@ -271,6 +280,7 @@ public class CombatMovementHelper {
 
 	// 移动
 	public boolean move(ITtank tank, int tick) {
+		mTick = tick;
 		if (mMoveEvent == null) {
 			try {
 				mMoveEvent = mMoveQueue.take();
@@ -329,7 +339,12 @@ public class CombatMovementHelper {
 		return false;
 	}
 
-	public boolean canPolling() {
+	public boolean canPolling(int tick) {
+		mTick = tick;
+		// Dodage后的5tick后才可以做动作
+		if (mTick - mLastDodageTick <= WONT_MOVE_DODAGEING) {
+			return false;
+		}
 		if (mPollingEvent != null) {
 			return mPollingEvent.tick > 0;
 		} else if (!mPollingQueue.isEmpty()) {
@@ -338,7 +353,12 @@ public class CombatMovementHelper {
 		return false;
 	}
 
-	public boolean canMove() {
+	public boolean canMove(int tick) {
+		mTick = tick;
+		// Dodage后的5tick后才可以做动作
+		if (mTick - mLastDodageTick <= WONT_MOVE_DODAGEING) {
+			return false;
+		}
 		if (mMoveEvent != null) {
 			return mMoveEvent.tick > 0;
 		} else if (!mMoveQueue.isEmpty()) {

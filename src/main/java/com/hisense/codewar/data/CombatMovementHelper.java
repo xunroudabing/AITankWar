@@ -25,21 +25,23 @@ public class CombatMovementHelper {
 		System.out.println(tick);
 	}
 
+	private int mLastDodageTick = 0;
 	private FireHelper mFireHelper;
 	private CombatAttackRadar mAttackRadar;
 	private CombatRealTimeDatabase mDatabase;
 	private PostionEvent mMoveEvent;
 	private MoveEvent mDodgeEvent;
 	private PollingEvent mPollingEvent;
-	private BlockingQueue<PollingEvent> mPollingQueue;
-	private BlockingQueue<PostionEvent> mMoveQueue;
-	private BlockingQueue<MoveEvent> mDodgeQueue;
+	private LimitedQueue<PollingEvent> mPollingQueue;
+	private LimitedQueue<PostionEvent> mMoveQueue;
+	private LimitedQueue<MoveEvent> mDodgeQueue;
+	private static final int QUEUE_SIZE = 5;
 	private static final Logger log = LoggerFactory.getLogger(CombatMovementHelper.class);
 
 	public CombatMovementHelper(CombatRealTimeDatabase database, CombatAttackRadar radar, FireHelper fireHelper) {
-		mDodgeQueue = new LinkedBlockingQueue<>();
-		mMoveQueue = new LinkedBlockingQueue<>();
-		mPollingQueue = new LinkedBlockingQueue<>();
+		mDodgeQueue = new LimitedQueue<>(QUEUE_SIZE);
+		mMoveQueue = new LimitedQueue<>(QUEUE_SIZE);
+		mPollingQueue = new LimitedQueue<>(QUEUE_SIZE);
 		mDatabase = database;
 		mAttackRadar = radar;
 		mFireHelper = fireHelper;
@@ -88,6 +90,11 @@ public class CombatMovementHelper {
 		mPollingQueue.add(event);
 	}
 
+	public void removeAllPolling() {
+		mPollingQueue.clear();
+		mPollingEvent = null;
+	}
+
 	public void addPollingEventByPos(int action, int x, int y, int r, int tick) {
 		PollingEvent event = new PollingEvent();
 		event.action = action;
@@ -113,6 +120,15 @@ public class CombatMovementHelper {
 		int tick = b.divide(BigDecimal.valueOf(AppConfig.TANK_SPEED), 0, BigDecimal.ROUND_CEILING).intValue();
 		event.tick = tick;
 		mDodgeQueue.add(event);
+	}
+
+	public void removeAllMove() {
+		mMoveQueue.clear();
+		mMoveEvent = null;
+	}
+
+	public int getMoveToDoCount() {
+		return mMoveQueue.size();
 	}
 
 	public void addMoveByTick(int r, int tick) {
@@ -155,8 +171,8 @@ public class CombatMovementHelper {
 				log.debug(String.format("[T%d]tank[%d]cant polling,no tick left", tick, tank.id));
 				return false;
 			}
-			log.debug(String.format("[Command-Polling]action[%d]r[%d]xy[%d,%d]tick[%d]", mPollingEvent.action, mPollingEvent.r,
-					mPollingEvent.tx, mPollingEvent.ty,mPollingEvent.tick));
+			log.debug(String.format("[Command-Polling]action[%d]r[%d]xy[%d,%d]tick[%d]", mPollingEvent.action,
+					mPollingEvent.r, mPollingEvent.tx, mPollingEvent.ty, mPollingEvent.tick));
 			i--;
 			mPollingEvent.tick = i;
 			switch (mPollingEvent.action) {
@@ -177,8 +193,10 @@ public class CombatMovementHelper {
 			default:
 				break;
 			}
-		
-			
+			if (i <= 0) {
+				mPollingEvent = null;
+			}
+
 		}
 		return false;
 	}
@@ -194,6 +212,11 @@ public class CombatMovementHelper {
 			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
 			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
 		}
+	}
+
+	public boolean isDodgeing(int tick) {
+		int span = tick - mLastDodageTick;
+		return false;
 	}
 
 	public boolean dodge(ITtank tank, int tick) {
@@ -242,7 +265,7 @@ public class CombatMovementHelper {
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
-
+			mLastDodageTick = tick;
 			// 锁定
 //			if (enemyTank != null) {
 //				int dest = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
@@ -297,6 +320,9 @@ public class CombatMovementHelper {
 //			}
 			moveTick--;
 			mMoveEvent.tick = moveTick;
+			if (mMoveEvent.tick <= 0) {
+				mMoveEvent = null;
+			}
 			int nowX = mDatabase.getNowX();
 			int nowY = mDatabase.getNowY();
 
@@ -312,17 +338,18 @@ public class CombatMovementHelper {
 			}
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
+			
 
 			TankGameInfo enemyTank = mAttackRadar.getTargetTank();
 			if (enemyTank != null) {
 				int angle = Utils.angleTo(nowX, nowY, enemyTank.x, enemyTank.y);
 				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, angle);
 			}
-			log.debug(String.format("[T%d][Command-Move]tank[%d]pos[%d,%d]r[%d]nextPos[%d,%d]heading[%d]movetick[%d]",
-					tick, tank.id, nowX, nowY, dest, x, y, dest, moveTick));
-			if (mMoveEvent.tick <= 0) {
+			if (moveTick <= 0) {
 				mMoveEvent = null;
 			}
+			log.debug(String.format("[T%d][Command-Move]tank[%d]pos[%d,%d]r[%d]nextPos[%d,%d]heading[%d]movetick[%d]",
+					tick, tank.id, nowX, nowY, dest, x, y, dest, moveTick));
 			return true;
 		}
 		log.debug(String.format("tank[%d]cant move,no moveEvent", tank.id));

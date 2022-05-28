@@ -192,6 +192,7 @@ public class MoveMentRadar {
 		int nowY = mDatabase.getNowY();
 		boolean isOut = mDatabase.isOut(nowX, nowY);
 		if (isOut) {
+			mHelper.removeAllPolling();
 			mHelper.addPollingEventByAction(PollingAction.AVOID_POISION, 3);
 		} else {
 			farFromFriends();

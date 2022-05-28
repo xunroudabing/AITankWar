@@ -132,6 +132,12 @@ public class CombatRealTimeDatabase {
 		log.debug(String.format("[Map][%d,%d]-[%d,%d]-[%d,%d]-[%d,%d]width[%d]height[%d]", minX, minY, minX, maxY, maxX,
 				maxY, maxX, minY, battleFieldWidth, battleFieldHeight));
 	}
+	//中心点
+	public Position getMiddlePostion() {
+		int x = Math.abs(maxX - minX) / 2;
+		int y = Math.abs(maxY - minY) / 2;
+		return new Position(x, y);
+	}
 
 	public void updateAllTanks(List<TankGameInfo> list) {
 		mAllTanks.clear();
@@ -241,9 +247,9 @@ public class CombatRealTimeDatabase {
 	}
 
 	public boolean isOut(int x, int y) {
-		if (x > maxX - AppConfig.TANK_WIDTH || x < minX + AppConfig.TANK_WIDTH) {
+		if (x > maxX || x < minX) {
 			return true;
-		} else if (y > maxY - AppConfig.TANK_WIDTH || y < minY + AppConfig.TANK_WIDTH) {
+		} else if (y > maxY|| y < minY) {
 			return true;
 		}
 		return false;

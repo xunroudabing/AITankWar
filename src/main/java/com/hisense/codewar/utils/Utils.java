@@ -16,14 +16,14 @@ public class Utils {
 	private static final Logger log = LoggerFactory.getLogger(Utils.class);
 
 	public static void main(String[] args) {
-		int x1 = 0;
-		int y1 = 0;
-
-		int x2 = 10;
-		int y2 = 0;
-
-		int x3 = 5;
-		int y3 = 0;
+//		int x1 = 0;
+//		int y1 = 0;
+//
+//		int x2 = 10;
+//		int y2 = 0;
+//
+//		int x3 = 5;
+//		int y3 = 0;
 
 //		Position p4 = Utils.getFoot(new Position(x1, y1), new Position(x2, y2), new Position(x3, y3));
 //		System.out.println(p4);
@@ -36,9 +36,29 @@ public class Utils {
 //
 //		Position position = Utils.crossPoint(p1, p2, p3, p4);
 //		System.out.println(position);
-
-		int bearing = Utils.bearing(180, 0);
-		System.out.println(bearing);
+//
+//		int bearing = Utils.bearing(180, 0);
+//		System.out.println(bearing);
+		
+		//[529,394]xforce[-36]yforce[-53]result[565,447]
+		
+		int x1 = 529;
+		int y1 = 394;
+		
+		int x2 = 565;
+		int y2 = 447;
+		
+		int angle1 = Utils.angleTo(x1, y1, x2, y2);
+		
+		int angel2 = Utils.angleTo2(x1, y1, x2, y2);
+		
+		System.out.println(angle1);
+		System.out.println(angel2);
+		
+		for(int i=0;i<10;i++) {
+			Position position = Utils.getNextTankPostion(x1, y1, -90, i);
+			System.out.println(position);
+		}
 
 	}
 
@@ -92,6 +112,23 @@ public class Utils {
 			ret -= 180;
 		}
 		return ret;
+	}
+	
+	public static int angleTo2(int nowx, int nowy, int tx, int ty) {
+		int dest_deg = 0;
+		 if (tx == nowx) {
+	            if (ty > nowy) {
+	                dest_deg = 90;
+	            } else {
+	                dest_deg = 270;
+	            }
+	        } else {
+	            dest_deg = r2a(Math.atan((float)(ty - nowy) / (float)(tx) - nowx));
+	        }
+	        if (tx < nowx && ty < nowy || (tx < nowx && ty > nowy)) {
+	            dest_deg += 180;
+	        }
+	        return dest_deg;
 	}
 
 	public static int formatAngle(int angle) {

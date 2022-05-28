@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.antigrave.AntiGraveMover;
 import com.hisense.codewar.data.CombatAttackRadar;
 import com.hisense.codewar.data.CombatMovementHelper;
 import com.hisense.codewar.data.CombatRealTimeDatabase;
@@ -26,6 +27,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	private Random mRandom = new Random();
 	private AtomicInteger mTick;
 	private int mTankId = 0;
+	private AntiGraveMover mAntiGraveMover;
 	private FireHelper mFireHelper;
 	private CombatMovementHelper mMovementHelper;
 	private MoveMentRadar mMoveMentRadar;
@@ -43,6 +45,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		mMovementHelper = new CombatMovementHelper(mCombatRealTimeDatabase, mAttackRadar, mFireHelper);
 		mCombatWarningRadar = new CombatWarningRadar(mCombatRealTimeDatabase, mMovementHelper);
 		mMoveMentRadar = new MoveMentRadar(mCombatRealTimeDatabase, mAttackRadar, mMovementHelper);
+		mAntiGraveMover = new AntiGraveMover(mCombatRealTimeDatabase,mAttackRadar, mMovementHelper,mFireHelper);
 
 	}
 
@@ -75,6 +78,10 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 					} else {
 						mFireHelper.fire(tank);
 					}
+				}else {
+					if (canMove) {
+						mMovementHelper.move(tank, mTick.get());
+					}
 				}
 
 			} else if (canMove) {
@@ -83,7 +90,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			} else if (canPolling) {
 				mMovementHelper.polling(tank, mTick.get());
 			}else {
-				mMovementHelper.lock(tank, mTick.get());
+				mMovementHelper.move(tank, mTick.get());
 			}
 
 		} catch (Exception e) {
@@ -91,26 +98,6 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			log.error(e.fillInStackTrace().getLocalizedMessage());
 		}
 
-	}
-
-	protected void randomMove(ITtank tank) {
-		int rr = 0;
-		if (mTick.get() % 100 == 0) {
-
-			rr = mRandom.nextInt(360);
-
-		}
-
-		mMovementHelper.addMoveByTick(rr, 1);
-
-		if (mTick.get() % 5 == 0) {
-			Random random = new Random();
-			int r = random.nextInt(360);
-			mMovementHelper.addMoveByTick(rr, 1);
-			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, 0);
-		} else {
-			mMovementHelper.addMoveByTick(rr, 2);
-		}
 	}
 
 	@Override
@@ -121,7 +108,6 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			long start = System.currentTimeMillis();
 			mTick.getAndIncrement();
 			mTankId = tank.id;
-
 			mFireHelper.reload(mTick.get());
 			mCombatRealTimeDatabase.setMyTankId(mTankId);
 			mCombatRealTimeDatabase.updateAllTanks(tanks);
@@ -129,7 +115,8 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			mCombatRealTimeDatabase.updatePoisionR(r);
 			mCombatWarningRadar.scan(mTick.get());
 			mAttackRadar.scan(mTick.get());
-			mMoveMentRadar.scan(mTick.get());
+			//mMoveMentRadar.scan(mTick.get());
+			mAntiGraveMover.move(mTick.get());
 			long end = System.currentTimeMillis();
 			long cost = end - start;
 			log.debug(String.format("[ScanCost]PoisionR[%d][%d]cost %d ms", r, mTick.get(), cost));

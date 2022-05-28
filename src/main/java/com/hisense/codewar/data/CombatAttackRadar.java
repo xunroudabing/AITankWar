@@ -14,11 +14,10 @@ import com.hisense.codewar.utils.Utils;
 
 public class CombatAttackRadar {
 	int mTick = 0;
-	private int mNearestTankId;
-	private int mTargetTankId;
+	private int mNearestTankId=-1;
+	private int mTargetTankId=-1;
 	private TankGameInfo mTargetTank;
 	private List<FireRange> mFriendsFireRange;
-
 	private List<TankGameInfo> mTargets;
 	private CombatRealTimeDatabase mDatabase;
 	private static final Logger log = LoggerFactory.getLogger(CombatAttackRadar.class);
@@ -60,10 +59,10 @@ public class CombatAttackRadar {
 		TankGameInfo leader = mDatabase.getLeader();
 
 		int enemyId = -1;
-		int minDistance = -1;
+		int minDistance = Integer.MAX_VALUE;
 		mFriendsFireRange.clear();
 		int nearEnemyId = -1;
-		int nearMinDistance = -1;
+		int nearMinDistance = Integer.MAX_VALUE;
 		while (iterator.hasNext()) {
 			TankGameInfo enemyTank = (TankGameInfo) iterator.next();
 			int tankid = enemyTank.id;
@@ -75,17 +74,12 @@ public class CombatAttackRadar {
 			}
 			int distance = Utils.distanceTo(leader.x, leader.y, enemyTank.x, enemyTank.y);
 			int nearDis = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
-			if (minDistance < 0) {
-				minDistance = distance;
-				enemyId = enemyTank.getId();
-			} else if (distance < minDistance) {
+			if (distance < minDistance) {
 				minDistance = distance;
 				enemyId = enemyTank.getId();
 			}
 
-			if (nearMinDistance < 0) {
-				nearMinDistance = nearDis;
-			} else if (nearDis < nearMinDistance) {
+			if (nearDis < nearMinDistance) {
 				nearMinDistance = nearDis;
 				nearEnemyId = enemyTank.id;
 			}

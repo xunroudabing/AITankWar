@@ -134,12 +134,12 @@ public class SimpleTracker implements ITrackingAlgorithm {
 
 			if (position == null) {
 				if (targetY > nowY) {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+					Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
 					if (isValid(p)) {
 						position = p;
 					}
 				} else {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+					Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
 					if (isValid(p)) {
 						position = p;
 					}
@@ -147,12 +147,12 @@ public class SimpleTracker implements ITrackingAlgorithm {
 			}
 		} else {
 			if (targetY > nowY) {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+				Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
 				if (isValid(p)) {
 					position = p;
 				}
 			} else {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+				Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
 				if (isValid(p)) {
 					position = p;
 				}

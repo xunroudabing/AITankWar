@@ -9,16 +9,16 @@ public class Wave {
 	public static void main(String[] args) {
 		int x1 = 200;
 		int y1 = 200;
-		
+
 		int x2 = 300;
 		int y2 = 200;
-		
+
 		int startX = 0;
 		int startY = 0;
 		int absBearing = Utils.angleTo(startX, startY, x1, y1);
 		int angleCurrent = Utils.angleTo(startX, startY, x2, y2);
 		int aimAngle = Utils.normalRelativeAngleDegrees(Utils.formatAngle(angleCurrent - absBearing));
-		
+
 		System.out.println("absBearing=" + absBearing + ",angleCurrent=" + angleCurrent + ",aim=" + aimAngle);
 	}
 
@@ -54,8 +54,8 @@ public class Wave {
 		// 波目前的传播距离
 		int waveDistance = AppConfig.BULLET_SPEED * tickPassed;
 		int distance = Utils.distanceTo(myStartPos.x, myStartPos.y, tank.x, tank.y);
-		//波击中目标
-		if (waveDistance >= distance) {
+		// 波击中目标
+		if (waveDistance >= distance + AppConfig.TARGET_RADIUS * 2) {
 
 			int angleCurrent = Utils.angleTo(myStartPos.x, myStartPos.y, tank.x, tank.y);
 			int aimAngle = Utils.normalRelativeAngleDegrees(Utils.formatAngle(angleCurrent - absBearing));

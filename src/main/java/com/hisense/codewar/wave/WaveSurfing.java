@@ -74,7 +74,7 @@ public class WaveSurfing {
 		Iterator<Wave> iter = queue.iterator();
 		while (iter.hasNext()) {
 			Wave w = iter.next();
-			// 計算歐幾里德距離，匹配信號相似度
+			//匹配信號相似度
 			distance = Math.pow(velSeg - w.getVelSeg(), 2) + Math.pow((adSeg - w.getAdSeg()), 2)
 					+ Math.pow((w.getDist() - dis) / 200, 2);
 			if (distance < maxMatch) {

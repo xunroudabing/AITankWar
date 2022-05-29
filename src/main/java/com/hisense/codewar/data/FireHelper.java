@@ -16,6 +16,7 @@ import com.hisense.codewar.wave.WaveSurfing;
 
 public class FireHelper {
 	private Random mRandom = new Random();
+	private CombatStatistics mStatistics;
 	private int mTick = 60;
 	CombatRealTimeDatabase mDatabase;
 	CombatAttackRadar mAttackRadar;
@@ -26,7 +27,9 @@ public class FireHelper {
 		mAttackRadar = attackRadar;
 		mTick = AppConfig.FIRE_SPAN;
 	}
-
+	public void setStatistics(CombatStatistics s) {
+		mStatistics = s;
+	}
 	public void reset() {
 		mTick = AppConfig.FIRE_SPAN;
 	}
@@ -76,6 +79,9 @@ public class FireHelper {
 		log.debug(String.format("[WaveFire]me[%d]pos[%d,%d]dest[%d]bestDest[%d]aim[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
 				mtankid, nowX, nowY, dest, bestDest, aim, target.id, target.x, target.y, target.r));
 		mTick = 0;
+		if(mStatistics != null) {
+			mStatistics.fireCounter();
+		}
 		return true;
 	}
 

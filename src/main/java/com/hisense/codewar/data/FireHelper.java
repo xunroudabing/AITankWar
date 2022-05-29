@@ -12,6 +12,7 @@ import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGameActionType;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.Utils;
+import com.hisense.codewar.wave.WaveSurfing;
 
 public class FireHelper {
 	private Random mRandom = new Random();
@@ -41,6 +42,41 @@ public class FireHelper {
 
 	public boolean canFire() {
 		return mTick >= AppConfig.FIRE_SPAN;
+	}
+
+	public boolean wavefire(ITtank tank, WaveSurfing waveSurfing) {
+		TankGameInfo target = mAttackRadar.getTargetTank();
+		if (target == null) {
+			log.debug("[Fire]not target!!");
+			return false;
+		}
+		int mtankid = mDatabase.getMyTankId();
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int heading = mDatabase.getHeading();
+
+		int bestDest = Utils.angleTo(nowX, nowY, target.x, target.y);
+		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
+		// 波统计瞄准角度
+		int aim = (int) waveSurfing.getBestMatchFireAngle(target.id);
+		int dest = bestDest + aim;
+		// 避免误伤
+		if (willHitFriends(dest)) {
+			return false;
+		}
+		// 射界内，不需要转向，直接开火
+		if (Math.abs(dest - heading) <= range) {
+			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+		} else {
+			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+		}
+
+		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+		log.debug(String.format("[WaveFire]me[%d]pos[%d,%d]dest[%d]bestDest[%d]aim[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+				mtankid, nowX, nowY, dest, bestDest, aim, target.id, target.x, target.y, target.r));
+		mTick = 0;
+		return true;
 	}
 
 	public boolean fire(ITtank tank) {

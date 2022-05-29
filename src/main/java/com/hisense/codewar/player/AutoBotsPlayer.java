@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.antigrave.AntiGraveMover;
 import com.hisense.codewar.data.CombatAttackRadar;
+import com.hisense.codewar.data.CombatEnemyDatabase;
 import com.hisense.codewar.data.CombatMovementHelper;
 import com.hisense.codewar.data.CombatRealTimeDatabase;
 import com.hisense.codewar.data.CombatWarningRadar;
@@ -16,17 +17,18 @@ import com.hisense.codewar.data.FireHelper;
 import com.hisense.codewar.data.MoveMentRadar;
 import com.hisense.codewar.model.HitInfo;
 import com.hisense.codewar.model.ITtank;
-import com.hisense.codewar.model.TankGameActionType;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankGamePlayInterface;
 import com.hisense.codewar.model.TankMapProjectile;
-import com.hisense.codewar.utils.PoisionCircleUtils;
+import com.hisense.codewar.wave.WaveSurfing;
 
 public class AutoBotsPlayer implements TankGamePlayInterface {
 
 	private Random mRandom = new Random();
 	private AtomicInteger mTick;
 	private int mTankId = 0;
+	private WaveSurfing mWaveSurfing;
+	private CombatEnemyDatabase mEnemyDatabase;
 	private AntiGraveMover mAntiGraveMover;
 	private FireHelper mFireHelper;
 	private CombatMovementHelper mMovementHelper;
@@ -46,6 +48,8 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		mCombatWarningRadar = new CombatWarningRadar(mCombatRealTimeDatabase, mMovementHelper);
 		mMoveMentRadar = new MoveMentRadar(mCombatRealTimeDatabase, mAttackRadar, mMovementHelper);
 		mAntiGraveMover = new AntiGraveMover(mCombatRealTimeDatabase,mAttackRadar, mMovementHelper,mFireHelper);
+		mEnemyDatabase = new CombatEnemyDatabase(mCombatRealTimeDatabase);
+		mWaveSurfing = new WaveSurfing(mCombatRealTimeDatabase, mEnemyDatabase);
 
 	}
 
@@ -76,7 +80,13 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 							mMovementHelper.move(tank, mTick.get());
 						}
 					} else {
-						mFireHelper.fire(tank);
+						boolean ret = mFireHelper.fire(tank);
+						//无法射击
+						if(!ret) {
+							if (canMove) {
+								mMovementHelper.move(tank, mTick.get());
+							}
+						}
 					}
 				}else {
 					if (canMove) {
@@ -112,11 +122,13 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			mCombatRealTimeDatabase.setMyTankId(mTankId);
 			mCombatRealTimeDatabase.updateAllTanks(tanks);
 			mCombatRealTimeDatabase.updateProjectiles(projectiles);
-			mCombatRealTimeDatabase.updatePoisionR(r);
+			mCombatRealTimeDatabase.updatePoisionR(r);			
 			mCombatWarningRadar.scan(mTick.get());
+			mEnemyDatabase.scan(mTick.get());
 			mAttackRadar.scan(mTick.get());
 			//mMoveMentRadar.scan(mTick.get());
 			mAntiGraveMover.move(mTick.get());
+			mWaveSurfing.scan(mTick.get());
 			long end = System.currentTimeMillis();
 			long cost = end - start;
 			log.debug(String.format("[ScanCost]PoisionR[%d][%d]cost %d ms", r, mTick.get(), cost));

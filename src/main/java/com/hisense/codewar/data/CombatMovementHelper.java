@@ -1,14 +1,9 @@
 package com.hisense.codewar.data;
 
 import java.math.BigDecimal;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hisense.codewar.algorithm.ITrackingAlgorithm;
-import com.hisense.codewar.algorithm.SimpleTracker;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.Position;

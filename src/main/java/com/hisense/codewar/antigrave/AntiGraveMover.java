@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.CombatAttackRadar;
 import com.hisense.codewar.data.CombatMovementHelper;
-import com.hisense.codewar.data.CombatMovementHelper.PollingAction;
 import com.hisense.codewar.data.CombatRealTimeDatabase;
 import com.hisense.codewar.data.FireHelper;
 import com.hisense.codewar.model.Bullet;
@@ -27,11 +26,11 @@ import com.hisense.codewar.utils.Utils;
  */
 public class AntiGraveMover {
 	public static void main(String[] args) {
-		int nowX = 190;
+		int nowX = 204;
 		int nowY = 198;
 		int px = 244;
 		int py = 198;
-		int power = -2;
+		int power = -5;
 
 		int distance = Utils.distanceTo(nowX, nowY, px, py);
 		System.out.println("dis=" + distance + " pow=" + Math.pow(Utils.distanceTo(nowX, nowY, px, py) / FACTOR, 2));
@@ -113,8 +112,7 @@ public class AntiGraveMover {
 			// Find the bearing from the point to us
 			int angle = Utils.angleTo(p.getX(), p.getY(), nowX, nowY);
 			double angleToR = Utils.a2r(angle);
-			// Add the components of this force to the total force in their respective
-			// directions
+
 			xforce += Math.cos(angleToR) * force;
 			yforce += Math.sin(angleToR) * force;
 //			log.debug(String.format(

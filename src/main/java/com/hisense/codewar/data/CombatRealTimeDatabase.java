@@ -2,7 +2,6 @@ package com.hisense.codewar.data;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -14,7 +13,6 @@ import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankMapBlock;
 import com.hisense.codewar.model.TankMapProjectile;
-import com.hisense.codewar.utils.PoisionCircleUtils;
 import com.hisense.codewar.utils.Utils;
 import com.jfinal.kit.PropKit;
 
@@ -47,7 +45,7 @@ public class CombatRealTimeDatabase {
 	private List<TankMapProjectile> mProjectiles;
 	private List<TankGameInfo> mAllTanks;
 	private List<TankMapBlock> mBlocks;
-
+	
 	private List<TankGameInfo> mEnemyTanks;
 	private List<TankGameInfo> mFriendTanks;
 	private List<Bullet> mBullets;
@@ -132,7 +130,8 @@ public class CombatRealTimeDatabase {
 		log.debug(String.format("[Map][%d,%d]-[%d,%d]-[%d,%d]-[%d,%d]width[%d]height[%d]", minX, minY, minX, maxY, maxX,
 				maxY, maxX, minY, battleFieldWidth, battleFieldHeight));
 	}
-	//中心点
+
+	// 中心点
 	public Position getMiddlePostion() {
 		int x = Math.abs(maxX - minX) / 2;
 		int y = Math.abs(maxY - minY) / 2;
@@ -249,7 +248,7 @@ public class CombatRealTimeDatabase {
 	public boolean isOut(int x, int y) {
 		if (x > maxX || x < minX) {
 			return true;
-		} else if (y > maxY|| y < minY) {
+		} else if (y > maxY || y < minY) {
 			return true;
 		}
 		return false;

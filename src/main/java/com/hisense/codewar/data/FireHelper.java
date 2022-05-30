@@ -121,6 +121,9 @@ public class FireHelper {
 		log.debug(String.format("[Fire]me[%d]pos[%d,%d]dest[%d]-->tankid[%d]pos[%d,%d]heading[%d]", mtankid, nowX, nowY,
 				dest, target.id, target.x, target.y, target.r));
 		mTick = 0;
+		if(mStatistics != null) {
+			mStatistics.fireCounter();
+		}
 		return true;
 	}
 

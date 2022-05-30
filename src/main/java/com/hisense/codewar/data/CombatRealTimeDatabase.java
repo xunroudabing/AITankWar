@@ -26,7 +26,7 @@ public class CombatRealTimeDatabase {
 	public static void main(String[] args) {
 		CombatRealTimeDatabase database = new CombatRealTimeDatabase();
 	}
-
+	private Map mMap;
 	private int minX;
 	private int maxX;
 	private int minY;
@@ -45,7 +45,7 @@ public class CombatRealTimeDatabase {
 	private List<TankMapProjectile> mProjectiles;
 	private List<TankGameInfo> mAllTanks;
 	private List<TankMapBlock> mBlocks;
-	
+
 	private List<TankGameInfo> mEnemyTanks;
 	private List<TankGameInfo> mFriendTanks;
 	private List<Bullet> mBullets;
@@ -65,6 +65,11 @@ public class CombatRealTimeDatabase {
 		maxX = AppConfig.MAP_WITH;
 		minY = 0;
 		maxY = AppConfig.MAP_HEIGHT;
+		mMap = new Map();
+		mMap.minX = minX;
+		mMap.maxX = maxX;
+		mMap.minY = 0;
+		mMap.maxY = maxY;
 		initFriendTanks();
 	}
 
@@ -84,6 +89,10 @@ public class CombatRealTimeDatabase {
 		minY = 0;
 		maxY = AppConfig.MAP_HEIGHT;
 		radius = AppConfig.MAP_WITH / 2;
+		mMap.minX = minX;
+		mMap.maxX = maxX;
+		mMap.minY = 0;
+		mMap.maxY = maxY;
 	}
 
 	public int getThreatBulletsCount() {
@@ -127,6 +136,12 @@ public class CombatRealTimeDatabase {
 
 		battleFieldWidth = radius * 2;
 		battleFieldHeight = battleFieldWidth * 9 / 16;
+		
+		mMap.minX = minX;
+		mMap.maxX = maxX;
+		mMap.minY = minY;
+		mMap.maxY = maxY;
+		
 		log.debug(String.format("[Map][%d,%d]-[%d,%d]-[%d,%d]-[%d,%d]width[%d]height[%d]", minX, minY, minX, maxY, maxX,
 				maxY, maxX, minY, battleFieldWidth, battleFieldHeight));
 	}
@@ -224,6 +239,12 @@ public class CombatRealTimeDatabase {
 		return Utils.inBlocks(x, y, AppConfig.BLOCK_SIZE, getBlocks(), AppConfig.BLOCK_SIZE);
 	}
 
+	public boolean isNearBorderCantMoveByDistance(int nowX, int nowY, int r, int distance) {
+		Position endPosition = Utils.getNextPositionByDistance(nowX, nowY, r, distance);
+		return isNearBorderCantMove(endPosition.x, endPosition.y);
+
+	}
+
 	public boolean isOutRangeByDistance(int nowX, int nowY, int r, int distance) {
 		Position endPosition = Utils.getNextPositionByDistance(nowX, nowY, r, distance);
 		return isOut(endPosition.x, endPosition.y);
@@ -231,6 +252,10 @@ public class CombatRealTimeDatabase {
 
 	public boolean isCrossBlocksByDistance(int nowX, int nowY, int r, int distance) {
 		return Utils.isCrossBlockByDistance(nowX, nowY, r, distance, getBlocks(), AppConfig.BLOCK_SIZE);
+	}
+
+	public boolean isNextPointInBlocks(int nowX, int nowY, int r, int distance) {
+		return Utils.isNextPointInBlocks(nowX, nowY, r, distance, getBlocks(), AppConfig.BLOCK_SIZE);
 	}
 
 	public boolean fireInBlocks(int nowX, int nowY, int tx, int ty) {
@@ -243,6 +268,19 @@ public class CombatRealTimeDatabase {
 
 	public int getBattleFieldHeight() {
 		return battleFieldHeight;
+	}
+	
+	public Map getMap() {
+		return mMap;
+	}
+	// 在最边上且小于半径，无法移动
+	public boolean isNearBorderCantMove(int x, int y) {
+		if (x > maxX - AppConfig.TANK_SIZE || x < minX + AppConfig.TANK_SIZE) {
+			return true;
+		} else if (y > maxY - AppConfig.TANK_SIZE || y < minY + AppConfig.TANK_SIZE) {
+			return true;
+		}
+		return false;
 	}
 
 	public boolean isOut(int x, int y) {

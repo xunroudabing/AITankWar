@@ -84,6 +84,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 							mMovementHelper.move(tank, mTick.get());
 						}
 					} else {
+						//boolean ret = mFireHelper.wavefire(tank,mWaveSurfing);
 						boolean ret = mFireHelper.fire(tank);
 						// 无法射击
 						if (!ret) {
@@ -130,11 +131,11 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			mCombatRealTimeDatabase.updateProjectiles(projectiles);
 			mCombatRealTimeDatabase.updatePoisionR(r);
 			mCombatWarningRadar.scan(mTick.get());
-			mEnemyDatabase.scan(mTick.get());
+			//mEnemyDatabase.scan(mTick.get());
 			mAttackRadar.scan(mTick.get());
 			// mMoveMentRadar.scan(mTick.get());
 			mAntiGraveMover.move(mTick.get());
-			mWaveSurfing.scan(mTick.get());
+			//mWaveSurfing.scan(mTick.get());
 			hitEnemyCount(hits);
 			long end = System.currentTimeMillis();
 			long cost = end - start;
@@ -152,6 +153,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		// TODO Auto-generated method stub
 		log.info(String.format("###########TANK[%d][%d]BattleSTART############", mTankId, 1));
 		mCombatRealTimeDatabase.reset();
+		mEnemyDatabase.reset();
 		mCombatWarningRadar.reset();
 		mAttackRadar.reset();
 		mMovementHelper.reset();
@@ -163,14 +165,16 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 
 	@Override
 	public void gameend(ITtank tank) {
-		// TODO Auto-generated method stub
+		// TODO Auto-generated method stub		
 		log.info(String.format("###########TANK[%d][%d]BattleEND############", mTankId, 1));
+		mCombatStatistics.show();
 		mCombatRealTimeDatabase.reset();
 		mCombatWarningRadar.reset();
 		mAttackRadar.reset();
 		mMovementHelper.reset();
 		mFireHelper.reset();
 		mMoveMentRadar.reset();
+		mEnemyDatabase.reset();
 		mTick.set(0);
 	}
 
@@ -182,12 +186,12 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		for (HitInfo hitInfo : hits) {
 			if (hitInfo.sTankid == tankid) {
 				int enemyId = hitInfo.dTankid;
-				log.info(String.format("[Battle-INFO][T%d]Me[%d]hit--->Enemy[%d]", mTick,tankid, enemyId));
+				log.info(String.format("[Battle-INFO][T%d]Me[%d]hit--->Enemy[%d]", mTick.get(),tankid, enemyId));
 				mCombatStatistics.hitCounter();
 			}else if(hitInfo.dTankid == tankid) {
 				int enemyId = hitInfo.sTankid;
 				mCombatStatistics.hitmeCounter();
-				log.info(String.format("[Battle-INFO][T%d]Enemy[%d]hit--->Me[%d]", mTick,enemyId, tankid));
+				log.info(String.format("[Battle-INFO][T%d]Enemy[%d]hit--->Me[%d]", mTick.get(),enemyId, tankid));
 			}
 		}
 	}

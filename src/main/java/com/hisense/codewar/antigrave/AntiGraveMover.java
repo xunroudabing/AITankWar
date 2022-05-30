@@ -12,6 +12,7 @@ import com.hisense.codewar.data.CombatAttackRadar;
 import com.hisense.codewar.data.CombatMovementHelper;
 import com.hisense.codewar.data.CombatRealTimeDatabase;
 import com.hisense.codewar.data.FireHelper;
+import com.hisense.codewar.data.Map;
 import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
@@ -85,8 +86,8 @@ public class AntiGraveMover {
 	private CombatRealTimeDatabase mDatabase;
 	private CombatMovementHelper mHelper;
 	private static final int FRIEND_POWER = 1000;
-	private static final int BLOCK_POWER = -10;
-	private static final int FACTOR = 40;
+	private static final int BLOCK_POWER = -2;
+	private static final int FACTOR = 20;
 	private static final Logger log = LoggerFactory.getLogger(AntiGraveMover.class);
 
 	public AntiGraveMover(CombatRealTimeDatabase database, CombatAttackRadar radar, CombatMovementHelper helper,
@@ -120,10 +121,11 @@ public class AntiGraveMover {
 //					tankid, p.getX(), p.getY(), nowX, nowY, p.getPower(), angle, force, xforce, yforce));
 		}
 		// blocks
-		xforce += 5000 / Math.pow(Utils.distanceTo(nowX, nowY, mDatabase.getBattleFieldWidth(), nowY) / FACTOR, 3);
-		xforce -= 5000 / Math.pow(Utils.distanceTo(nowX, nowY, 0, nowY) / FACTOR, 3);
-		yforce += 5000 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, mDatabase.getBattleFieldHeight()) / FACTOR, 3);
-		yforce -= 5000 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, 0) / FACTOR, 3);
+		Map map = mDatabase.getMap();
+		xforce += 5000 / Math.pow(Utils.distanceTo(nowX, nowY, map.maxX, nowY) / FACTOR, 3);
+		xforce -= 5000 / Math.pow(Utils.distanceTo(nowX, nowY, map.minX, nowY) / FACTOR, 3);
+		yforce += 5000 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.maxY) / FACTOR, 3);
+		yforce -= 5000 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.minY) / FACTOR, 3);
 
 		int lx = nowX - xforce;
 		int ly = nowY - yforce;
@@ -135,10 +137,11 @@ public class AntiGraveMover {
 		Position positionX = Utils.getNextTankPostion(nowX, nowY, angleX, 1);
 		Position positionY = Utils.getNextTankPostion(nowX, nowY, angleX, 1);
 		// x轴方向有block，不移动
-		if (mDatabase.inBlocks(positionX.x, positionX.y)) {
+		if (mDatabase.inBlocks(positionX.x, positionX.y) || mDatabase.isNearBorderCantMove(positionX.x, positionY.y)) {
 			lx = nowX;
 			ly -= yforce > 0 ? Math.abs(xforce) : -Math.abs(xforce);
-		} else if (mDatabase.inBlocks(positionY.x, positionY.y)) {
+		} else if (mDatabase.inBlocks(positionY.x, positionY.y)
+				|| mDatabase.isNearBorderCantMove(positionX.x, positionY.y)) {
 			ly = nowY;
 			lx -= xforce > 0 ? Math.abs(yforce) : -Math.abs(yforce);
 		}
@@ -149,13 +152,18 @@ public class AntiGraveMover {
 	}
 
 	public void move(int tick) {
-		mTick = tick;
-		// 正在闪躲，不move
-		if (mHelper.isDodgeing(mTick)) {
-			return;
+		try {
+			mTick = tick;
+			// 正在闪躲，不move
+			if (mHelper.isDodgeing(mTick)) {
+				return;
+			}
+			createGravePoints();
+			antiGraveMove();
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.error(e.toString());
 		}
-		createGravePoints();
-		antiGraveMove();
 	}
 
 	/** Move towards an x and y coordinate **/
@@ -207,14 +215,14 @@ public class AntiGraveMover {
 			boolean fireNearReady = mFireHelper.nearFire();
 			int power = -1000;
 			if (tank.id == targetId) {
-				power = 200;
-				if (fireNearReady) {
-					power = 2000;
+				power = -200;
+				if (fireBlock || dis > AppConfig.COMBAT_MAX_DISTANCE) {
+					power = 1000;
+				} else if (fireNearReady) {
+					power = 200;
 				}
-			} else if (!fireNearReady) {
-				power = -1000;
-			} else if (dis > AppConfig.COMBAT_MAX_DISTANCE || fireBlock) {
-				power = 500;
+			} else if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
+				power = 1000;
 			} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
 				power = -1000;
 			}
@@ -270,7 +278,7 @@ public class AntiGraveMover {
 		List<GravePoint> points = new ArrayList<>();
 		List<Bullet> bullets = mDatabase.getBullets();
 		for (Bullet bullet : bullets) {
-			GravePoint gPoint = new GravePoint(bullet.currentX, bullet.currentY, -200);
+			GravePoint gPoint = new GravePoint(bullet.currentX, bullet.currentY, -500);
 			points.add(gPoint);
 		}
 		return points;

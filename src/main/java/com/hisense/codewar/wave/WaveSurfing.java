@@ -42,10 +42,17 @@ public class WaveSurfing {
 	}
 
 	public void scan(int tick) {
-		mTick = tick;
-		loopWavesAndHitTest(tick);
-		// 创建wave
-		createWaves(tick);
+		try {
+			mTick = tick;
+			loopWavesAndHitTest(tick);
+			// 创建wave
+			createWaves(tick);
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.error(e.toString());
+		}
+
 	}
 
 	/*
@@ -54,20 +61,21 @@ public class WaveSurfing {
 	public double getBestMatchFireAngle(int tankid) {
 		double aim = 0;
 		double distance;
-		
+
 		LimitedQueue<Wave> queue = mWaveDataBase.get(tankid);
-		if(queue == null) {
+		if (queue == null) {
 			return aim;
 		}
 		EnemyCombatData eCombatData = mEnemyDatabase.getEnemyData(tankid);
-		if(eCombatData == null) {
+		if (eCombatData == null) {
 			return aim;
 		}
-		MovementTrack track = eCombatData.trackData.peek();
+		MovementTrack track = eCombatData.trackData;
 		double velSeg = track.velSeg;
 		double adSeg = track.adSeg;
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
+		int currentAngle = Utils.angleTo(nowX, nowY, track.x, track.y);
 		int dis = Utils.distanceTo(nowX, nowY, track.x, track.y);
 		// 定義一個匹配，初始化成一個非常大的值
 		double maxMatch = Double.POSITIVE_INFINITY;
@@ -77,11 +85,18 @@ public class WaveSurfing {
 			// 計算歐幾里德距離，匹配信號相似度
 			distance = Math.pow(velSeg - w.getVelSeg(), 2) + Math.pow((adSeg - w.getAdSeg()), 2)
 					+ Math.pow((w.getDist() - dis) / 200, 2);
+
 			if (distance < maxMatch) {
 				maxMatch = distance;
 				aim = w.getAngle();
+				log.debug(String.format(
+						"velSeg[%f,%f]adSeg[%f,%f]dist[%d,%d]distance[%f]aim[%f]currentAngle[%d] %f , %f , %f", velSeg,
+						w.getVelSeg(), adSeg, w.getAdSeg(), dis, w.getDist(), distance, aim, currentAngle,
+						Math.pow(velSeg - w.getVelSeg(), 2), Math.pow((adSeg - w.getAdSeg()), 2),
+						Math.pow((w.getDist() - dis) / 50, 2)));
 			}
 		}
+		log.debug("bestMatch=" + maxMatch + ",aim=" + aim);
 		return aim;
 	}
 
@@ -92,13 +107,18 @@ public class WaveSurfing {
 			Wave wave = (Wave) iterator.next();
 			int tankId = wave.getEnemyTankId();
 			TankGameInfo enemyTank = mDatabase.getTankById(tankId);
+			if (enemyTank == null) {
+				continue;
+			}
 			HitTestResult result = wave.hitTest(tick, enemyTank);
 			// 波击中目标
 			if (result.ret) {
 				wave.setAngle(result.suggestAimAngle);
+				insertToDB(tankId, wave);
 				iterator.remove();
 			}
 		}
+		// log.debug("loopWavesAndHitTest");
 	}
 
 	// 创建波
@@ -119,12 +139,14 @@ public class WaveSurfing {
 		if (enemyCombatData == null) {
 			return;
 		}
-		MovementTrack trackData = enemyCombatData.trackData.peek();
+		MovementTrack trackData = enemyCombatData.trackData;
 		if (trackData == null) {
+			log.debug("track data == null");
 			return;
 		}
 
 		else if (trackData.absAngle == -1 || trackData.speed == -1) {
+			log.debug("speed  == -1");
 			return;
 		}
 
@@ -142,6 +164,7 @@ public class WaveSurfing {
 		wave.setDist(distance);
 
 		mWaveList.add(wave);
+		// log.debug("createWave END");
 	}
 
 	/**

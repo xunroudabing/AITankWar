@@ -279,11 +279,10 @@ public class Utils {
 		}
 		return angle;
 	}
-	
+
 	/**
-	 * Normalizes an angle to a relative angle.
-	 * The normalized angle will be in the range from -180 to 180, where 180
-	 * itself is not included.
+	 * Normalizes an angle to a relative angle. The normalized angle will be in the
+	 * range from -180 to 180, where 180 itself is not included.
 	 *
 	 * @param angle the angle to normalize
 	 * @return the normalized angle that will be in the range of [-180,180[
@@ -324,8 +323,10 @@ public class Utils {
 	public static int distanceTo(int x, int y, int tx, int ty) {
 		return doubleToInt(Math.hypot(x - tx, y - ty));
 	}
+
 	/**
 	 * double向上取整，1.1返回 2
+	 * 
 	 * @param d
 	 * @return
 	 */
@@ -406,8 +407,8 @@ public class Utils {
 	// 坦克移动位置
 	public static Position getNextTankPostion(int x, int y, int r, int tick) {
 		float angle = a2r(r);
-		int dy = (int) (AppConfig.TANK_SPEED * tick * Math.sin(angle));
-		int dx = (int) (AppConfig.TANK_SPEED * tick * Math.cos(angle));
+		int dy = doubleToInt((AppConfig.TANK_SPEED * tick * Math.sin(angle)));
+		int dx = doubleToInt((AppConfig.TANK_SPEED * tick * Math.cos(angle)));
 
 		int nx = x + dx;
 		int ny = y + dy;
@@ -417,8 +418,8 @@ public class Utils {
 	// 返回x y r方向上 distance的点
 	public static Position getNextPositionByDistance(int x, int y, int r, int distance) {
 		float angle = a2r(r);
-		int dy = (int) (distance * Math.sin(angle));
-		int dx = (int) (distance * Math.cos(angle));
+		int dy = doubleToInt((distance * Math.sin(angle)));
+		int dx = doubleToInt((distance * Math.cos(angle)));
 
 		int nx = x + dx;
 		int ny = y + dy;
@@ -539,7 +540,7 @@ public class Utils {
 		int totalR = width + blockWidth;
 		int distance = Utils.distanceTo(x, y, blockX, blockY);
 
-		return distance <= totalR;
+		return distance < totalR;
 	}
 
 	/**
@@ -557,6 +558,23 @@ public class Utils {
 			int blockWidth) {
 		Position endPostion = Utils.getNextPositionByDistance(x, y, r, distance);
 		return isCrossBlock(x, y, endPostion.x, endPostion.y, blocks, blockWidth);
+	}
+
+	/**
+	 * 靠近Block时，判断下一个移动位置是否和block相交，如果相交则代表无法移动
+	 * 
+	 * @param x
+	 * @param y
+	 * @param r
+	 * @param distance
+	 * @param blocks
+	 * @param blockWidth
+	 * @return
+	 */
+	public static boolean isNextPointInBlocks(int x, int y, int r, int distance, List<TankMapBlock> blocks,
+			int blockWidth) {
+		Position endPostion = Utils.getNextPositionByDistance(x, y, r, distance);
+		return inBlocks(endPostion.x, endPostion.y, blockWidth, blocks, blockWidth);
 	}
 
 	/**

@@ -108,7 +108,7 @@ public class MoveMentRadar {
 		// 目标到我的角度
 		int r = Utils.angleTo(nowX, nowY, target.x, target.y);
 		// 目标为圆心，到我方向200米上的点
-		Position moveToPosition = Utils.getNextPositionByDistance(nowX, nowY, r, AppConfig.COMBAT_CIRCLE_RADIUS);
+		//Position moveToPosition = Utils.getNextPositionByDistance(nowX, nowY, r, AppConfig.COMBAT_CIRCLE_RADIUS);
 		// 我距目標距離
 		int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
 		// 移动方向 todo 需要判斷障礙物

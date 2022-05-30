@@ -14,8 +14,8 @@ import com.hisense.codewar.utils.Utils;
 
 public class CombatAttackRadar {
 	int mTick = 0;
-	private int mNearestTankId=-1;
-	private int mTargetTankId=-1;
+	private int mNearestTankId = -1;
+	private int mTargetTankId = -1;
 	private TankGameInfo mTargetTank;
 	private List<FireRange> mFriendsFireRange;
 	private List<TankGameInfo> mTargets;
@@ -92,8 +92,13 @@ public class CombatAttackRadar {
 
 		mTargetTankId = enemyId;
 		mNearestTankId = nearEnemyId;
-		TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
-		mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
+		if (mTick < 600) {
+			TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
+			mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
+		} else {
+			TankGameInfo tank = mDatabase.getTankById(nearEnemyId);
+			mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
+		}
 		log.debug(String.format("[T%d][AttackTarget]->%s", mTick, mTargetTank.toString()));
 	}
 

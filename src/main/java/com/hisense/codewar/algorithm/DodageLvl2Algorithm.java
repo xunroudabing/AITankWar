@@ -82,8 +82,8 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			// 所需移动距离
 			int dodgeBestDistance = AppConfig.TANK_WIDTH - a;
 			// ****判断最佳方向上有无block或出界，出界则选择反方向****
-			boolean hitBlocks = mDatabase.isCrossBlocksByDistance(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
-			boolean outRange = mDatabase.isOutRangeByDistance(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
+			boolean hitBlocks = mDatabase.isNextPointInBlocks(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
+			boolean outRange = mDatabase.isNearBorderCantMoveByDistance(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
 			if (hitBlocks || outRange) {
 				log.debug(String.format("[HitWarning-Error]will out of range or in block %s change angle 180",
 						bullet.toString()));
@@ -201,8 +201,8 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 				suggestAngle = Utils.angleTo(nowX, nowY, positionB.x, positionB.y);
 			}
 			// ****判断最佳方向上有无block或出界，有则采用PlanB****
-			boolean haveBlocks = mDatabase.isCrossBlocksByDistance(nowX, nowY, suggestAngle, suggestDis);
-			boolean outRange = mDatabase.isOutRangeByDistance(nowX, nowY, suggestAngle, suggestDis);
+			boolean haveBlocks = mDatabase.isNextPointInBlocks(nowX, nowY, suggestAngle, suggestDis);
+			boolean outRange = mDatabase.isNearBorderCantMoveByDistance(nowX, nowY, suggestAngle, suggestDis);
 			if (haveBlocks || outRange) {
 				// 提前躲避，给bullet2留出时间,todo这里需要考虑移动带来的位置改变
 				int needMoreTick = bullet2.suggestion.dodgeNeedTick;

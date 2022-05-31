@@ -257,11 +257,11 @@ public class CombatRealTimeDatabase {
 	public boolean isNextPointInBlocks(int nowX, int nowY, int r, int distance) {
 		return Utils.isNextPointInBlocks(nowX, nowY, r, distance, getBlocks(), AppConfig.BLOCK_SIZE);
 	}
-
+	//true 射击被阻挡
 	public boolean fireInBlocks(int nowX, int nowY, int tx, int ty) {
 		return Utils.isCrossBlock(nowX, nowY, tx, ty, getBlocks(), AppConfig.BLOCK_SIZE);
 	}
-
+	
 	public int getBattleFieldWidth() {
 		return battleFieldWidth;
 	}

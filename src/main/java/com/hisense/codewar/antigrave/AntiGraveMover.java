@@ -56,6 +56,11 @@ public class AntiGraveMover {
 		int r = Utils.angleTo(nowX, nowY, tx, ty);
 		System.out.println(r);
 
+		int j = 0;
+		for (int i = 0; i < 4; i++) {
+			j += 45 + 45 * i;
+			System.out.println(j);
+		}
 //		int nowX = 204;
 //		int nowY = 198;
 //		int xforce = 0;
@@ -86,7 +91,7 @@ public class AntiGraveMover {
 	private CombatRealTimeDatabase mDatabase;
 	private CombatMovementHelper mHelper;
 	private static final int FRIEND_POWER = 1000;
-	private static final int BLOCK_POWER = -2;
+	private static final int BLOCK_POWER = -10;
 	private static final int FACTOR = 20;
 	private static final Logger log = LoggerFactory.getLogger(AntiGraveMover.class);
 
@@ -122,10 +127,10 @@ public class AntiGraveMover {
 		}
 		// blocks
 		Map map = mDatabase.getMap();
-		xforce += 5000 / Math.pow(Utils.distanceTo(nowX, nowY, map.maxX, nowY) / FACTOR, 3);
-		xforce -= 5000 / Math.pow(Utils.distanceTo(nowX, nowY, map.minX, nowY) / FACTOR, 3);
-		yforce += 5000 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.maxY) / FACTOR, 3);
-		yforce -= 5000 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.minY) / FACTOR, 3);
+		xforce += 7500 / Math.pow(Utils.distanceTo(nowX, nowY, map.maxX, nowY) / FACTOR, 3);
+		xforce -= 7500 / Math.pow(Utils.distanceTo(nowX, nowY, map.minX, nowY) / FACTOR, 3);
+		yforce += 7500 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.maxY) / FACTOR, 3);
+		yforce -= 7500 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.minY) / FACTOR, 3);
 
 		int lx = nowX - xforce;
 		int ly = nowY - yforce;
@@ -137,11 +142,11 @@ public class AntiGraveMover {
 		Position positionX = Utils.getNextTankPostion(nowX, nowY, angleX, 1);
 		Position positionY = Utils.getNextTankPostion(nowX, nowY, angleX, 1);
 		// x轴方向有block，不移动
-		if (mDatabase.inBlocks(positionX.x, positionX.y) || mDatabase.isNearBorderCantMove(positionX.x, positionY.y)) {
+		if (mDatabase.inBlocks(positionX.x, positionX.y) || mDatabase.isNearBorderCantMove(positionX.x, positionX.y)) {
 			lx = nowX;
 			ly -= yforce > 0 ? Math.abs(xforce) : -Math.abs(xforce);
 		} else if (mDatabase.inBlocks(positionY.x, positionY.y)
-				|| mDatabase.isNearBorderCantMove(positionX.x, positionY.y)) {
+				|| mDatabase.isNearBorderCantMove(positionY.x, positionY.y)) {
 			ly = nowY;
 			lx -= xforce > 0 ? Math.abs(yforce) : -Math.abs(yforce);
 		}
@@ -213,18 +218,18 @@ public class AntiGraveMover {
 			// 射界被遮挡
 			boolean fireBlock = mDatabase.fireInBlocks(nowX, nowY, tank.x, tank.y);
 			boolean fireNearReady = mFireHelper.nearFire();
-			int power = -1000;
+			int power = -500;
 			if (tank.id == targetId) {
-				power = -200;
+				power = 500;
 				if (fireBlock || dis > AppConfig.COMBAT_MAX_DISTANCE) {
 					power = 1000;
 				} else if (fireNearReady) {
-					power = 200;
+					power = 500;
 				}
 			} else if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
 				power = 1000;
 			} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
-				power = -1000;
+				power = -500;
 			}
 			GravePoint gPoint = new GravePoint(tank.x, tank.y, power);
 			points.add(gPoint);
@@ -262,13 +267,28 @@ public class AntiGraveMover {
 		List<GravePoint> points = new ArrayList<>();
 		mTurn++;
 		int power = 0;
-		if (mTurn > 5) {
+
+		Position middlePosition = mDatabase.getMiddlePostion();
+		int[] array = { 45, 135, 225, 315 };
+		for (int i = 0; i < array.length; i++) {
+			int r = array[i];
+			Position pos = Utils.getNextPositionByDistance(middlePosition.x, middlePosition.y, r,
+					mDatabase.getBattleFieldWidth() / 4);
+			if (mTurn > 50) {
+				boolean b = mRandom.nextBoolean();
+				int seed = b ? 1 : -1;
+				power = seed * 500;
+			}
+			GravePoint point = new GravePoint(pos.x, pos.y, power);
+			points.add(point);
+		}
+
+		if (mTurn > 50) {
 			mTurn = 0;
 			boolean b = mRandom.nextBoolean();
 			int seed = b ? 1 : -1;
 			power = seed * 1000;
 		}
-		Position middlePosition = mDatabase.getMiddlePostion();
 		GravePoint point = new GravePoint(middlePosition.x, middlePosition.y, power);
 		points.add(point);
 		return points;
@@ -304,11 +324,16 @@ public class AntiGraveMover {
 				} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
 					power = -500;
 				}
+			}else {
+				if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
+					power = 1000;
+				}
 			}
 			GravePoint gPoint = new GravePoint(tank.x, tank.y, power);
 			points.add(gPoint);
 		}
 		return points;
 	}
+
 
 }

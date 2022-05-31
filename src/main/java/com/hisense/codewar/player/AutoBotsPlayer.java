@@ -44,15 +44,17 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		// TODO Auto-generated constructor stub
 		mTick = new AtomicInteger();
 		mCombatRealTimeDatabase = new CombatRealTimeDatabase();
+		mEnemyDatabase = new CombatEnemyDatabase(mCombatRealTimeDatabase);
 		mAttackRadar = new CombatAttackRadar(mCombatRealTimeDatabase);
-		mFireHelper = new FireHelper(mCombatRealTimeDatabase, mAttackRadar);
+		mFireHelper = new FireHelper(mCombatRealTimeDatabase, mAttackRadar,mEnemyDatabase);
 		mMovementHelper = new CombatMovementHelper(mCombatRealTimeDatabase, mAttackRadar, mFireHelper);
 		mCombatWarningRadar = new CombatWarningRadar(mCombatRealTimeDatabase, mMovementHelper);
 		mMoveMentRadar = new MoveMentRadar(mCombatRealTimeDatabase, mAttackRadar, mMovementHelper);
 		mAntiGraveMover = new AntiGraveMover(mCombatRealTimeDatabase, mAttackRadar, mMovementHelper, mFireHelper);
-		mEnemyDatabase = new CombatEnemyDatabase(mCombatRealTimeDatabase);
+		
 		mWaveSurfing = new WaveSurfing(mCombatRealTimeDatabase, mEnemyDatabase);
 		mCombatStatistics = new CombatStatistics();
+		mFireHelper.setStatistics(mCombatStatistics);
 
 	}
 
@@ -131,9 +133,9 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			mCombatRealTimeDatabase.updateProjectiles(projectiles);
 			mCombatRealTimeDatabase.updatePoisionR(r);
 			mCombatWarningRadar.scan(mTick.get());
-			//mEnemyDatabase.scan(mTick.get());
+			mEnemyDatabase.scan(mTick.get());
 			mAttackRadar.scan(mTick.get());
-			// mMoveMentRadar.scan(mTick.get());
+			//mMoveMentRadar.scan(mTick.get());
 			mAntiGraveMover.move(mTick.get());
 			//mWaveSurfing.scan(mTick.get());
 			hitEnemyCount(hits);

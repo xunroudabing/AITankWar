@@ -7,11 +7,15 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.EnemyCombatData.MovementTrack;
+import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.Utils;
+
 /**
  * 敌人运行轨迹数据库
+ * 
  * @author hanzheng
  *
  */
@@ -32,21 +36,25 @@ public class CombatEnemyDatabase {
 
 		System.out.println("r=" + r + ",speed=" + speed + ",velSeg=" + velSeg + ",adSeg=" + adSeg);
 	}
+
 	private int mTick = 0;
 	private List<EnemyCombatData> mEnemyCombatHistoryDatas;
 	private CombatRealTimeDatabase mDatabase;
 	private static final Logger log = LoggerFactory.getLogger(CombatEnemyDatabase.class);
+
 	public CombatEnemyDatabase(CombatRealTimeDatabase database) {
 		mEnemyCombatHistoryDatas = new ArrayList<EnemyCombatData>();
 		mDatabase = database;
 	}
+
 	public void reset() {
 		mTick = 0;
 		mEnemyCombatHistoryDatas.clear();
 	}
+
 	public void scan(int tick) {
 		mTick = tick;
-		//扫描敌人位置
+		// 扫描敌人位置
 		List<TankGameInfo> list = mDatabase.getEnemyTanks();
 		Iterator<TankGameInfo> iterator = list.iterator();
 		while (iterator.hasNext()) {
@@ -54,7 +62,7 @@ public class CombatEnemyDatabase {
 			// 读取历史记录，查看有无此坦克数据
 			EnemyCombatData data = getEnemyData(tank.id);
 			if (data != null) {
-				//有数据，更新数据,上一次记录
+				// 有数据，更新数据,上一次记录
 				MovementTrack lastTrack = data.trackData;
 
 				// 本次记录
@@ -66,11 +74,11 @@ public class CombatEnemyDatabase {
 				currentTrack.velSeg = -1;
 				currentTrack.adSeg = -1;
 				currentTrack.tick = tick;
-				//计算角度速度，更新数据			
+				// 计算角度速度，更新数据
 				data.trackData = compareGetMovement(currentTrack, lastTrack);
 				log.debug("update " + currentTrack.toString());
 			} else {
-				//无记录，新增数据
+				// 无记录，新增数据
 				// 判断队伍
 				int teamid = 0;
 				EnemyCombatData newData = new EnemyCombatData(tank.id, teamid);
@@ -89,14 +97,15 @@ public class CombatEnemyDatabase {
 
 		}
 	}
-	
-	//根据上一个tick算当前tick的角度和速度分量
+
+	// 根据上一个tick算当前tick的角度和速度分量
 	protected MovementTrack compareGetMovement(MovementTrack currentTrack, MovementTrack lastTrack) {
-		//log.debug("currentTrack=" + currentTrack.toString() + ",lastTrack=" + lastTrack.toString());
+		// log.debug("currentTrack=" + currentTrack.toString() + ",lastTrack=" +
+		// lastTrack.toString());
 		// 连续数据，计算速度与角度
 		if ((currentTrack.tick - lastTrack.tick) == 1) {
 			int dis = Utils.distanceTo(currentTrack.x, currentTrack.y, lastTrack.x, lastTrack.y);
-			//速度的最大值应该是9，此处过滤speed为10的情况
+			// 速度的最大值应该是9，此处过滤speed为10的情况
 			int speed = Math.min(dis, 9);
 			int r = Utils.angleTo(lastTrack.x, lastTrack.y, currentTrack.x, currentTrack.y);
 			// velSeg = e.getVelocity() * Math. cos (e.getHeadingRadians() - absBearing );
@@ -131,5 +140,52 @@ public class CombatEnemyDatabase {
 			}
 		}
 		return null;
+	}
+
+	public Position guessPosition(int tankid, int when) {
+		EnemyCombatData data = getEnemyData(tankid);
+		if (data != null) {
+			int x = data.trackData.x;
+			int y = data.trackData.y;
+			double velSeg = data.trackData.velSeg;
+			double adSeg = data.trackData.adSeg;
+			if (velSeg == -1 || adSeg == -1) {
+				return null;
+			}
+			int speed = data.trackData.speed;
+			int newY = (int) (y + velSeg * when);
+			int newX = (int) (x + adSeg * when);
+
+			return new Position(newX, newY);
+
+		}
+		return null;
+	}
+
+	public Position guessPosition(int tankid) {
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+
+		int bulletTick = 0;
+		// 敌人移动时间
+		int when = 0;
+		Position enenmyPosition = null;
+
+		do {
+			when++;
+			// when时间后敌人的位置
+			enenmyPosition = guessPosition(tankid, when);
+			if (enenmyPosition == null) {
+				break;
+			}
+			int dis = Utils.distanceTo(nowX, nowY, enenmyPosition.x, enenmyPosition.y);
+			// 计算子弹到达时间,子弹能够达到，迭代结束
+			bulletTick = dis / AppConfig.BULLET_SPEED;
+			log.debug(String.format("[Bullet-Loop]bulletTick[%d]when[%d]enemyPos[%d,%d]", bulletTick, when,
+					enenmyPosition.x, enenmyPosition.y));
+
+		} while (bulletTick >= when);
+
+		return enenmyPosition;
 	}
 }

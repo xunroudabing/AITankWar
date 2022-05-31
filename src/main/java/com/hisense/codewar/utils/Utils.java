@@ -170,7 +170,7 @@ public class Utils {
 	 * @return
 	 */
 	@Deprecated
-	public static int getTargetRadius(int tx, int ty, int nowx, int nowy) {
+	public static int angleTo4( int nowx, int nowy,int tx, int ty) {
 		// return getFireAngle(nowx, nowy, tx, ty);
 		int ret = 0;
 		if (tx == nowx) {

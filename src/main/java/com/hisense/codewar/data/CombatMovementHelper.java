@@ -323,7 +323,8 @@ public class CombatMovementHelper {
 
 			// int dest = Utils.angleTo(nowX, nowY, x, y);
 			// 判断出界
-			Position nextPosition = Utils.getNextTankPostion(nowX, nowY, dest, 2);
+			//Position nextPosition = Utils.getNextTankPostion(nowX, nowY, dest, 2);
+			Position nextPosition = Utils.getNextPositionByDistance(nowX, nowY, dest, AppConfig.TANK_WIDTH);
 			if (mDatabase.isOut(nextPosition.x, nextPosition.y)) {
 				// 出界，不执行此次命令
 				log.debug(String.format(

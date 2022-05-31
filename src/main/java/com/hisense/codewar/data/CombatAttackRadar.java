@@ -17,6 +17,7 @@ public class CombatAttackRadar {
 	private int mNearestTankId = -1;
 	private int mTargetTankId = -1;
 	private TankGameInfo mTargetTank;
+	private List<TankGameInfo> mEnemyCanFire;
 	private List<FireRange> mFriendsFireRange;
 	private List<TankGameInfo> mTargets;
 	private CombatRealTimeDatabase mDatabase;
@@ -25,10 +26,12 @@ public class CombatAttackRadar {
 	public CombatAttackRadar(CombatRealTimeDatabase database) {
 		mTargets = new ArrayList<TankGameInfo>();
 		mFriendsFireRange = new ArrayList<>();
+		mEnemyCanFire = new ArrayList<TankGameInfo>();
 		mDatabase = database;
 	}
 
 	public void reset() {
+		mEnemyCanFire.clear();
 		mFriendsFireRange.clear();
 		mTargets.clear();
 		mTick = 0;
@@ -48,58 +51,119 @@ public class CombatAttackRadar {
 	}
 
 	public void scan(int tick) {
+		try {
+			mTick = tick;
+			int mTankId = mDatabase.getMyTankId();
+			int nowX = mDatabase.getNowX();
+			int nowY = mDatabase.getNowY();
+			List<TankGameInfo> friends = mDatabase.getFriendTanks();
+			Iterator<TankGameInfo> iterator = mDatabase.getAllTanks().iterator();
 
-		mTick = tick;
-		int mTankId = mDatabase.getMyTankId();
+			TankGameInfo leader = mDatabase.getLeader();
+
+			int enemyId = -1;
+			int minDistance = Integer.MAX_VALUE;
+			mFriendsFireRange.clear();
+			int nearEnemyId = -1;
+			int nearMinDistance = Integer.MAX_VALUE;
+			mEnemyCanFire.clear();
+			while (iterator.hasNext()) {
+				TankGameInfo enemyTank = (TankGameInfo) iterator.next();
+				int tankid = enemyTank.id;
+				if (mDatabase.isFriend(tankid)) {
+					caculateFriendsFireRange(nowX, nowY, enemyTank);
+					continue;
+				} else if (tankid == mTankId) {
+					continue;
+				}
+				int distance = Utils.distanceTo(leader.x, leader.y, enemyTank.x, enemyTank.y);
+				int nearDis = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
+				if (distance < minDistance) {
+					minDistance = distance;
+					enemyId = enemyTank.getId();
+				}
+
+				if (nearDis < nearMinDistance) {
+					nearMinDistance = nearDis;
+					nearEnemyId = enemyTank.id;
+				}
+
+				boolean inFireBlock = mDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
+				if (!inFireBlock) {
+					mEnemyCanFire.add(enemyTank);
+				}
+			}
+
+			if (enemyId == -1) {
+				log.debug("No Target found");
+				return;
+			}
+
+			mTargetTankId = enemyId;
+			mNearestTankId = nearEnemyId;
+			if (mTick < 600) {
+				TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
+				mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
+			} else {
+				TankGameInfo tank = mDatabase.getTankById(nearEnemyId);
+				mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
+			}
+
+//			TankGameInfo tank = getNearestCanFireTank();
+//			if (tank != null) {
+//				mTargetTank = new TankGameInfo(tank.id, tank.x, tank.y, tank.r, tank.hp);
+//			}
+//			if (mTargetTank == null) {
+//				TankGameInfo nearTank = mDatabase.getTankById(nearEnemyId);
+//				if (nearTank != null) {
+//					mTargetTank = new TankGameInfo(nearTank.id, tank.x, tank.y, tank.r, tank.hp);
+//				}
+//			}
+//			if (tick > 600) {
+//				TankGameInfo lowHpTank = getLowHpTank();
+//				boolean fireBlock = mDatabase.fireInBlocks(nowX, nowY, lowHpTank.x, lowHpTank.y);
+//				if (lowHpTank != null && !fireBlock) {
+//					mTargetTank = new TankGameInfo(lowHpTank.id, lowHpTank.x, lowHpTank.y, lowHpTank.r, lowHpTank.hp);
+//				} else {
+//
+//				}
+//			}
+			log.debug(String.format("[T%d][AttackTarget]->%s", mTick, mTargetTank.toString()));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.error(e.toString());
+		}
+
+	}
+
+	public TankGameInfo getNearestCanFireTank() {
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
-		List<TankGameInfo> friends = mDatabase.getFriendTanks();
-		Iterator<TankGameInfo> iterator = mDatabase.getAllTanks().iterator();
-
+		int minDis = Integer.MAX_VALUE;
 		TankGameInfo leader = mDatabase.getLeader();
-
-		int enemyId = -1;
-		int minDistance = Integer.MAX_VALUE;
-		mFriendsFireRange.clear();
-		int nearEnemyId = -1;
-		int nearMinDistance = Integer.MAX_VALUE;
-		while (iterator.hasNext()) {
-			TankGameInfo enemyTank = (TankGameInfo) iterator.next();
-			int tankid = enemyTank.id;
-			if (mDatabase.isFriend(tankid)) {
-				caculateFriendsFireRange(nowX, nowY, enemyTank);
-				continue;
-			} else if (tankid == mTankId) {
-				continue;
-			}
-			int distance = Utils.distanceTo(leader.x, leader.y, enemyTank.x, enemyTank.y);
-			int nearDis = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
-			if (distance < minDistance) {
-				minDistance = distance;
-				enemyId = enemyTank.getId();
-			}
-
-			if (nearDis < nearMinDistance) {
-				nearMinDistance = nearDis;
-				nearEnemyId = enemyTank.id;
+		TankGameInfo target = null;
+		for (TankGameInfo tank : mEnemyCanFire) {
+			int dis = Utils.distanceTo(leader.x, leader.y, tank.x, tank.y);
+			if (dis < minDis) {
+				minDis = dis;
+				target = tank;
 			}
 		}
+		return target;
+	}
 
-		if (enemyId == -1) {
-			log.debug("No Target found");
-			return;
+	public TankGameInfo getLowHpTank() {
+		int minHp = Integer.MAX_VALUE;
+		TankGameInfo ret = null;
+		for (TankGameInfo tank : mEnemyCanFire) {
+			if (tank.hp < minHp) {
+				minHp = tank.hp;
+				ret = tank;
+			}
 		}
+		return ret;
 
-		mTargetTankId = enemyId;
-		mNearestTankId = nearEnemyId;
-		if (mTick < 600) {
-			TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
-			mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
-		} else {
-			TankGameInfo tank = mDatabase.getTankById(nearEnemyId);
-			mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
-		}
-		log.debug(String.format("[T%d][AttackTarget]->%s", mTick, mTargetTank.toString()));
 	}
 
 	public List<FireRange> getFriendsFireRange() {

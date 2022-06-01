@@ -101,13 +101,14 @@ public class FireHelper {
 	}
 
 	public boolean fire(ITtank tank) {
-		boolean guessFireEnable = mRandom.nextBoolean();
+		boolean guessFireEnable = false;
 		boolean guessFire = false;
 		TankGameInfo target = mAttackRadar.getTargetTank();
 		if (target == null) {
 			log.debug("[Fire]not target!!");
 			return false;
 		}
+
 		int mtankid = mDatabase.getMyTankId();
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
@@ -116,7 +117,11 @@ public class FireHelper {
 		int dest = Utils.angleTo(nowX, nowY, target.x, target.y);
 		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
 		int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
-
+		// 是否有队友正在向目标射击,有则进行预测射击
+		boolean friendShooting = CombatFriendBulletDatabase.getInstance().exist(target.id, mTick, mtankid);
+		if (friendShooting) {
+			guessFireEnable = true;
+		}
 		// 预测射击
 		int guessDest = 0;
 		int orignDest = 0;
@@ -162,6 +167,7 @@ public class FireHelper {
 		if (mStatistics != null) {
 			mStatistics.fireCounter();
 		}
+		CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
 		return true;
 	}
 

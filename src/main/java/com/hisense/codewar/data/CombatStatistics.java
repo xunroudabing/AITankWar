@@ -13,7 +13,7 @@ public class CombatStatistics {
 
 	private int hitEnemyCount = 0;
 	private int totalFireCount = 0;
-	private int hitmeCount=0;// 被击中次数
+	private int hitmeCount = 0;// 被击中次数
 	private static final Logger log = LoggerFactory.getLogger(CombatStatistics.class);
 
 	public CombatStatistics() {
@@ -39,7 +39,9 @@ public class CombatStatistics {
 	}
 
 	public void show() {
-		log.debug("total" + totalFireCount + ",hiE=" + hitEnemyCount);
+		if (totalFireCount == 0) {
+			return;
+		}
 		// double percent = hitEnemyCount * 100 / totalFireCount;
 		BigDecimal bigDecimal = BigDecimal.valueOf(hitEnemyCount * 100);
 		BigDecimal result = bigDecimal.divide(BigDecimal.valueOf(totalFireCount), 2, BigDecimal.ROUND_HALF_DOWN);

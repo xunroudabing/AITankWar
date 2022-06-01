@@ -101,12 +101,13 @@ public class CombatAttackRadar {
 
 			mTargetTankId = enemyId;
 			mNearestTankId = nearEnemyId;
-			if (mTick < 600) {
-				TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
-				mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
-			} else {
-				TankGameInfo tank = mDatabase.getTankById(nearEnemyId);
-				mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
+			
+			TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
+			mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
+			boolean fireBlock = mDatabase.fireInBlocks(nowX, nowY, mTargetTank.x, mTargetTank.y);
+			if(fireBlock) {
+				TankGameInfo nearTank = mDatabase.getTankById(nearEnemyId);
+				mTargetTank = new TankGameInfo(nearTank.id, nearTank.x, nearTank.y, nearTank.r, nearTank.hp);
 			}
 
 //			TankGameInfo tank = getNearestCanFireTank();

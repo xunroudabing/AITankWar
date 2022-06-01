@@ -27,6 +27,7 @@ public class CombatMovementHelper {
 	private PostionEvent mMoveEvent;
 	private MoveEvent mDodgeEvent;
 	private PollingEvent mPollingEvent;
+	private LimitedQueue<MoveEvent> mTrackQueue;
 	private LimitedQueue<PollingEvent> mPollingQueue;
 	private LimitedQueue<PostionEvent> mMoveQueue;
 	private LimitedQueue<MoveEvent> mDodgeQueue;
@@ -34,9 +35,10 @@ public class CombatMovementHelper {
 	private static final Logger log = LoggerFactory.getLogger(CombatMovementHelper.class);
 
 	public CombatMovementHelper(CombatRealTimeDatabase database, CombatAttackRadar radar, FireHelper fireHelper) {
-		mDodgeQueue = new LimitedQueue<>(QUEUE_SIZE);
+		mDodgeQueue = new LimitedQueue<>(15);
 		mMoveQueue = new LimitedQueue<>(QUEUE_SIZE);
 		mPollingQueue = new LimitedQueue<>(QUEUE_SIZE);
+		mTrackQueue = new LimitedQueue<>(9);
 		mDatabase = database;
 		mAttackRadar = radar;
 		mFireHelper = fireHelper;
@@ -47,9 +49,14 @@ public class CombatMovementHelper {
 		mDodgeQueue.clear();
 		mMoveQueue.clear();
 		mPollingQueue.clear();
+		mTrackQueue.clear();
 		mMoveEvent = null;
 		mDodgeEvent = null;
 		mPollingEvent = null;
+	}
+
+	public boolean needTrack(int tick) {
+		return !mTrackQueue.isEmpty();
 	}
 
 	public boolean needDodge(int tick) {
@@ -100,15 +107,12 @@ public class CombatMovementHelper {
 		mPollingQueue.add(event);
 	}
 
-	public void addDodgeByTick(int r, int tick) {
+	public void addDodgeByDistance(int startX, int startY, int dstX, int dstY, int r, int distance) {
 		MoveEvent event = new MoveEvent();
-		event.heading = r;
-		event.tick = tick;
-		mDodgeQueue.add(event);
-	}
-
-	public void addDodgeByDistance(int r, int distance) {
-		MoveEvent event = new MoveEvent();
+		event.startX = startX;
+		event.startY = startY;
+		event.dstX = dstX;
+		event.dstY = dstY;
 		event.heading = r;
 		BigDecimal b = BigDecimal.valueOf(distance);
 		// distance / AppConfig.TANK_SPEED; CEILING，向上取整
@@ -142,6 +146,33 @@ public class CombatMovementHelper {
 		event.heading = r;
 		event.tick = Utils.getTicks(distance, AppConfig.TANK_SPEED);
 		mMoveQueue.add(event);
+	}
+	public void addTrack(int r) {
+		MoveEvent event = new MoveEvent();
+		event.heading = r;
+		mTrackQueue.add(event);
+	}
+	public boolean track(ITtank tank, int tick) {
+		if (mTrackQueue.isEmpty()) {
+			return false;
+		}
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int heading = mDatabase.getHeading();
+		for (int i = 0; i < 3; i++) {
+			if (mTrackQueue.isEmpty()) {
+				break;
+			}
+			MoveEvent moveEvent = mTrackQueue.poll();
+			if (moveEvent != null) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveEvent.heading);
+				log.debug(String.format("[Command-track][T%d]tank[%d]pos[%d,%d]chead[%d]r[%d]", tick,tank.id, nowX, nowY,
+						heading, moveEvent.heading));
+			} else {
+				break;
+			}
+		}
+		return true;
 	}
 
 	public boolean polling(ITtank tank, int tick) {
@@ -215,16 +246,22 @@ public class CombatMovementHelper {
 	}
 
 	public boolean dodge(ITtank tank, int tick) {
+		boolean firstRunning = false;
 		if (mDodgeEvent == null) {
 			try {
-				mDodgeEvent = mDodgeQueue.take();
-			} catch (InterruptedException e) {
+				mDodgeEvent = mDodgeQueue.poll();
+				firstRunning = true;
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				log.error(e.toString());
 			}
 		}
 
 		if (mDodgeEvent != null) {
+			int startX = mDodgeEvent.startX;
+			int startY = mDodgeEvent.startY;
+			int dx = mDodgeEvent.dstX;
+			int dy = mDodgeEvent.dstY;
 			int heading = mDodgeEvent.heading;
 			int dodgeTick = mDodgeEvent.tick;
 			if (dodgeTick <= 0) {
@@ -235,9 +272,30 @@ public class CombatMovementHelper {
 			mDodgeEvent.tick = dodgeTick;
 			int nowX = mDatabase.getNowX();
 			int nowY = mDatabase.getNowY();
+
+			int currentAngle = Utils.angleTo(nowX, nowY, dx, dy);
+			// 调整与服务器端的坐标误差
+//			if (Math.abs(currentAngle - heading) > 2) {
+//				log.debug(String.format(
+//						"[Command-Dodge-fixAngleError]tank[%d]currentPos[%d,%d]startPos[%d,%d]dstPos[%d,%d]currentAngle[%d]oriAngle[%d]",
+//						tank.id, nowX, nowY, startX, startY, dx, dy, currentAngle, heading));
+//				mDodgeEvent.heading = currentAngle;
+//				heading = currentAngle;
+//			}
 			int currentHeading = mDatabase.getHeading();
 			TankGameInfo enemyTank = mAttackRadar.getTargetTank();
 
+			int dis = Utils.distanceTo(nowX, nowY, dx, dy);
+			// 当前已经移动至目标点，考虑误差
+			if (Utils.isNear(nowX, nowY, dx, dy)) {
+				mDodgeEvent.tick = 0;
+				mDodgeEvent = null;
+				log.debug(String.format(
+						"[Command-Dodge-skip]tank[%d]currentPos[%d,%d]dstPos[%d,%d]chead[%d]r[%d]tick[%d]", tank.id,
+						nowX, nowY, dx, dy, currentHeading, heading, dodgeTick));
+				// 已到达指定位置
+				return false;
+			}
 			// 先开火再闪避
 //			boolean canFire = mFireHelper.canFire();
 //			if (canFire) {
@@ -249,7 +307,7 @@ public class CombatMovementHelper {
 //				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 //			}
 			// 判断出界
-			Position nextPosition = Utils.getNextTankPostion(nowX, nowY, heading, 2);
+			Position nextPosition = Utils.getNextPositionByDistance(nowX, nowY, heading, AppConfig.TANK_WIDTH * 2);
 			if (mDatabase.isOut(nextPosition.x, nextPosition.y)) {
 				// 出界，不执行此次命令
 				log.debug(String.format(
@@ -270,8 +328,9 @@ public class CombatMovementHelper {
 //				tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, heading);
 //			}
 
-			log.debug(String.format("[Command-Dodge]tank[%d]pos[%d,%d]chead[%d]r[%d]tick[%d]", tank.id, nowX, nowY,
-					currentHeading, heading, dodgeTick));
+			log.debug(String.format(
+					"[Command-Dodge]tank[%d]startpos[%d,%d]pos[%d,%d]dstPos[%d,%d]errorDis[%d]chead[%d]r[%d]tick[%d]",
+					tank.id, startX, startY, nowX, nowY, dx, dy, dis, currentHeading, heading, dodgeTick));
 			if (dodgeTick == 0) {
 				mDodgeEvent = null;
 			}
@@ -291,8 +350,8 @@ public class CombatMovementHelper {
 	public boolean move(ITtank tank, int tick) {
 		if (mMoveEvent == null) {
 			try {
-				mMoveEvent = mMoveQueue.take();
-			} catch (InterruptedException e) {
+				mMoveEvent = mMoveQueue.poll();
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				log.error(e.toString());
 			}
@@ -323,8 +382,8 @@ public class CombatMovementHelper {
 
 			// int dest = Utils.angleTo(nowX, nowY, x, y);
 			// 判断出界
-			//Position nextPosition = Utils.getNextTankPostion(nowX, nowY, dest, 2);
-			Position nextPosition = Utils.getNextPositionByDistance(nowX, nowY, dest, AppConfig.TANK_WIDTH);
+			// Position nextPosition = Utils.getNextTankPostion(nowX, nowY, dest, 2);
+			Position nextPosition = Utils.getNextPositionByDistance(nowX, nowY, dest, AppConfig.TANK_WIDTH * 2);
 			if (mDatabase.isOut(nextPosition.x, nextPosition.y)) {
 				// 出界，不执行此次命令
 				log.debug(String.format(
@@ -334,7 +393,6 @@ public class CombatMovementHelper {
 			}
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
 			tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, dest);
-			
 
 			TankGameInfo enemyTank = mAttackRadar.getTargetTank();
 			if (enemyTank != null) {
@@ -397,6 +455,10 @@ public class CombatMovementHelper {
 	}
 
 	public static class MoveEvent {
+		public int dstX;
+		public int dstY;
+		public int startX;
+		public int startY;
 		public int heading;
 		public int tick;
 	}

@@ -82,10 +82,14 @@ public class AntiGraveMover {
 
 	}
 
+	private Position mLastPosition;
+	private boolean isStupid = false;
+	private int stupidTimer = 0;
 	private int mTurn = 0;
 	private int mTick = 0;
 	private Random mRandom = new Random();
 	private FireHelper mFireHelper;
+	private List<GravePoint> mStupidPoints;
 	private List<GravePoint> mGravePoints;
 	private CombatAttackRadar mAttackRadar;
 	private CombatRealTimeDatabase mDatabase;
@@ -102,6 +106,16 @@ public class AntiGraveMover {
 		mHelper = helper;
 		mFireHelper = fireHelper;
 		mGravePoints = new ArrayList<GravePoint>();
+		mStupidPoints = new ArrayList<GravePoint>();
+
+	}
+
+	public void reset() {
+		stupidTimer = 0;
+		mTurn = 0;
+		mTick = 0;
+		isStupid = false;
+		mLastPosition = null;
 	}
 
 	public void antiGraveMove() {
@@ -163,6 +177,7 @@ public class AntiGraveMover {
 			if (mHelper.isDodgeing(mTick)) {
 				return;
 			}
+			// antiStupid(tick);
 			createGravePoints();
 			antiGraveMove();
 		} catch (Exception e) {
@@ -183,6 +198,28 @@ public class AntiGraveMover {
 
 	}
 
+	protected void antiStupid(int tick) {
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int tankid = mDatabase.getMyTankId();
+		if (mLastPosition == null) {
+			mLastPosition = new Position(nowX, nowY);
+		} else {
+			int dis = Math.abs(nowX - mLastPosition.x);
+			mLastPosition = new Position(nowX, nowY);
+			if (dis < 100) {
+				stupidTimer++;
+				if (stupidTimer > 300) {
+					isStupid = true;
+					log.debug(String.format("[AntiGrave-AntiStupid]tankid[%d]stupidPos[%d,%d]", tankid, nowX, nowY));
+				}
+			} else {
+				isStupid = false;
+				stupidTimer = 0;
+			}
+		}
+	}
+
 	protected void createGravePoints() {
 		mGravePoints.clear();
 
@@ -191,12 +228,47 @@ public class AntiGraveMover {
 		List<GravePoint> blockPoints = createGravePointsByBlocks();
 		List<GravePoint> bulletPoints = createGravePointsByBullets();
 		List<GravePoint> randomPoints = createGravePointsByRandom();
+		// List<GravePoint> stupidPoints = createStupidPoints();
 
 		mGravePoints.addAll(enemyPoints);
 		mGravePoints.addAll(friendPoints);
 		mGravePoints.addAll(blockPoints);
 		mGravePoints.addAll(bulletPoints);
 		mGravePoints.addAll(randomPoints);
+		// mGravePoints.addAll(stupidPoints);
+
+	}
+
+	protected List<GravePoint> createStupidPoints() {
+		if (isStupid) {
+			int nowX = mDatabase.getNowX();
+			int nowY = mDatabase.getNowY();
+
+			int[] array = { 0, 90, 180, 270 };
+			Position stupidPos = null;
+			int dis = mDatabase.getBattleFieldWidth() / 4;
+			for (int i = 0; i < array.length; i++) {
+				Position position = Utils.getNextPositionByDistance(nowX, nowY, array[i], 150);
+				boolean inBlock = mDatabase.inBlocks(position.x, position.y);
+				boolean isOut = mDatabase.isOut(position.x, position.y);
+				if (!inBlock && !isOut) {
+					stupidPos = position;
+					break;
+				}
+			}
+			if (stupidPos == null) {
+				return mStupidPoints;
+			}
+//			if (mStupidPoints.size() > 3) {
+//				return mStupidPoints;
+//			}
+			GravePoint point = new GravePoint(stupidPos.x, stupidPos.y, 500);
+			mStupidPoints.add(point);
+		} else {
+			mStupidPoints.clear();
+		}
+
+		return mStupidPoints;
 	}
 
 	/**
@@ -220,11 +292,10 @@ public class AntiGraveMover {
 			boolean fireNearReady = mFireHelper.nearFire();
 			int power = -500;
 			if (tank.id == targetId) {
-				power = 500;
 				if (fireBlock || dis > AppConfig.COMBAT_MAX_DISTANCE) {
 					power = 1000;
 				} else if (fireNearReady) {
-					power = 500;
+					power = 200;
 				}
 			} else if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
 				power = 1000;
@@ -297,8 +368,21 @@ public class AntiGraveMover {
 	protected List<GravePoint> createGravePointsByBullets() {
 		List<GravePoint> points = new ArrayList<>();
 		List<Bullet> bullets = mDatabase.getBullets();
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
 		for (Bullet bullet : bullets) {
-			GravePoint gPoint = new GravePoint(bullet.currentX, bullet.currentY, -500);
+			int power = -200;
+			int dis = Utils.distanceTo(nowX, nowY, bullet.currentX, bullet.currentY);
+			if (dis > 0 && dis < 100) {
+				power = -1000;
+			} else if (dis > 100 && dis < 200) {
+				power = -500;
+			} else if (dis > 200 && dis < 300) {
+				power = -300;
+			} else {
+
+			}
+			GravePoint gPoint = new GravePoint(bullet.currentX, bullet.currentY, power);
 			points.add(gPoint);
 		}
 		return points;
@@ -317,23 +401,23 @@ public class AntiGraveMover {
 		TankGameInfo leader = mDatabase.getLeader();
 		for (TankGameInfo tank : friends) {
 			int dis = Utils.distanceTo(nowX, nowY, tank.x, tank.y);
-			int power = -500;
+			int power = -700;
 			if (tank.id == leader.id) {
 				if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
-					power = 2000;
-				} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
-					power = -500;
-				}
-			}else {
-				if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
 					power = 1000;
+				} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
+					power = -700;
 				}
-			}
+			} 
+//			else {
+//				if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
+//					power = 1000;
+//				}
+//			}
 			GravePoint gPoint = new GravePoint(tank.x, tank.y, power);
 			points.add(gPoint);
 		}
 		return points;
 	}
-
 
 }

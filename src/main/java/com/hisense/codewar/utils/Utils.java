@@ -42,8 +42,8 @@ public class Utils {
 
 		// [529,394]xforce[-36]yforce[-53]result[565,447]
 
-		int x1 = 529;
-		int y1 = 394;
+		int x1 = 895;
+		int y1 = 355;
 
 		int x2 = 565;
 		int y2 = 447;
@@ -56,7 +56,7 @@ public class Utils {
 		System.out.println(angel2);
 
 		for (int i = 0; i < 10; i++) {
-			Position position = Utils.getNextTankPostion(x1, y1, -90, i);
+			Position position = Utils.getNextPositionByDistance(x1, y1, 0, 9 * i);
 			System.out.println(position);
 		}
 
@@ -170,7 +170,7 @@ public class Utils {
 	 * @return
 	 */
 	@Deprecated
-	public static int angleTo4( int nowx, int nowy,int tx, int ty) {
+	public static int angleTo4(int nowx, int nowy, int tx, int ty) {
 		// return getFireAngle(nowx, nowy, tx, ty);
 		int ret = 0;
 		if (tx == nowx) {
@@ -418,11 +418,11 @@ public class Utils {
 	// 返回x y r方向上 distance的点
 	public static Position getNextPositionByDistance(int x, int y, int r, int distance) {
 		float angle = a2r(r);
-		int dy = doubleToInt((distance * Math.sin(angle)));
-		int dx = doubleToInt((distance * Math.cos(angle)));
+		double dy = y + (distance * Math.sin(angle));
+		double dx = x + (distance * Math.cos(angle));
 
-		int nx = x + dx;
-		int ny = y + dy;
+		int nx = doubleToInt(dx);
+		int ny = doubleToInt(dy);
 		return new Position(nx, ny);
 	}
 
@@ -434,13 +434,13 @@ public class Utils {
 //		}
 //		return false;
 //	}
-
+	
 	public static boolean isNear(Position p1, Position p2) {
-		return (Math.abs(p1.x - p2.x) <= 1) && (Math.abs(p1.y - p2.y) <= 1);
+		return (Math.abs(p1.x - p2.x) <= 2) && (Math.abs(p1.y - p2.y) <= 2);
 	}
 
 	public static boolean isNear(int x1, int y1, int x2, int y2) {
-		return Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1;
+		return Math.abs(x1 - x2) <= 2 && Math.abs(y1 - y2) <= 2;
 	}
 
 	public static int getFireRange(int nowx, int nowy, int tx, int ty) {

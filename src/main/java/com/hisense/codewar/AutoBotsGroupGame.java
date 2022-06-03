@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.config.AppConfig;
+import com.hisense.codewar.data.CombatFriendBulletDatabase;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
 import com.hisense.codewar.player.AutoBotsPlayer;
@@ -41,6 +42,7 @@ public class AutoBotsGroupGame {
 		ITtank tank2 = game2.tank_init("10.18.224.205", 22222, token2, player2, null);
 		ITtank tank3 = game3.tank_init("10.18.224.205", 22222, token3, player3, null);
 		
+		CombatFriendBulletDatabase.getInstance().reset();
 		new Thread(new Runnable() {
 
 			@Override

@@ -1,6 +1,10 @@
 package com.hisense.codewar.wave;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.hisense.codewar.config.AppConfig;
+import com.hisense.codewar.data.CombatEnemyDatabase;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.Utils;
@@ -43,6 +47,7 @@ public class Wave {
 	private int angle;
 	private int enemyTankId;
 	private int speed;
+	private static final Logger log = LoggerFactory.getLogger(Wave.class);
 
 	public Wave() {
 
@@ -55,13 +60,16 @@ public class Wave {
 		int waveDistance = AppConfig.BULLET_SPEED * tickPassed;
 		int distance = Utils.distanceTo(myStartPos.x, myStartPos.y, tank.x, tank.y);
 		// 波击中目标
-		if (waveDistance >= distance + AppConfig.TARGET_RADIUS * 2) {
+		if (waveDistance >= distance) {
 
 			int angleCurrent = Utils.angleTo(myStartPos.x, myStartPos.y, tank.x, tank.y);
+			int aimAngle2 = Utils.formatAngle(angleCurrent - absBearing);
 			int aimAngle = Utils.normalRelativeAngleDegrees(Utils.formatAngle(angleCurrent - absBearing));
 
 			result.ret = true;
 			result.suggestAimAngle = aimAngle;
+			log.debug("ret = true,aim=" + aimAngle + ",aim2=" + aimAngle2 + " waveDis=" + waveDistance + ",distance="
+					+ distance + ",absBearing=" + absBearing + ",angleCurrent=" + angleCurrent);
 			return result;
 		}
 		result.ret = false;
@@ -92,7 +100,7 @@ public class Wave {
 		this.startTick = startTick;
 	}
 
-	public double getDist() {
+	public int getDist() {
 		return dist;
 	}
 

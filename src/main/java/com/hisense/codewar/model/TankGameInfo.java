@@ -59,7 +59,7 @@ public class TankGameInfo implements Comparable<TankGameInfo> {
     
 	@Override
 	public String toString() {
-		return String.format("tankId[%d]postion[%d,%d]r[%d]", id, x, y, r);
+		return String.format("tankId[%d]postion[%d,%d]r[%d]hp[%d]", id, x, y, r,hp);
 	}
 
 	@Override

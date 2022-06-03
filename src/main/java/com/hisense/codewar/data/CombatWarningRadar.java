@@ -1,23 +1,17 @@
 package com.hisense.codewar.data;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hisense.codewar.algorithm.DodageLvl1Algorithm;
 import com.hisense.codewar.algorithm.DodageLvl2Algorithm;
 import com.hisense.codewar.algorithm.IDodageAlgorithm;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Bullet;
-import com.hisense.codewar.model.Bullet.DodgeSuggestion;
 import com.hisense.codewar.model.BulletInfo;
-import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankMapProjectile;
 import com.hisense.codewar.model.ThreatTarget;
 import com.hisense.codewar.utils.Utils;

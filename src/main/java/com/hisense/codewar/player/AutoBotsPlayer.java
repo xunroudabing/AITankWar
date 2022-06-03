@@ -44,23 +44,26 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		// TODO Auto-generated constructor stub
 		mTick = new AtomicInteger();
 		mCombatRealTimeDatabase = new CombatRealTimeDatabase();
+		mEnemyDatabase = new CombatEnemyDatabase(mCombatRealTimeDatabase);
 		mAttackRadar = new CombatAttackRadar(mCombatRealTimeDatabase);
-		mFireHelper = new FireHelper(mCombatRealTimeDatabase, mAttackRadar);
+		mFireHelper = new FireHelper(mCombatRealTimeDatabase, mAttackRadar, mEnemyDatabase);
 		mMovementHelper = new CombatMovementHelper(mCombatRealTimeDatabase, mAttackRadar, mFireHelper);
 		mCombatWarningRadar = new CombatWarningRadar(mCombatRealTimeDatabase, mMovementHelper);
 		mMoveMentRadar = new MoveMentRadar(mCombatRealTimeDatabase, mAttackRadar, mMovementHelper);
 		mAntiGraveMover = new AntiGraveMover(mCombatRealTimeDatabase, mAttackRadar, mMovementHelper, mFireHelper);
-		mEnemyDatabase = new CombatEnemyDatabase(mCombatRealTimeDatabase);
 		mWaveSurfing = new WaveSurfing(mCombatRealTimeDatabase, mEnemyDatabase);
 		mCombatStatistics = new CombatStatistics();
+		mFireHelper.setStatistics(mCombatStatistics);
 
 	}
 
 	@Override
 	public void gametick(ITtank tank) {
 		// TODO Auto-generated method stub
+		//log.info("gametick");
 		long start = System.currentTimeMillis();
 		try {
+			boolean canTrack = mMovementHelper.needTrack(mTick.get());
 			boolean canPolling = mMovementHelper.canPolling();
 			boolean canFire = mFireHelper.canFire();
 			boolean needDodge = mMovementHelper.needDodge(mTick.get());
@@ -80,10 +83,14 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 				if (enemyTank != null) {
 					fireBlock = mCombatRealTimeDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
 					if (fireBlock) {
-						if (canMove) {
+						if(canTrack) {
+							mMovementHelper.track(tank, mTick.get());
+						}
+						else if (canMove) {
 							mMovementHelper.move(tank, mTick.get());
 						}
 					} else {
+						//boolean ret = mFireHelper.wavefire(tank,mWaveSurfing);
 						boolean ret = mFireHelper.fire(tank);
 						// 无法射击
 						if (!ret) {
@@ -98,7 +105,11 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 					}
 				}
 
-			} else if (canMove) {
+			}
+			else if(canTrack) {
+				mMovementHelper.track(tank, mTick.get());
+			}
+			else if (canMove) {
 				mMovementHelper.move(tank, mTick.get());
 				// mMovementHelper.lock(tank, mTick.get());
 			} else if (canPolling) {
@@ -120,6 +131,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles, int r,
 			List<HitInfo> hits) {
 		// TODO Auto-generated method stub
+		//log.info("updatemap");
 		try {
 			long start = System.currentTimeMillis();
 			mTick.getAndIncrement();
@@ -132,9 +144,9 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			mCombatWarningRadar.scan(mTick.get());
 			mEnemyDatabase.scan(mTick.get());
 			mAttackRadar.scan(mTick.get());
-			// mMoveMentRadar.scan(mTick.get());
+			mMoveMentRadar.scan(mTick.get());
 			mAntiGraveMover.move(mTick.get());
-			mWaveSurfing.scan(mTick.get());
+			// mWaveSurfing.scan(mTick.get());
 			hitEnemyCount(hits);
 			long end = System.currentTimeMillis();
 			long cost = end - start;
@@ -152,11 +164,13 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		// TODO Auto-generated method stub
 		log.info(String.format("###########TANK[%d][%d]BattleSTART############", mTankId, 1));
 		mCombatRealTimeDatabase.reset();
+		mEnemyDatabase.reset();
 		mCombatWarningRadar.reset();
 		mAttackRadar.reset();
 		mMovementHelper.reset();
 		mFireHelper.reset();
 		mMoveMentRadar.reset();
+		mAntiGraveMover.reset();
 		mTick.set(0);
 		mCombatRealTimeDatabase.setBlocks(tank.getBlocks());
 	}
@@ -165,12 +179,15 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	public void gameend(ITtank tank) {
 		// TODO Auto-generated method stub
 		log.info(String.format("###########TANK[%d][%d]BattleEND############", mTankId, 1));
+		mCombatStatistics.show();
 		mCombatRealTimeDatabase.reset();
 		mCombatWarningRadar.reset();
 		mAttackRadar.reset();
 		mMovementHelper.reset();
 		mFireHelper.reset();
 		mMoveMentRadar.reset();
+		mEnemyDatabase.reset();
+		mAntiGraveMover.reset();
 		mTick.set(0);
 	}
 
@@ -182,12 +199,12 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		for (HitInfo hitInfo : hits) {
 			if (hitInfo.sTankid == tankid) {
 				int enemyId = hitInfo.dTankid;
-				log.info(String.format("[Battle-INFO][T%d]Me[%d]hit--->Enemy[%d]", mTick,tankid, enemyId));
+				log.info(String.format("[Battle-INFO][T%d]Me[%d]hit--->Enemy[%d]", mTick.get(), tankid, enemyId));
 				mCombatStatistics.hitCounter();
-			}else if(hitInfo.dTankid == tankid) {
+			} else if (hitInfo.dTankid == tankid) {
 				int enemyId = hitInfo.sTankid;
 				mCombatStatistics.hitmeCounter();
-				log.info(String.format("[Battle-INFO][T%d]Enemy[%d]hit--->Me[%d]", mTick,enemyId, tankid));
+				log.info(String.format("[Battle-INFO][T%d]Enemy[%d]hit--->Me[%d]", mTick.get(), enemyId, tankid));
 			}
 		}
 	}

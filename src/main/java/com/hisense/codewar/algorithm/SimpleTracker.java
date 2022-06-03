@@ -33,15 +33,15 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		log.debug("track + " + seed);
 		Position position = null;
 		int moveTick = 2;
-
+		int speed = 3;
 		if (direction) {
 			if (targetX > nowX) {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 0, moveTick);
+				Position p = Utils.getNextPositionByDistance(nowX, nowY, 0, speed);
 				if (isValid(p)) {
 					position = p;
 				}
 			} else {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 180, moveTick);
+				Position p = Utils.getNextPositionByDistance(nowX, nowY, 180, speed);
 				if (isValid(p)) {
 					position = p;
 				}
@@ -49,12 +49,12 @@ public class SimpleTracker implements ITrackingAlgorithm {
 
 			if (position == null) {
 				if (targetY > nowY) {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+					Position p = Utils.getNextPositionByDistance(nowX, nowY, 90, speed);
 					if (isValid(p)) {
 						position = p;
 					}
 				} else {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+					Position p = Utils.getNextPositionByDistance(nowX, nowY, 270, speed);
 					if (isValid(p)) {
 						position = p;
 					}
@@ -62,12 +62,12 @@ public class SimpleTracker implements ITrackingAlgorithm {
 			}
 		} else {
 			if (targetY > nowY) {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+				Position p = Utils.getNextPositionByDistance(nowX, nowY, 90, speed);
 				if (isValid(p)) {
 					position = p;
 				}
 			} else {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+				Position p = Utils.getNextPositionByDistance(nowX, nowY, 270, speed);
 				if (isValid(p)) {
 					position = p;
 				}
@@ -75,12 +75,12 @@ public class SimpleTracker implements ITrackingAlgorithm {
 
 			if (position == null) {
 				if (targetX > nowX) {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 0, moveTick);
+					Position p = Utils.getNextPositionByDistance(nowX, nowY, 0, speed);
 					if (isValid(p)) {
 						position = p;
 					}
 				} else {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 180, moveTick);
+					Position p = Utils.getNextPositionByDistance(nowX, nowY, 180, speed);
 					if (isValid(p)) {
 						position = p;
 					}
@@ -119,14 +119,15 @@ public class SimpleTracker implements ITrackingAlgorithm {
 		boolean direction = seed % 2 == 0;
 		int moveTick = 2;
 		Position position = null;
+		int speed = 3;
 		if (direction) {
 			if (targetX > nowX) {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 180, moveTick);
+				Position p = Utils.getNextPositionByDistance(nowX, nowY, 180, speed);
 				if (isValid(p)) {
 					position = p;
 				}
 			} else {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 0, moveTick);
+				Position p = Utils.getNextPositionByDistance(nowX, nowY, 0, speed);
 				if (isValid(p)) {
 					position = p;
 				}
@@ -134,12 +135,12 @@ public class SimpleTracker implements ITrackingAlgorithm {
 
 			if (position == null) {
 				if (targetY > nowY) {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+					Position p = Utils.getNextPositionByDistance(nowX, nowY, 90, speed);
 					if (isValid(p)) {
 						position = p;
 					}
 				} else {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+					Position p = Utils.getNextPositionByDistance(nowX, nowY, 270, speed);
 					if (isValid(p)) {
 						position = p;
 					}
@@ -147,12 +148,12 @@ public class SimpleTracker implements ITrackingAlgorithm {
 			}
 		} else {
 			if (targetY > nowY) {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 90, moveTick);
+				Position p = Utils.getNextPositionByDistance(nowX, nowY, 90, speed);
 				if (isValid(p)) {
 					position = p;
 				}
 			} else {
-				Position p = Utils.getNextTankPostion(nowX, nowY, 270, moveTick);
+				Position p = Utils.getNextPositionByDistance(nowX, nowY, 270, speed);
 				if (isValid(p)) {
 					position = p;
 				}
@@ -160,12 +161,12 @@ public class SimpleTracker implements ITrackingAlgorithm {
 
 			if (position == null) {
 				if (targetX > nowX) {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 180, moveTick);
+					Position p = Utils.getNextPositionByDistance(nowX, nowY, 180, speed);
 					if (isValid(p)) {
 						position = p;
 					}
 				} else {
-					Position p = Utils.getNextTankPostion(nowX, nowY, 0, moveTick);
+					Position p = Utils.getNextPositionByDistance(nowX, nowY, 0, speed);
 					if (isValid(p)) {
 						position = p;
 					}

@@ -17,6 +17,7 @@ public class Bullet {
 	public int currentY;
 	public int r;
 	public int tankid;
+	public int dstid;
 	public boolean isActive = true;
 	public boolean handled = false;
 	// 创建时间，单位tick
@@ -96,13 +97,14 @@ public class Bullet {
 		public int dodgeNeedTick;
 		// 倒计时时间 剩余来袭时间减去闪避所需时间，hitTickleft - dodgeNeedTick
 		public int coutdownTimer;
-
+		//最佳移动到的位置
+		public Position dodgeBestMoveToPosition;
 		@Override
 		public String toString() {
 			// TODO Auto-generated method stub
 			return String.format(
-					"-Suggest-bulletToMeDis[%d]hitleft[%d]bestAngle[%d]bestDis[%d]dodageNeedTick[%d]timer[%d]",
-					distance, hitTickleft, dodgeBestAngle, dodgeBestDistance, dodgeNeedTick, coutdownTimer);
+					"-Suggest-bulletToMeDis[%d]hitleft[%d]bestAngle[%d]bestDis[%d]dodageNeedTick[%d]timer[%d]dodgeBestMoveToPosition[%d,%d]",
+					distance, hitTickleft, dodgeBestAngle, dodgeBestDistance, dodgeNeedTick, coutdownTimer,dodgeBestMoveToPosition.x,dodgeBestMoveToPosition.y);
 		}
 	}
 }

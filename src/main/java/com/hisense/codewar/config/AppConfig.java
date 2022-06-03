@@ -12,7 +12,6 @@ public class AppConfig {
 	public static int TANK_SIZE = 50;
 	public static int COMBAT_MAX_DISTANCE = 500;
 	public static int COMBAT_MIN_DISTANCE = 170;
-	public static int COMBAT_CIRCLE_RADIUS = 400;
 	public static int WAVE_DB_MAXROWS = 2000;
 	/**
 	 * 提前闪躲，值越大闪躲的越早
@@ -45,7 +44,6 @@ public class AppConfig {
 		DODGE_TICK = PropKit.getInt("dodge.earlytick");
 		COMBAT_MAX_DISTANCE = PropKit.getInt("battle.combatMaxDistance");
 		COMBAT_MIN_DISTANCE = PropKit.getInt("battle.combatMinDistance");
-		COMBAT_CIRCLE_RADIUS = PropKit.getInt("battle.combatCircleRadius"); 
 		MAP_WITH = PropKit.getInt("battle.range.with");
 		MAP_HEIGHT = PropKit.getInt("battle.range.height");
 		TANK_SIZE = PropKit.getInt("battle.range.tanksize");

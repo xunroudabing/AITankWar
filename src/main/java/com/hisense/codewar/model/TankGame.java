@@ -167,10 +167,18 @@ public class TankGame {
         while(true){
             try {
                 boolean connectflag = false;
+                boolean needRetryConnect = false;
                 long nexttick = System.currentTimeMillis() + 33;
                 Selector selector = Selector.open();
                 long lastsendtime = 0;
-                long lastrecvtime = 0;                
+                long lastrecvtime = 0;   
+                ByteBuffer byteBuffer = ByteBuffer.allocate(1024 * 4);
+
+                if (tank.getState() == TankGameState.sInit) {
+                    tank_connect(selector);
+                    // send_token(tank);
+                    nexttick = System.currentTimeMillis() + 1000;
+                }                             
                 while (true) {
                     //选择准备好的事件
     //                System.out.println("start selector.select();");
@@ -178,15 +186,20 @@ public class TankGame {
                     if(timeout <= 0){
                         timeout = 33;
                     }
-                    // System.out.println(timeout);
+                    //System.out.println("before:" + timeout);
 
                     int channels = selector.select(timeout);
+                    // System.out.println("after:" + timeout);
 
     //                System.out.println("end selector.select();");
                     if (tank.getState() == TankGameState.sInit) {
-                        tank_connect(selector);
-                        // send_token(tank);
-                        nexttick = System.currentTimeMillis() + 1000;
+                        if(needRetryConnect == true){
+                            tank_connect(selector);
+                            // send_token(tank);
+                            nexttick = System.currentTimeMillis() + 1000;
+                            needRetryConnect = false;
+                        }
+                        
                     } else if (tank.getState() == TankGameState.sWait) {
                         nexttick = System.currentTimeMillis() + 1000;
                     } else if (tank.getState() == TankGameState.sGaming) {
@@ -219,6 +232,7 @@ public class TankGame {
                             tank.setCache("");                        
                             lastrecvtime = 0;
                             connectflag = false;
+                            needRetryConnect = true;
                             continue;
                         }   
                     }                 
@@ -226,12 +240,13 @@ public class TankGame {
                     if(channels == 0){
                         continue;
                     }
+                    //  System.out.println("select:" + channels);
+
                     //已选择的键集
                     Iterator<SelectionKey> it = selector.selectedKeys().iterator();
                     //处理已选择键集事件
                     while (it.hasNext()) {
                         SelectionKey key = it.next();
-                        //处理掉后将键移除，避免重复消费(因为下次选择后，还在已选择键集中)
                         it.remove();
                         if (key.isConnectable()) {
 
@@ -250,18 +265,21 @@ public class TankGame {
                             }
                         }
                         else if (key.isReadable()) {
-                            ByteBuffer byteBuffer = ByteBuffer.allocate(1024 * 4);
+                            //  System.out.println("read:" + timeout);
+
                             int len = 0;
                             SocketChannel client = (SocketChannel)key.channel();
                             try {
+                                byteBuffer.clear();
                                 if ((len = client.read(byteBuffer)) > 0) {
     //                                System.out.println("接收到來自服务器的消息\n");
                                     String data = new String(byteBuffer.array(), 0, len);
                                     // System.out.println(data);
                                     tank.addCache(data);
-                                    client.register(selector, SelectionKey.OP_READ);
+                                    // key.interestOps(SelectionKey.OP_READ);
+                                    // client.register(selector, key.interestOps()^SelectionKey.OP_READ);
                                 }else{
-    //                                System.out.println("接收到來自服务器的消息, no data.\n");
+                                    System.out.println("接收到來自服务器的消息, no data.\n");
                                     continue;
 
                                 }
@@ -273,6 +291,7 @@ public class TankGame {
                                 tank.setCache("");
                                 lastrecvtime = 0;
                                 connectflag = false;
+                                needRetryConnect = true;
                                 continue;
 
                             }

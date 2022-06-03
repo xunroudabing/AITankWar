@@ -37,7 +37,7 @@ public class TrackerPlayer implements TankGamePlayInterface {
 		mTick = new AtomicInteger();
 		mCombatRealTimeDatabase = new CombatRealTimeDatabase();
 		mAttackRadar = new CombatAttackRadar(mCombatRealTimeDatabase);
-		mFireHelper = new FireHelper(mCombatRealTimeDatabase, mAttackRadar);
+		mFireHelper = new FireHelper(mCombatRealTimeDatabase, mAttackRadar,null);
 		mMovementHelper = new CombatMovementHelper(mCombatRealTimeDatabase, mAttackRadar, mFireHelper);
 		mCombatWarningRadar = new CombatWarningRadar(mCombatRealTimeDatabase, mMovementHelper);
 		mMoveMentRadar = new MoveMentRadar(mCombatRealTimeDatabase, mAttackRadar, mMovementHelper);

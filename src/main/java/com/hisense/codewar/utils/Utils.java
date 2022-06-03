@@ -42,8 +42,8 @@ public class Utils {
 
 		// [529,394]xforce[-36]yforce[-53]result[565,447]
 
-		int x1 = 529;
-		int y1 = 394;
+		int x1 = 895;
+		int y1 = 355;
 
 		int x2 = 565;
 		int y2 = 447;
@@ -56,7 +56,7 @@ public class Utils {
 		System.out.println(angel2);
 
 		for (int i = 0; i < 10; i++) {
-			Position position = Utils.getNextTankPostion(x1, y1, -90, i);
+			Position position = Utils.getNextPositionByDistance(x1, y1, 0, 9 * i);
 			System.out.println(position);
 		}
 
@@ -170,7 +170,7 @@ public class Utils {
 	 * @return
 	 */
 	@Deprecated
-	public static int getTargetRadius(int tx, int ty, int nowx, int nowy) {
+	public static int angleTo4(int nowx, int nowy, int tx, int ty) {
 		// return getFireAngle(nowx, nowy, tx, ty);
 		int ret = 0;
 		if (tx == nowx) {
@@ -279,11 +279,10 @@ public class Utils {
 		}
 		return angle;
 	}
-	
+
 	/**
-	 * Normalizes an angle to a relative angle.
-	 * The normalized angle will be in the range from -180 to 180, where 180
-	 * itself is not included.
+	 * Normalizes an angle to a relative angle. The normalized angle will be in the
+	 * range from -180 to 180, where 180 itself is not included.
 	 *
 	 * @param angle the angle to normalize
 	 * @return the normalized angle that will be in the range of [-180,180[
@@ -324,8 +323,10 @@ public class Utils {
 	public static int distanceTo(int x, int y, int tx, int ty) {
 		return doubleToInt(Math.hypot(x - tx, y - ty));
 	}
+
 	/**
 	 * double向上取整，1.1返回 2
+	 * 
 	 * @param d
 	 * @return
 	 */
@@ -406,8 +407,8 @@ public class Utils {
 	// 坦克移动位置
 	public static Position getNextTankPostion(int x, int y, int r, int tick) {
 		float angle = a2r(r);
-		int dy = (int) (AppConfig.TANK_SPEED * tick * Math.sin(angle));
-		int dx = (int) (AppConfig.TANK_SPEED * tick * Math.cos(angle));
+		int dy = doubleToInt((AppConfig.TANK_SPEED * tick * Math.sin(angle)));
+		int dx = doubleToInt((AppConfig.TANK_SPEED * tick * Math.cos(angle)));
 
 		int nx = x + dx;
 		int ny = y + dy;
@@ -417,11 +418,11 @@ public class Utils {
 	// 返回x y r方向上 distance的点
 	public static Position getNextPositionByDistance(int x, int y, int r, int distance) {
 		float angle = a2r(r);
-		int dy = (int) (distance * Math.sin(angle));
-		int dx = (int) (distance * Math.cos(angle));
+		double dy = y + (distance * Math.sin(angle));
+		double dx = x + (distance * Math.cos(angle));
 
-		int nx = x + dx;
-		int ny = y + dy;
+		int nx = doubleToInt(dx);
+		int ny = doubleToInt(dy);
 		return new Position(nx, ny);
 	}
 
@@ -433,13 +434,13 @@ public class Utils {
 //		}
 //		return false;
 //	}
-
+	
 	public static boolean isNear(Position p1, Position p2) {
-		return (Math.abs(p1.x - p2.x) <= 1) && (Math.abs(p1.y - p2.y) <= 1);
+		return (Math.abs(p1.x - p2.x) <= 2) && (Math.abs(p1.y - p2.y) <= 2);
 	}
 
 	public static boolean isNear(int x1, int y1, int x2, int y2) {
-		return Math.abs(x1 - x2) <= 1 && Math.abs(y1 - y2) <= 1;
+		return Math.abs(x1 - x2) <= 2 && Math.abs(y1 - y2) <= 2;
 	}
 
 	public static int getFireRange(int nowx, int nowy, int tx, int ty) {
@@ -539,7 +540,7 @@ public class Utils {
 		int totalR = width + blockWidth;
 		int distance = Utils.distanceTo(x, y, blockX, blockY);
 
-		return distance <= totalR;
+		return distance < totalR;
 	}
 
 	/**
@@ -557,6 +558,23 @@ public class Utils {
 			int blockWidth) {
 		Position endPostion = Utils.getNextPositionByDistance(x, y, r, distance);
 		return isCrossBlock(x, y, endPostion.x, endPostion.y, blocks, blockWidth);
+	}
+
+	/**
+	 * 靠近Block时，判断下一个移动位置是否和block相交，如果相交则代表无法移动
+	 * 
+	 * @param x
+	 * @param y
+	 * @param r
+	 * @param distance
+	 * @param blocks
+	 * @param blockWidth
+	 * @return
+	 */
+	public static boolean isNextPointInBlocks(int x, int y, int r, int distance, List<TankMapBlock> blocks,
+			int blockWidth) {
+		Position endPostion = Utils.getNextPositionByDistance(x, y, r, distance);
+		return inBlocks(endPostion.x, endPostion.y, blockWidth, blocks, blockWidth);
 	}
 
 	/**

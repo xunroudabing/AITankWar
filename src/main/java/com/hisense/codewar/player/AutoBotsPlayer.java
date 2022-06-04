@@ -21,6 +21,7 @@ import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.model.TankGamePlayInterface;
 import com.hisense.codewar.model.TankMapProjectile;
+import com.hisense.codewar.utils.Utils;
 import com.hisense.codewar.wave.WaveSurfing;
 
 public class AutoBotsPlayer implements TankGamePlayInterface {
@@ -60,9 +61,10 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	@Override
 	public void gametick(ITtank tank) {
 		// TODO Auto-generated method stub
-		//log.info("gametick");
+		// log.info("gametick");
 		long start = System.currentTimeMillis();
 		try {
+			
 			boolean canTrack = mMovementHelper.needTrack(mTick.get());
 			boolean canPolling = mMovementHelper.canPolling();
 			boolean canFire = mFireHelper.canFire();
@@ -82,15 +84,15 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 				int nowY = mCombatRealTimeDatabase.getNowY();
 				if (enemyTank != null) {
 					fireBlock = mCombatRealTimeDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
+					int dis = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
 					if (fireBlock) {
-						if(canTrack) {
+						if (canTrack) {
 							mMovementHelper.track(tank, mTick.get());
-						}
-						else if (canMove) {
+						} else if (canMove) {
 							mMovementHelper.move(tank, mTick.get());
 						}
 					} else {
-						//boolean ret = mFireHelper.wavefire(tank,mWaveSurfing);
+						// boolean ret = mFireHelper.wavefire(tank,mWaveSurfing);
 						boolean ret = mFireHelper.fire(tank);
 						// 无法射击
 						if (!ret) {
@@ -105,11 +107,9 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 					}
 				}
 
-			}
-			else if(canTrack) {
+			} else if (canTrack) {
 				mMovementHelper.track(tank, mTick.get());
-			}
-			else if (canMove) {
+			} else if (canMove) {
 				mMovementHelper.move(tank, mTick.get());
 				// mMovementHelper.lock(tank, mTick.get());
 			} else if (canPolling) {
@@ -124,14 +124,14 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		}
 		long end = System.currentTimeMillis();
 		long cost = end - start;
-		log.debug(String.format("[GameTickCost][%d]cost %d ms",mTick.get(), cost));
+		log.debug(String.format("[GameTickCost][%d]cost %d ms", mTick.get(), cost));
 	}
 
 	@Override
 	public void updatemap(ITtank tank, List<TankGameInfo> tanks, List<TankMapProjectile> projectiles, int r,
 			List<HitInfo> hits) {
 		// TODO Auto-generated method stub
-		//log.info("updatemap");
+		// log.info("updatemap");
 		try {
 			long start = System.currentTimeMillis();
 			mTick.getAndIncrement();
@@ -146,7 +146,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			mAttackRadar.scan(mTick.get());
 			mMoveMentRadar.scan(mTick.get());
 			mAntiGraveMover.move(mTick.get());
-			// mWaveSurfing.scan(mTick.get());
+			mWaveSurfing.scan(mTick.get());
 			hitEnemyCount(hits);
 			long end = System.currentTimeMillis();
 			long cost = end - start;

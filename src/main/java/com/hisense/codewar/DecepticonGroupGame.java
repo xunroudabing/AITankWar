@@ -6,9 +6,7 @@ import org.slf4j.LoggerFactory;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGame;
-import com.hisense.codewar.player.AutoBotsPlayer;
 import com.hisense.codewar.player.DecepticonPlayer;
-import com.hisense.codewar.player.TrackerPlayer;
 import com.jfinal.kit.PropKit;
 
 public class DecepticonGroupGame {
@@ -37,7 +35,7 @@ public class DecepticonGroupGame {
 		ITtank tank4 = game4.tank_init("10.18.224.205", 22222, token4, player4, null);
 		ITtank tank5 = game5.tank_init("10.18.224.205", 22222, token5, player5, null);
 		ITtank tank6 = game6.tank_init("10.18.224.205", 22222, token6, player6, null);
-		
+
 		new Thread(new Runnable() {
 
 			@Override

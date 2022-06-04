@@ -54,6 +54,8 @@ public class FireHelper {
 	}
 
 	public boolean wavefire(ITtank tank, WaveSurfing waveSurfing) {
+		boolean guessFireEnable = false;
+		boolean guessFire = false;
 		TankGameInfo target = mAttackRadar.getTargetTank();
 		if (target == null) {
 			log.debug("[Fire]not target!!");
@@ -66,9 +68,21 @@ public class FireHelper {
 
 		int bestDest = Utils.angleTo(nowX, nowY, target.x, target.y);
 		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
-		// 波统计瞄准角度
-		int aim = (int) waveSurfing.getBestMatchFireAngle(target.id);
-		int dest = bestDest + aim;
+
+		// 是否有队友正在向目标射击,有则进行预测射击
+		boolean friendShooting = CombatFriendBulletDatabase.getInstance().exist(target.id, mTick, mtankid);
+		if (friendShooting) {
+			guessFireEnable = true;
+		}
+		//预测射击
+		int dest = bestDest;
+		int aim = 0;
+		if (guessFireEnable) {
+			// 波统计瞄准角度
+			aim = (int) waveSurfing.getBestMatchFireAngle(target.id);
+			dest = dest + aim;
+		}
+
 		// 避免误伤
 		if (willHitFriends(dest)) {
 			return false;
@@ -91,9 +105,11 @@ public class FireHelper {
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		log.debug(
-				String.format("[WaveFire]me[%d]pos[%d,%d]dest[%d]bestDest[%d]aim[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
-						mtankid, nowX, nowY, dest, bestDest, aim, target.id, target.x, target.y, target.r));
+				String.format("[WaveFire]guessFire[%b]me[%d]pos[%d,%d]dest[%d]bestDest[%d]aim[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						guessFireEnable,mtankid, nowX, nowY, dest, bestDest, aim, target.id, target.x, target.y, target.r));
 		mTick = 0;
+		// 创建波
+		waveSurfing.createWave(target, mTick);
 		if (mStatistics != null) {
 			mStatistics.fireCounter();
 		}
@@ -101,7 +117,7 @@ public class FireHelper {
 	}
 
 	public boolean fire(ITtank tank) {
-		boolean guessFireEnable = false;
+		boolean guessFireEnable = true;
 		boolean guessFire = false;
 		TankGameInfo target = mAttackRadar.getTargetTank();
 		if (target == null) {
@@ -118,21 +134,21 @@ public class FireHelper {
 		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
 		int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
 		// 是否有队友正在向目标射击,有则进行预测射击
-		boolean friendShooting = CombatFriendBulletDatabase.getInstance().exist(target.id, mTick, mtankid);
-		if (friendShooting) {
-			guessFireEnable = true;
-		}
+//		boolean friendShooting = CombatFriendBulletDatabase.getInstance().exist(target.id, mTick, mtankid);
+//		if (friendShooting) {
+//			guessFireEnable = true;
+//		}
 		// 预测射击
 		int guessDest = 0;
 		int orignDest = 0;
 		if (guessFireEnable) {
-			Position guessPosition = mEnemyDatabase.guessPosition(target.id);
+			Position guessPosition = mEnemyDatabase.guessPositionByPattern(target.id);
 			if (guessPosition != null) {
 				guessDest = Utils.angleTo(nowX, nowY, guessPosition.x, guessPosition.y);
 				orignDest = dest;
 				dest = guessDest;
 				guessFire = true;
-				log.debug(String.format("[Guess-Fire]me[%d]-->enemyid[%d]current[%d,%d]guess[%d,%d]", mtankid,
+				log.debug(String.format("[Guess-Fire]me[%d]-->enemyid[%d]currentPos[%d,%d]guessPos[%d,%d]", mtankid,
 						target.id, target.x, target.y, guessPosition.x, guessPosition.y));
 			}
 		}
@@ -141,7 +157,7 @@ public class FireHelper {
 			return false;
 		}
 		// 射界内，不需要转向，直接开火
-		if (heading >= Math.abs(dest - range / 2) && heading <= Math.abs(dest + range / 2)) {
+		if (heading > Math.abs(dest - range) && heading < Math.abs(dest + range)) {
 			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		} else {
 			// 非预测射击加随机角度
@@ -149,7 +165,7 @@ public class FireHelper {
 				boolean b = mRandom.nextBoolean();
 				int seed = b ? 1 : -1;
 				int r = mRandom.nextInt(range);
-				dest += seed * r / 2;
+				dest += seed * r;
 			}
 			// 避免误伤
 			if (willHitFriends(dest)) {
@@ -160,7 +176,7 @@ public class FireHelper {
 
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
-		log.debug(String.format(
+		log.info(String.format(
 				"[Fire]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]", mtankid,
 				guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
 		mTick = 0;

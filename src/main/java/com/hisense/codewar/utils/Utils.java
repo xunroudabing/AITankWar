@@ -59,6 +59,15 @@ public class Utils {
 			Position position = Utils.getNextPositionByDistance(x1, y1, 0, 9 * i);
 			System.out.println(position);
 		}
+		
+		int x3 = 100;
+		int y3 = 100;
+		
+		int x4 = 110;
+		int y4 = 110;
+		
+		int range = Utils.getFireRange(x3, y3, x4, y4);
+		System.out.println("range=" + range);
 
 	}
 
@@ -436,11 +445,11 @@ public class Utils {
 //	}
 	
 	public static boolean isNear(Position p1, Position p2) {
-		return (Math.abs(p1.x - p2.x) <= 2) && (Math.abs(p1.y - p2.y) <= 2);
+		return (Math.abs(p1.x - p2.x) <= 6) && (Math.abs(p1.y - p2.y) <= 6);
 	}
 
 	public static boolean isNear(int x1, int y1, int x2, int y2) {
-		return Math.abs(x1 - x2) <= 2 && Math.abs(y1 - y2) <= 2;
+		return Math.abs(x1 - x2) <= 6 && Math.abs(y1 - y2) <= 6;
 	}
 
 	public static int getFireRange(int nowx, int nowy, int tx, int ty) {

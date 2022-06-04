@@ -44,10 +44,9 @@ public class WaveSurfing {
 	public void scan(int tick) {
 		try {
 			mTick = tick;
-			loopWavesAndHitTest(tick);
-			// 创建wave
-			createWaves(tick);
-
+			loopWavesAndHitTest(tick);		
+			//创建波
+			//createWaves(tick);
 		} catch (Exception e) {
 			// TODO: handle exception
 			log.error(e.toString());

@@ -16,7 +16,7 @@ public class EnemyCombatData {
 	public EnemyCombatData(int tankID, int teamID) {
 		tankid = tankID;
 		teamid = teamID;
-		historyTracks = new ArrayList<EnemyCombatData.MovementTrack>(2000);
+		historyTracks = new ArrayList<EnemyCombatData.MovementTrack>(6000);
 	}
 
 	public static class MovementTrack implements Cloneable {

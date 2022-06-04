@@ -176,7 +176,7 @@ public class FireHelper {
 
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
-		log.debug(String.format(
+		log.info(String.format(
 				"[Fire]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]", mtankid,
 				guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
 		mTick = 0;

@@ -56,11 +56,14 @@ public class CombatEnemyDatabase {
 		mTick = tick;
 		// 扫描敌人位置
 		List<TankGameInfo> list = mDatabase.getEnemyTanks();
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
 		Iterator<TankGameInfo> iterator = list.iterator();
 		while (iterator.hasNext()) {
 			TankGameInfo tank = (TankGameInfo) iterator.next();
 			// 读取历史记录，查看有无此坦克数据
 			EnemyCombatData data = getEnemyData(tank.id);
+			int distance = Utils.distanceTo(nowX, nowY, tank.x, tank.y);
 			if (data != null) {
 				// 有数据，更新数据,上一次记录
 				MovementTrack lastTrack = data.trackData;
@@ -73,10 +76,23 @@ public class CombatEnemyDatabase {
 				currentTrack.speed = -1;
 				currentTrack.velSeg = -1;
 				currentTrack.adSeg = -1;
+				currentTrack.dist = distance;
 				currentTrack.tick = tick;
 				// 计算角度速度，更新数据
 				data.trackData = compareGetMovement(currentTrack, lastTrack);
-				log.debug("update " + currentTrack.toString());
+				// log.debug("update " + currentTrack.toString());
+				try {
+					//保存至历史记录
+					if (data.trackData.speed != -1 && data.trackData.velSeg != -1 && data.trackData.adSeg != -1) {
+						MovementTrack hisTrack = data.trackData.clone();
+						data.addToHistroy(hisTrack);
+						log.debug("addToHis " + hisTrack.toString());
+					}
+				} catch (CloneNotSupportedException e) {
+					// TODO Auto-generated catch block
+					log.error(e.toString());
+				}
+
 			} else {
 				// 无记录，新增数据
 				// 判断队伍
@@ -89,6 +105,7 @@ public class CombatEnemyDatabase {
 				track.speed = -1;
 				track.velSeg = -1;
 				track.adSeg = -1;
+				track.dist = distance;
 				track.tick = tick;
 				newData.trackData = track;
 				mEnemyCombatHistoryDatas.add(newData);
@@ -142,6 +159,91 @@ public class CombatEnemyDatabase {
 		return null;
 	}
 
+	// 用于匹配段的长度
+	private static final int MATCH_LENGHT = 10;
+
+	protected int getMatchIndex(int tankid) {
+		EnemyCombatData data = getEnemyData(tankid);
+		if (data == null) {
+			return -1;
+		}
+
+		List<MovementTrack> tracks = data.historyTracks;
+		int totalSize = tracks.size();
+		if (totalSize <= MATCH_LENGHT * 10) {
+			return -1;
+		}
+		int currentIndex = totalSize - 1;
+		double beatSimilarity = Double.POSITIVE_INFINITY;
+		int matchIndex = 0;
+		// 这里取i<currentFrame-100是为了避免比较样本和被比较样本重复
+		// 和留取足够的节点给递推未来坐标用
+		for (int i = MATCH_LENGHT; i < currentIndex - MATCH_LENGHT; i++) {
+			// 取10个样本节点计算相似度
+			double similarity = 0;
+			for (int j = 1; j <= MATCH_LENGHT; j++) {
+				double compare_velSeg = tracks.get(i - j).velSeg;
+				double compare_adSeg = tracks.get(i - j).adSeg;
+
+				double current_velSeg = tracks.get(currentIndex - j).velSeg;
+				double current_adSeg = tracks.get(currentIndex - j).adSeg;
+
+				// double compare_dist = tracks.get(i - j).dist;
+				// double current_dist = tracks.get(currentIndex - j).dist;
+				// 相似度
+				similarity += Math.pow(current_velSeg - compare_velSeg, 2) + Math.pow(current_adSeg - compare_adSeg, 2);
+				// 相似度可以加入 与敌人的距离、子弹距离方向等对比数据
+				// similarity += Math.pow((current_dist - compare_dist) / 200, 2);
+
+				// similarity += Math.abs(velocityRecord[i - j] - velocityRecord[currentIndex -
+				// j]);
+				// similarity += Math.abs(headingRecord[i - j] - headingRecord[currentIndex -
+				// j]);
+
+			}
+			// 记录最相似的相似度，以及对应的记录节点下标
+			if (similarity < beatSimilarity) {
+				matchIndex = i;
+				beatSimilarity = similarity;
+			}
+		}
+		return matchIndex;
+
+	}
+
+	public Position guessPositionByPattern(int tankid) {
+		// 预测位置
+		TankGameInfo enemyTank = mDatabase.getTankById(tankid);
+		Position guessPosition = new Position(enemyTank.x, enemyTank.y);
+		int matchIndex = getMatchIndex(tankid);
+		if (matchIndex < 0) {
+			return guessPosition;
+		}
+
+		EnemyCombatData data = getEnemyData(tankid);
+		List<MovementTrack> tracks = data.historyTracks;
+		int currentIndex = tracks.size() - 1;
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int time = 0;
+		while (matchIndex + time < currentIndex) {
+			double distance = Utils.distanceTo(nowX, nowY, guessPosition.x, guessPosition.y);
+			if ((distance / AppConfig.BULLET_SPEED) <= time) {
+				break;
+			}
+
+			int guessX = (int) (guessPosition.x + tracks.get(matchIndex + time).adSeg);
+			int guessY = (int) (guessPosition.y + tracks.get(matchIndex + time).velSeg);
+			guessPosition = new Position(guessX, guessY);
+			log.debug(String.format("[Patter-Guess-Loop]enemyid[%d]oriPos[%d,%d]guessPos[%d,%d]guessTime[%d]", tankid,
+					enemyTank.x, enemyTank.y, guessPosition.x, guessPosition.y, time));
+			time++;
+		}
+		log.debug(String.format("[Patter-Guess-Final]enemyid[%d]oriPos[%d,%d]guessPos[%d,%d]guessTime[%d]", tankid,
+				enemyTank.x, enemyTank.y, guessPosition.x, guessPosition.y, time));
+		return guessPosition;
+	}
+
 	public Position guessPosition(int tankid, int when) {
 		EnemyCombatData data = getEnemyData(tankid);
 		if (data != null) {
@@ -184,7 +286,7 @@ public class CombatEnemyDatabase {
 			log.debug(String.format("[Bullet-Loop]bulletTick[%d]when[%d]enemyPos[%d,%d]", bulletTick, when,
 					enenmyPosition.x, enenmyPosition.y));
 
-		} while (bulletTick >= when);
+		} while (bulletTick >= when || when > 7);
 
 		return enenmyPosition;
 	}

@@ -199,7 +199,7 @@ public class CombatRealTimeDatabase {
 		int tankid = getMyTankId();
 		Collections.sort(friends);
 		// 如果没有队友，自己就是leader,id最小的是leader
-		if (friends.size() > 1) {
+		if (friends.size() >= 1) {
 			tankid = Math.min(tankid, friends.get(0).id);
 		}
 		return getTankById(tankid);
@@ -216,6 +216,15 @@ public class CombatRealTimeDatabase {
 	public int[][] getMapNodeArrays() {
 
 		return mMapNodeArrys;
+	}
+
+	public boolean isAttackMe(int tankid) {
+		for (Bullet bullet : mBullets) {
+			if (bullet.tankid == tankid) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public List<Bullet> getBullets() {
@@ -254,6 +263,12 @@ public class CombatRealTimeDatabase {
 	}
 
 	public boolean inBlocks(int x, int y) {
+		// 队友也算障碍物
+		for (TankGameInfo tank : mFriendTanks) {
+			if (Utils.inBlock(x, y, AppConfig.BLOCK_SIZE, tank.x, tank.y, AppConfig.BLOCK_SIZE)) {
+				return true;
+			}
+		}
 		return Utils.inBlocks(x, y, AppConfig.BLOCK_SIZE, getBlocks(), AppConfig.BLOCK_SIZE);
 	}
 
@@ -302,10 +317,12 @@ public class CombatRealTimeDatabase {
 		}
 		return false;
 	}
-	//返回毒圈半径
+
+	// 返回毒圈半径
 	public int getPoisionR() {
 		return radius;
 	}
+
 	public boolean isOut(int x, int y) {
 		if (x > maxX || x < minX) {
 			return true;

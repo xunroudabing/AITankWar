@@ -195,7 +195,7 @@ public class MoveMentRadar {
 			return true;
 		}
 		TankGameInfo tmp = tankInfo;
-		Position newPoint = Utils.getNextPositionByDistance(tmp.x, tmp.y, (int) angel, 1);
+		Position newPoint = Utils.getNextPositionByDistance(tmp.x, tmp.y, (int) angel, 3);
 		// TankMapBlock newPoint =
 		// TankGeometricOperationUtils.getEndPointByDisAndAngel((double)tmp.x,(double)tmp.y,(double)1,angel);
 		tmp.x = newPoint.x;
@@ -203,12 +203,12 @@ public class MoveMentRadar {
 		int R = mDatabase.getPoisionR();
 		if ((tmp.x > (800 + R - 20)) || (tmp.y > (0.5625 * (800 + R) - 20)) || (tmp.x < (800 - R + 20))
 				|| (tmp.y < (0.5625 * (800 - R) + 20))) {
-			System.out.print("主动进攻路线规划  毒圈避开angel: " + angel + "\n");
+			//System.out.print("主动进攻路线规划  毒圈避开angel: " + angel + "\n");
 			return false;
 		}
 		boolean inBlocks = mDatabase.inBlocks(tmp.x, tmp.y);
 		if (inBlocks) {
-			System.out.print("主动进攻路线规划  block避开angel: " + angel + "\n");
+			//System.out.print("主动进攻路线规划  block避开angel: " + angel + "\n");
 			return false;
 		}
 		count++;

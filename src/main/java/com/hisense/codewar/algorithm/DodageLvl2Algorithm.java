@@ -59,9 +59,16 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			int c = AppConfig.TANK_WIDTH;
 			// 垂足到圆心距离 半径减去此值就是最小移动距离 按B角度躲避公式： (半径-a)/cosB = 移动距离
 			int a = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
+
+			int angleHit = Utils.angleTo(bullet.currentX, bullet.currentY, p4.x, p4.y);
+
 			// 会被击中
 			if (a < c) {
 				canHit = true;
+			}
+			// 子弹已远离
+			if (Math.abs(angleHit - bullet.r) >= 170) {
+				canHit = false;
 			}
 			// 不会击中，忽略
 			if (!canHit) {
@@ -82,7 +89,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			// 所需移动距离
 			int dodgeBestDistance = AppConfig.TANK_WIDTH - a;
 			// ****判断最佳方向上有无block或出界，出界则选择反方向****
-			boolean hitBlocks = mDatabase.isNextPointInBlocks(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
+			boolean hitBlocks = mDatabase.isNextPointCrossBlocks(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
 			boolean outRange = mDatabase.isNearBorderCantMoveByDistance(nowX, nowY, dodgeBestAngle, dodgeBestDistance);
 			if (hitBlocks || outRange) {
 				log.debug(String.format("[HitWarning-Error]will out of range or in block %s change angle 180",
@@ -211,7 +218,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 				suggestAngle = Utils.angleTo(nowX, nowY, positionB.x, positionB.y);
 			}
 			// ****判断最佳方向上有无block或出界，有则采用PlanB****
-			boolean haveBlocks = mDatabase.isNextPointInBlocks(nowX, nowY, suggestAngle, suggestDis);
+			boolean haveBlocks = mDatabase.isNextPointCrossBlocks(nowX, nowY, suggestAngle, suggestDis);
 			boolean outRange = mDatabase.isNearBorderCantMoveByDistance(nowX, nowY, suggestAngle, suggestDis);
 			if (haveBlocks || outRange) {
 				// 提前躲避，给bullet2留出时间,todo这里需要考虑移动带来的位置改变
@@ -220,7 +227,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 				if (bullet1.suggestion.coutdownTimer <= AppConfig.DODGE_TICK + needMoreTick) {
 					int dx = bullet1.suggestion.dodgeBestMoveToPosition.x;
 					int dy = bullet1.suggestion.dodgeBestMoveToPosition.y;
-					mMovementHelper.addDodgeByDistance(nowX,nowY,dx, dy, bullet1.suggestion.dodgeBestAngle,
+					mMovementHelper.addDodgeByDistance(nowX, nowY, dx, dy, bullet1.suggestion.dodgeBestAngle,
 							bullet1.suggestion.dodgeBestDistance);
 					bullet1.handled = true;
 					log.debug(String.format("[T%d][DodgeAI][2-PlanB-Block]tankid[%d]angle[%d]dis[%d]", mTick, tankid,
@@ -242,7 +249,8 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 //							bullet1.suggestion.dodgeBestDistance);
 					// 移动到的目标位置
 					Position moveToPosition = Utils.getNextPositionByDistance(nowX, nowY, suggestAngle, suggestDis);
-					mMovementHelper.addDodgeByDistance(nowX,nowY,moveToPosition.x, moveToPosition.y, suggestAngle, suggestDis);
+					mMovementHelper.addDodgeByDistance(nowX, nowY, moveToPosition.x, moveToPosition.y, suggestAngle,
+							suggestDis);
 					log.debug(
 							String.format("[T%d][DodgeAI][2-PlanA]angle[%d]dis[%d]", mTick, suggestAngle, suggestDis));
 					bullet1.handled = true;
@@ -253,7 +261,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 				// angleBullet = Math.abs(180 - angleBullet);
 				bullet1.handled = true;
 
-				mMovementHelper.addDodgeByDistance(nowX,nowY,bullet1.suggestion.dodgeBestMoveToPosition.x,
+				mMovementHelper.addDodgeByDistance(nowX, nowY, bullet1.suggestion.dodgeBestMoveToPosition.x,
 						bullet1.suggestion.dodgeBestMoveToPosition.y, bullet1.suggestion.dodgeBestAngle,
 						bullet1.suggestion.dodgeBestDistance);
 				log.debug(String.format("[T%d][DodgeAI][2-PlanB]angle[%d]dis[%d]", mTick,

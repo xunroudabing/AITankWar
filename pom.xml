@@ -59,7 +59,13 @@
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>1.7.9</version>
 		</dependency>
-		
+		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.11.0</version>
+		</dependency>
+
 	</dependencies>
 	<build>
 		<plugins>
@@ -175,7 +181,7 @@
 								<platform>windows</platform>
 							</platforms>
 							<id>startup-windows</id>
-							<!-- 启动类 AutoBotsGroupGame AutoBotsSingleGame-->
+							<!-- 启动类 AutoBotsGroupGame AutoBotsSingleGame -->
 							<mainClass>com.hisense.codewar.AutoBotsGroupGame</mainClass>
 							<jvmSettings>
 								<extraArguments>

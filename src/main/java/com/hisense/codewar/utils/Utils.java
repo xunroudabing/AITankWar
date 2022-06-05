@@ -375,6 +375,7 @@ public class Utils {
 	 * @param targetWidth 坦克为41X41正方形，此处虚拟为半径29的圆，此处取值建议为29
 	 * @return
 	 */
+	@Deprecated
 	public static boolean willHit(int bulletX, int bulletY, int r, int targetX, int targetY, int targetWidth) {
 		Position nextPos = getNextBulletByTick(bulletX, bulletY, r, 1);
 

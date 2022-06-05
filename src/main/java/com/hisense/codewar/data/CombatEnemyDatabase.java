@@ -2,16 +2,21 @@ package com.hisense.codewar.data;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.util.IOUtils;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.EnemyCombatData.MovementTrack;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.Utils;
+import com.jfinal.json.Json;
 
 /**
  * 敌人运行轨迹数据库
@@ -35,6 +40,18 @@ public class CombatEnemyDatabase {
 		int adSeg = (int) (speed * Math.cos(Utils.a2r(r)));
 
 		System.out.println("r=" + r + ",speed=" + speed + ",velSeg=" + velSeg + ",adSeg=" + adSeg);
+		
+		LinkedList<MovementTrack> list = new LinkedList<>();
+		for (int i = 0; i < 10; i++) {
+			MovementTrack track = new MovementTrack();
+			track.velSeg = i + 1;
+			track.adSeg = i + 2;
+			track.x = i;
+			track.y = i;
+			list.add(track);
+		}
+		String json =JSON.toJSONString(list);
+		System.out.println(json);
 	}
 
 	private int mTick = 0;
@@ -49,7 +66,7 @@ public class CombatEnemyDatabase {
 
 	public void reset() {
 		mTick = 0;
-		mEnemyCombatHistoryDatas.clear();
+		// mEnemyCombatHistoryDatas.clear();
 	}
 
 	public void scan(int tick) {
@@ -160,7 +177,7 @@ public class CombatEnemyDatabase {
 	}
 
 	// 用于匹配段的长度
-	private static final int MATCH_LENGHT = 10;
+	private static final int MATCH_LENGHT = 15;
 
 	protected int getMatchIndex(int tankid) {
 		EnemyCombatData data = getEnemyData(tankid);
@@ -254,8 +271,11 @@ public class CombatEnemyDatabase {
 			int guessX = (int) (guessPosition.x + tracks.get(matchIndex + time).adSeg);
 			int guessY = (int) (guessPosition.y + tracks.get(matchIndex + time).velSeg);
 			guessPosition = new Position(guessX, guessY);
-			log.debug(String.format("[Patter-Guess-Loop]me[%d]enemyid[%d]oriPos[%d,%d]guessPos[%d,%d]guessTime[%d]", meId,tankid,
-					enemyTank.x, enemyTank.y, guessPosition.x, guessPosition.y, time));
+			log.debug(String.format("[Patter-Guess-Loop]me[%d]enemyid[%d]oriPos[%d,%d]guessPos[%d,%d]guessTime[%d]",
+					meId, tankid, enemyTank.x, enemyTank.y, guessPosition.x, guessPosition.y, time));
+			if (time > 49) {
+				break;
+			}
 			time++;
 		}
 		// time过大不预测
@@ -312,5 +332,14 @@ public class CombatEnemyDatabase {
 		} while (bulletTick >= when || when > 7);
 
 		return enenmyPosition;
+	}
+
+	public void saveFile() {
+		for (EnemyCombatData data : mEnemyCombatHistoryDatas) {
+			int tankid = data.tankid;
+			LinkedList<MovementTrack> trackdata = data.historyTracks;
+			String json = JSON.toJSONString(trackdata);
+
+		}
 	}
 }

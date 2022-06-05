@@ -1,22 +1,37 @@
 package com.hisense.codewar.data;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Objects;
 
 import com.hisense.codewar.config.AppConfig;
 
 public class EnemyCombatData {
+	
+	public static void main(String[] args) {
+		LinkedList<Integer> list = new LinkedList<>();
+		for(int i =0;i<20;i++) {
+			if(list.size() < 5) {
+				list.add(i);
+			}else {
+				list.removeFirst();
+				list.add(i);
+			}
+		}
+		
+		for(Integer integer : list) {
+			System.out.print(integer + ",");
+		}
+	}
 	public int tankid;
 	public int teamid;
 	public boolean isAlive;
 	public MovementTrack trackData;
-	public List<MovementTrack> historyTracks;
+	public LinkedList<MovementTrack> historyTracks;
 
 	public EnemyCombatData(int tankID, int teamID) {
 		tankid = tankID;
 		teamid = teamID;
-		historyTracks = new ArrayList<EnemyCombatData.MovementTrack>(6000);
+		historyTracks = new LinkedList<>();
 	}
 
 	public static class MovementTrack implements Cloneable {
@@ -40,7 +55,7 @@ public class EnemyCombatData {
 		//与我的距离
 		public int dist;
 		// 我的子弹
-		public int bulletAngle;
+		public int ba;
 		// 时间戳
 		public int tick;
 
@@ -58,10 +73,11 @@ public class EnemyCombatData {
 			ret.velSeg = this.velSeg;
 			ret.adSeg = this.adSeg;
 			ret.speed = this.speed;
+			ret.absAngle = this.absAngle;
 			ret.x = this.x;
 			ret.y = this.y;
 			ret.dist = this.dist;
-			ret.bulletAngle = this.bulletAngle;
+			ret.ba = this.ba;
 			ret.tick = this.tick;
 			return ret;
 		}
@@ -69,6 +85,9 @@ public class EnemyCombatData {
 
 	public void addToHistroy(MovementTrack track) {
 		if (historyTracks.size() < AppConfig.WAVE_DB_MAXROWS) {
+			historyTracks.add(track);
+		}else {
+			historyTracks.removeFirst();
 			historyTracks.add(track);
 		}
 	}

@@ -14,7 +14,6 @@ import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.AStarUtil;
 import com.hisense.codewar.utils.Node;
-import com.hisense.codewar.utils.PoisionCircleUtils;
 import com.hisense.codewar.utils.Utils;
 
 public class MoveMentRadar {
@@ -126,16 +125,15 @@ public class MoveMentRadar {
 			 * if(end.getAngelToMytank() < 300){ return; }
 			 */
 			if (end == null || (end.x == 0 && end.y == 0)) {
-				log.debug("activeAttack  没有目标坦克\n");
+				//log.debug("activeAttack  没有目标坦克\n");
 				return;
 			}
 			Node endNode = new Node(end.x, end.y);
 			Node res_node = AHandler.astarSearch(startNode, endNode);
 			if (res_node == null) {
-				log.debug("activeAttack  没有路径\n");
+				//log.debug("activeAttack  没有路径\n");
 			} else {
-
-				log.debug("activeAttack 发现路径 \n");
+				//log.debug("activeAttack 发现路径 \n");
 			}
 
 			Node lastNode = new Node(0, 0);

@@ -181,6 +181,15 @@ public class CombatRealTimeDatabase {
 		return mFriendTanks;
 	}
 
+	public List<TankMapBlock> getFriendAsBlocks() {
+		List<TankMapBlock> list = new ArrayList<>();
+		for (TankGameInfo tank : mFriendTanks) {
+			TankMapBlock block = new TankMapBlock(tank.x, tank.y);
+			list.add(block);
+		}
+		return list;
+	}
+
 	public List<TankGameInfo> getEnemyTanks() {
 		return mEnemyTanks;
 	}
@@ -283,17 +292,24 @@ public class CombatRealTimeDatabase {
 		return isOut(endPosition.x, endPosition.y);
 	}
 
-	public boolean isCrossBlocksByDistance(int nowX, int nowY, int r, int distance) {
-		return Utils.isCrossBlockByDistance(nowX, nowY, r, distance, getBlocks(), AppConfig.BLOCK_SIZE);
-	}
-
-	public boolean isNextPointInBlocks(int nowX, int nowY, int r, int distance) {
-		return Utils.isNextPointInBlocks(nowX, nowY, r, distance, getBlocks(), AppConfig.BLOCK_SIZE);
+	public boolean isNextPointCrossBlocks(int nowX, int nowY, int r, int distance) {
+		Position nextPostion = Utils.getNextPositionByDistance(nowX, nowY, r, distance);
+		// return Utils.isNextPointInBlocks(nowX, nowY, r, distance, getBlocks(),
+		// AppConfig.BLOCK_SIZE);
+		boolean crossBlocks = Utils.isCrossBlock(nowX, nowY, nextPostion.x, nextPostion.y, getBlocks(),
+				AppConfig.BLOCK_SIZE);
+		boolean crossFriends = Utils.isCrossBlock(nowX, nowY, nextPostion.x, nextPostion.y, getFriendAsBlocks(),
+				AppConfig.BLOCK_SIZE);
+		return crossBlocks || crossFriends;
 	}
 
 	// true 射击被阻挡
 	public boolean fireInBlocks(int nowX, int nowY, int tx, int ty) {
-		return Utils.isCrossBlock(nowX, nowY, tx, ty, getBlocks(), AppConfig.BLOCK_SIZE);
+		boolean crossBlocks = Utils.isCrossBlock(nowX, nowY, tx, ty, getBlocks(), AppConfig.BLOCK_SIZE);
+		boolean crossFriends = Utils.isCrossBlock(nowX, nowY, tx, ty, getFriendAsBlocks(), AppConfig.BLOCK_SIZE);
+		return crossBlocks || crossFriends;
+		// return Utils.isCrossBlock(nowX, nowY, tx, ty, getBlocks(),
+		// AppConfig.BLOCK_SIZE);
 	}
 
 	public int getBattleFieldWidth() {

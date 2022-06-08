@@ -74,7 +74,7 @@ public class FireHelper {
 		if (friendShooting) {
 			guessFireEnable = true;
 		}
-		//预测射击
+		// 预测射击
 		int dest = bestDest;
 		int aim = 0;
 		if (guessFireEnable) {
@@ -104,9 +104,9 @@ public class FireHelper {
 
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
-		log.debug(
-				String.format("[WaveFire]guessFire[%b]me[%d]pos[%d,%d]dest[%d]bestDest[%d]aim[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
-						guessFireEnable,mtankid, nowX, nowY, dest, bestDest, aim, target.id, target.x, target.y, target.r));
+		log.debug(String.format(
+				"[WaveFire]guessFire[%b]me[%d]pos[%d,%d]dest[%d]bestDest[%d]aim[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+				guessFireEnable, mtankid, nowX, nowY, dest, bestDest, aim, target.id, target.x, target.y, target.r));
 		mTick = 0;
 		// 创建波
 		waveSurfing.createWave(target, mTick);
@@ -116,7 +116,40 @@ public class FireHelper {
 		return true;
 	}
 
-	public boolean fire(ITtank tank) {
+	public boolean fire1(ITtank tank) {
+		TankGameInfo target = mAttackRadar.getTargetTank();
+		if (target == null) {
+			log.debug("[Fire]not target!!");
+			return false;
+		}
+
+		int mtankid = mDatabase.getMyTankId();
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int heading = mDatabase.getHeading();
+
+		int dest = Utils.angleTo(nowX, nowY, target.x, target.y);
+		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
+
+		// 避免误伤
+		if (willHitFriends(dest)) {
+			return false;
+		}
+
+		// 射界内，不需要转向，直接开火
+		if (heading > Math.abs(dest - range) && heading < Math.abs(dest + range)) {
+			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+			mTick = 0;
+			log.info(String.format(
+					"[Fire1]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+					mtankid, false, nowX, nowY, dest, dest, target.id, target.x, target.y, target.r));
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean fire2(ITtank tank) {
 		boolean guessFireEnable = true;
 		boolean guessFire = false;
 		TankGameInfo target = mAttackRadar.getTargetTank();
@@ -152,38 +185,223 @@ public class FireHelper {
 						target.id, target.x, target.y, guessPosition.x, guessPosition.y));
 			}
 		}
-		// 避免误伤
-		if (willHitFriends(dest)) {
-			return false;
-		}
+
 		// 射界内，不需要转向，直接开火
 		if (heading > Math.abs(dest - range) && heading < Math.abs(dest + range)) {
-			tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
-		} else {
-			// 非预测射击加随机角度
-			if (!guessFire) {
-				boolean b = mRandom.nextBoolean();
-				int seed = b ? 1 : -1;
-				int r = mRandom.nextInt(range);
-				dest += seed * r;
+			if (distance <= 70) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return false;
 			}
 			// 避免误伤
 			if (willHitFriends(dest)) {
 				return false;
 			}
-			tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+			if (distance <= 396) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire2]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return false;
+			} else if (distance > 396 && distance <= 594) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire2]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return true;
+			}
+		} else {
+			if (distance <= 70) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire2]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return true;
+			}
+			// 避免误伤
+			if (willHitFriends(dest)) {
+				return false;
+			}
+			if (distance <= 396) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire2]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return true;
+			}
 		}
-
-		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
-		tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
 		log.info(String.format(
 				"[Fire]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]", mtankid,
 				guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
-		mTick = 0;
-		if (mStatistics != null) {
-			mStatistics.fireCounter();
+
+		return false;
+	}
+
+	public boolean fire3(ITtank tank) {
+		boolean guessFireEnable = true;
+		boolean guessFire = false;
+		TankGameInfo target = mAttackRadar.getTargetTank();
+		if (target == null) {
+			log.debug("[Fire]not target!!");
+			return false;
 		}
-		CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+
+		int mtankid = mDatabase.getMyTankId();
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int heading = mDatabase.getHeading();
+
+		int dest = Utils.angleTo(nowX, nowY, target.x, target.y);
+		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
+		int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
+		// 是否有队友正在向目标射击,有则进行预测射击
+//		boolean friendShooting = CombatFriendBulletDatabase.getInstance().exist(target.id, mTick, mtankid);
+//		if (friendShooting) {
+//			guessFireEnable = true;
+//		}
+		// 预测射击
+		int guessDest = 0;
+		int orignDest = 0;
+		if (guessFireEnable) {
+			Position guessPosition = mEnemyDatabase.guessPositionByPattern(target.id);
+			if (guessPosition != null) {
+				guessDest = Utils.angleTo(nowX, nowY, guessPosition.x, guessPosition.y);
+				orignDest = dest;
+				dest = guessDest;
+				guessFire = true;
+				log.debug(String.format("[Guess-Fire]me[%d]-->enemyid[%d]currentPos[%d,%d]guessPos[%d,%d]", mtankid,
+						target.id, target.x, target.y, guessPosition.x, guessPosition.y));
+			}
+		}
+
+		// 射界内，不需要转向，直接开火
+		if (heading > Math.abs(dest - range) && heading < Math.abs(dest + range)) {
+			if (distance <= 70) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return false;
+			}
+			// 避免误伤
+			if (willHitFriends(dest)) {
+				return false;
+			}
+			if (distance <= 396) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire3]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return false;
+			} else if (distance > 396 && distance <= 594) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire3]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return false;
+			} else if (distance > 594 && distance <= 891) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire3]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return true;
+			}
+		} else {
+			if (distance <= 70) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire3]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return false;
+			}
+			// 避免误伤
+			if (willHitFriends(dest)) {
+				return false;
+			}
+			if (distance <= 396) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire2]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return false;
+			} else if (distance > 396 && distance <= 594) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire3]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return true;
+			} else if (distance > 594 && distance <= 891) {
+				// 射程不够
+
+			}
+			return false;
+		}
 		return true;
 	}
 
@@ -192,8 +410,8 @@ public class FireHelper {
 		List<FireRange> friends = mAttackRadar.getFriendsFireRange();
 		for (FireRange fireRange : friends) {
 			// 在友军射界内
-			if (dest >= Math.abs(fireRange.fireAngle - fireRange.range / 2 - 10)
-					&& dest <= Math.abs(fireRange.fireAngle + fireRange.range / 2 + 10)) {
+			if (dest >= Math.abs(fireRange.fireAngle - fireRange.range)
+					&& dest <= Math.abs(fireRange.fireAngle + fireRange.range)) {
 				ret = true;
 				break;
 			}

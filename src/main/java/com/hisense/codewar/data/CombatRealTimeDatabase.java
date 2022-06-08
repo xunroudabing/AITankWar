@@ -25,6 +25,8 @@ import com.jfinal.kit.PropKit;
 public class CombatRealTimeDatabase {
 	public static void main(String[] args) {
 		CombatRealTimeDatabase database = new CombatRealTimeDatabase();
+		boolean ret = true || false;
+		System.out.println(ret);
 	}
 
 	private int[][] mMapNodeArrys;
@@ -293,14 +295,15 @@ public class CombatRealTimeDatabase {
 	}
 
 	public boolean isNextPointCrossBlocks(int nowX, int nowY, int r, int distance) {
-		Position nextPostion = Utils.getNextPositionByDistance(nowX, nowY, r, distance);
+		Position nextPostion = Utils.getNextPositionByDistance(nowX, nowY, r, 9);
 		// return Utils.isNextPointInBlocks(nowX, nowY, r, distance, getBlocks(),
 		// AppConfig.BLOCK_SIZE);
+		boolean inBlock = inBlocks(nextPostion.x, nextPostion.y);
 		boolean crossBlocks = Utils.isCrossBlock(nowX, nowY, nextPostion.x, nextPostion.y, getBlocks(),
 				AppConfig.BLOCK_SIZE);
 		boolean crossFriends = Utils.isCrossBlock(nowX, nowY, nextPostion.x, nextPostion.y, getFriendAsBlocks(),
 				AppConfig.BLOCK_SIZE);
-		return crossBlocks || crossFriends;
+		return inBlock || crossBlocks || crossFriends;
 	}
 
 	// true 射击被阻挡
@@ -308,8 +311,12 @@ public class CombatRealTimeDatabase {
 		boolean crossBlocks = Utils.isCrossBlock(nowX, nowY, tx, ty, getBlocks(), AppConfig.BLOCK_SIZE);
 		boolean crossFriends = Utils.isCrossBlock(nowX, nowY, tx, ty, getFriendAsBlocks(), AppConfig.BLOCK_SIZE);
 		return crossBlocks || crossFriends;
-		// return Utils.isCrossBlock(nowX, nowY, tx, ty, getBlocks(),
-		// AppConfig.BLOCK_SIZE);
+//		 return Utils.isCrossBlock(nowX, nowY, tx, ty, getBlocks(),
+//		 AppConfig.BLOCK_SIZE);
+
+//		int r = Utils.angleTo(nowX, nowY, tx, ty);
+//		return Utils.isStopFireByBlock(Double.valueOf(nowX), Double.valueOf(nowY), Double.valueOf(tx),
+//				Double.valueOf(ty), Double.valueOf(r), getBlocks());
 	}
 
 	public int getBattleFieldWidth() {

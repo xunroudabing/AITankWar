@@ -103,7 +103,7 @@ public class CombatEnemyDatabase {
 					if (data.trackData.speed != -1 && data.trackData.velSeg != -1 && data.trackData.adSeg != -1) {
 						MovementTrack hisTrack = data.trackData.clone();
 						data.addToHistroy(hisTrack);
-						log.debug("addToHis " + hisTrack.toString());
+						//log.debug("addToHis " + hisTrack.toString());
 					}
 				} catch (CloneNotSupportedException e) {
 					// TODO Auto-generated catch block
@@ -126,7 +126,7 @@ public class CombatEnemyDatabase {
 				track.tick = tick;
 				newData.trackData = track;
 				mEnemyCombatHistoryDatas.add(newData);
-				log.debug("add");
+				//log.debug("add");
 			}
 
 		}
@@ -151,7 +151,7 @@ public class CombatEnemyDatabase {
 			currentTrack.adSeg = adSeg;
 			currentTrack.velSeg = velSeg;
 			currentTrack.absAngle = r;
-			log.debug(currentTrack.toString());
+			//log.debug(currentTrack.toString());
 			return currentTrack;
 		}
 
@@ -177,7 +177,7 @@ public class CombatEnemyDatabase {
 	}
 
 	// 用于匹配段的长度
-	private static final int MATCH_LENGHT = 15;
+	private static final int MATCH_LENGHT = 10;
 
 	protected int getMatchIndex(int tankid) {
 		EnemyCombatData data = getEnemyData(tankid);
@@ -239,17 +239,17 @@ public class CombatEnemyDatabase {
 		int matchIndex = getMatchIndex(tankid);
 		// 无匹配数据
 		if (matchIndex < 0) {
-			return oriPosition;
+			return null;
 		}
 		int dis = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
 		// 距离过近不预测
 		if (dis <= 60) {
-			return oriPosition;
+			return null;
 		}
 		EnemyCombatData data = getEnemyData(tankid);
 		// 无数据，不预测
 		if (data == null) {
-			return oriPosition;
+			return null;
 		}
 		List<MovementTrack> tracks = data.historyTracks;
 		// 当前状态
@@ -257,30 +257,30 @@ public class CombatEnemyDatabase {
 		if (currentTrack != null) {
 			// 当前静止目标不预测
 			if (currentTrack.velSeg == 0 && currentTrack.velSeg == 0) {
-				return oriPosition;
+				return null;
 			}
 		}
 		int currentIndex = tracks.size() - 1;
 		int time = 0;
 		while (matchIndex + time < currentIndex) {
 			double distance = Utils.distanceTo(nowX, nowY, guessPosition.x, guessPosition.y);
-			if (((distance - AppConfig.TARGET_RADIUS) / AppConfig.BULLET_SPEED) <= time) {
+			if ((distance / AppConfig.BULLET_SPEED) <= time) {
 				break;
 			}
 
 			int guessX = (int) (guessPosition.x + tracks.get(matchIndex + time).adSeg);
 			int guessY = (int) (guessPosition.y + tracks.get(matchIndex + time).velSeg);
 			guessPosition = new Position(guessX, guessY);
-			log.debug(String.format("[Patter-Guess-Loop]me[%d]enemyid[%d]oriPos[%d,%d]guessPos[%d,%d]guessTime[%d]",
-					meId, tankid, enemyTank.x, enemyTank.y, guessPosition.x, guessPosition.y, time));
+//			log.debug(String.format("[Patter-Guess-Loop]me[%d]enemyid[%d]oriPos[%d,%d]guessPos[%d,%d]guessTime[%d]",
+//					meId, tankid, enemyTank.x, enemyTank.y, guessPosition.x, guessPosition.y, time));
 			if (time > 49) {
 				break;
 			}
 			time++;
 		}
 		// time过大不预测
-		if (time > 40) {
-			return oriPosition;
+		if (time > 48) {
+			return null;
 		}
 		log.info(String.format("[Patter-Guess-Final]enemyid[%d]oriPos[%d,%d]guessPos[%d,%d]guessTime[%d]", tankid,
 				enemyTank.x, enemyTank.y, guessPosition.x, guessPosition.y, time));

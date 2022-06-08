@@ -18,6 +18,28 @@ import com.hisense.codewar.model.Bullet.DodgeSuggestion;
 import com.hisense.codewar.utils.Utils;
 
 public class DodageLvl2Algorithm implements IDodageAlgorithm {
+	public static void main(String[] args) {
+		// 976,267
+		int x = 976;
+		int y = 267;
+		// FarAway tankid[132]pos[1362,165]r[337]angleHit[-24]p3[1362,165]
+		int nowx = 1362;
+		int nowy = 165;
+
+		Position p1 = new Position(x, y);
+		Position p2 = Utils.getNextBulletByTick(x, y, 337, 2);
+		Position p3 = new Position(nowx, nowy);
+		// 垂足
+		Position p4 = Utils.getFoot(p1, p2, p3);
+
+		int angleHit = Utils.angleTo(x, y, p4.x, p4.y);
+
+		int angle = Utils.angleTo(x, y, nowx, nowy);
+
+		int abs = Math.abs(Utils.formatAngle(-17 - 344));
+		System.out.println("abs = " + abs);
+	}
+
 	private int mTick;
 	private CombatMovementHelper mMovementHelper;
 	private CombatRealTimeDatabase mDatabase;
@@ -33,6 +55,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 	public int scan(List<Bullet> bulletList, int nowX, int nowY, int tick) {
 		// TODO Auto-generated method stub
 		mTick = tick;
+		int tankid = mDatabase.getMyTankId();
 		int count = bulletList.size();
 		List<Bullet> toDoList = new ArrayList<>();
 		Iterator<Bullet> iterator2 = bulletList.iterator();
@@ -67,8 +90,11 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 				canHit = true;
 			}
 			// 子弹已远离
-			if (Math.abs(angleHit - bullet.r) >= 170) {
+			if (Math.abs(Utils.formatAngle(angleHit) - Utils.formatAngle(bullet.r)) >= 170) {
+				bullet.handled = true;
 				canHit = false;
+				log.debug(String.format("FarAway tankid[%d]pos[%d,%d]r[%d]angleHit[%d]p4[%d,%d]", tankid, nowX, nowY,
+						bullet.r, angleHit, p4.x, p4.y));
 			}
 			// 不会击中，忽略
 			if (!canHit) {
@@ -112,7 +138,6 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			suggestion.distance = distance;
 			suggestion.dodgeBestAngle = dodgeBestAngle;
 			suggestion.dodgeBestDistance = dodgeBestDistance;
-			suggestion.dodgeNeedTick = dodgeBestDistance;
 			suggestion.hitTickleft = hitTickleft;
 			suggestion.dodgeNeedTick = dodgeBestNeedTick;
 			suggestion.coutdownTimer = timer;
@@ -158,7 +183,8 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 	protected void handleBullet1(Bullet bullet) {
 		// 时间到，马上进行闪避
 		if (bullet.suggestion.coutdownTimer <= AppConfig.DODGE_TICK) {
-			bullet.handled = true;
+
+			// bullet.handled = true;
 			int tankid = mDatabase.getMyTankId();
 			int nowX = mDatabase.getNowX();
 			int nowY = mDatabase.getNowY();
@@ -212,10 +238,13 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			int suggestDis = Math.min(suggestDisA, suggestDisB);
 			int suggestNeedTick = Utils.getTicks(suggestDis, AppConfig.TANK_SPEED);
 			int suggestAngle = 0;
+			Position moveToPosition;
 			if (suggestDisA < suggestDisB) {
 				suggestAngle = Utils.angleTo(nowX, nowY, positionA.x, positionA.y);
+				moveToPosition = positionA;
 			} else {
 				suggestAngle = Utils.angleTo(nowX, nowY, positionB.x, positionB.y);
+				moveToPosition = positionB;
 			}
 			// ****判断最佳方向上有无block或出界，有则采用PlanB****
 			boolean haveBlocks = mDatabase.isNextPointCrossBlocks(nowX, nowY, suggestAngle, suggestDis);
@@ -229,7 +258,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 					int dy = bullet1.suggestion.dodgeBestMoveToPosition.y;
 					mMovementHelper.addDodgeByDistance(nowX, nowY, dx, dy, bullet1.suggestion.dodgeBestAngle,
 							bullet1.suggestion.dodgeBestDistance);
-					bullet1.handled = true;
+					// bullet1.handled = true;
 					log.debug(String.format("[T%d][DodgeAI][2-PlanB-Block]tankid[%d]angle[%d]dis[%d]", mTick, tankid,
 							bullet1.suggestion.dodgeBestAngle, bullet1.suggestion.dodgeBestDistance));
 					return;
@@ -248,18 +277,19 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 //					mMovementHelper.addDodgeByDistance(bullet1.suggestion.dodgeBestAngle,
 //							bullet1.suggestion.dodgeBestDistance);
 					// 移动到的目标位置
-					Position moveToPosition = Utils.getNextPositionByDistance(nowX, nowY, suggestAngle, suggestDis);
+					// Position moveToPosition = Utils.getNextPositionByDistance(nowX, nowY,
+					// suggestAngle, suggestDis);
 					mMovementHelper.addDodgeByDistance(nowX, nowY, moveToPosition.x, moveToPosition.y, suggestAngle,
 							suggestDis);
 					log.debug(
 							String.format("[T%d][DodgeAI][2-PlanA]angle[%d]dis[%d]", mTick, suggestAngle, suggestDis));
-					bullet1.handled = true;
+					// bullet1.handled = true;
 				}
 
 			} else {
 				// 来不及躲避,转换角度
 				// angleBullet = Math.abs(180 - angleBullet);
-				bullet1.handled = true;
+				// bullet1.handled = true;
 
 				mMovementHelper.addDodgeByDistance(nowX, nowY, bullet1.suggestion.dodgeBestMoveToPosition.x,
 						bullet1.suggestion.dodgeBestMoveToPosition.y, bullet1.suggestion.dodgeBestAngle,

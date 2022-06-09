@@ -10,6 +10,7 @@ import com.hisense.codewar.algorithm.ITrackingAlgorithm;
 import com.hisense.codewar.algorithm.SimpleTracker;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.CombatMovementHelper.PollingAction;
+import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.AStarUtil;
@@ -117,7 +118,7 @@ public class MoveMentRadar {
 			return;
 		}
 
-		if (fireInBlock || distance > AppConfig.COMBAT_MAX_DISTANCE) {
+		if (fireInBlock||distance > AppConfig.COMBAT_MAX_DISTANCE) {
 			AStarUtil AHandler = new AStarUtil(mDatabase.getMapNodeArrays(), mDatabase.getPoisionR());
 			Node startNode = new Node(nowX, nowY);
 			TankGameInfo end = target;
@@ -199,6 +200,7 @@ public class MoveMentRadar {
 		tmp.x = newPoint.x;
 		tmp.y = newPoint.y;
 		int R = mDatabase.getPoisionR();
+
 		if ((tmp.x > (800 + R - 20)) || (tmp.y > (0.5625 * (800 + R) - 20)) || (tmp.x < (800 - R + 20))
 				|| (tmp.y < (0.5625 * (800 - R) + 20))) {
 			//System.out.print("主动进攻路线规划  毒圈避开angel: " + angel + "\n");
@@ -212,6 +214,7 @@ public class MoveMentRadar {
 		count++;
 		return judgeTankMoveThreePointIsSafe(tmp, angel, count);
 	}
+	
 
 	/**
 	 * x1 = xcos(angle)-ysin(angle) y1 = xsin(angle)+ycos(angle)

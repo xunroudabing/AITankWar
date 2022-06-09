@@ -7,6 +7,7 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.algorithm.DodageLvl3Algorithm.HitResult;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.CombatAttackRadar;
 import com.hisense.codewar.data.CombatMovementHelper;
@@ -141,10 +142,10 @@ public class AntiGraveMover {
 		}
 		// blocks
 		Map map = mDatabase.getMap();
-		xforce += 7500 / Math.pow(Utils.distanceTo(nowX, nowY, map.maxX, nowY) / FACTOR, 3);
-		xforce -= 7500 / Math.pow(Utils.distanceTo(nowX, nowY, map.minX, nowY) / FACTOR, 3);
-		yforce += 7500 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.maxY) / FACTOR, 3);
-		yforce -= 7500 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.minY) / FACTOR, 3);
+		xforce += 5500 / Math.pow(Utils.distanceTo(nowX, nowY, map.maxX, nowY) / FACTOR, 3);
+		xforce -= 5500 / Math.pow(Utils.distanceTo(nowX, nowY, map.minX, nowY) / FACTOR, 3);
+		yforce += 5500 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.maxY) / FACTOR, 3);
+		yforce -= 5500 / Math.pow(Utils.distanceTo(nowX, nowY, nowX, map.minY) / FACTOR, 3);
 
 		int lx = nowX - xforce;
 		int ly = nowY - yforce;
@@ -154,7 +155,7 @@ public class AntiGraveMover {
 		int angleY = Utils.angleTo(nowX, nowY, nowX, ly);
 
 		Position positionX = Utils.getNextTankPostion(nowX, nowY, angleX, 1);
-		Position positionY = Utils.getNextTankPostion(nowX, nowY, angleX, 1);
+		Position positionY = Utils.getNextTankPostion(nowX, nowY, angleY, 1);
 		// x轴方向有block，不移动
 		if (mDatabase.inBlocks(positionX.x, positionX.y) || mDatabase.isNearBorderCantMove(positionX.x, positionX.y)) {
 			lx = nowX;
@@ -170,12 +171,12 @@ public class AntiGraveMover {
 		goTo(lx, ly);
 	}
 
-	public void move(int tick) {
+	public boolean move(int tick) {
 		try {
 			mTick = tick;
 			// 正在闪躲，不move
 			if (mHelper.isDodgeing(mTick)) {
-				return;
+				return false;
 			}
 			// antiStupid(tick);
 			createGravePoints();
@@ -184,6 +185,7 @@ public class AntiGraveMover {
 			// TODO: handle exception
 			log.error(e.toString());
 		}
+		return true;
 	}
 
 	/** Move towards an x and y coordinate **/
@@ -204,14 +206,15 @@ public class AntiGraveMover {
 		List<GravePoint> enemyPoints = createGravePointsByEnemys();
 		List<GravePoint> friendPoints = createGravePointsByFriends();
 		List<GravePoint> blockPoints = createGravePointsByBlocks();
-		List<GravePoint> bulletPoints = createGravePointsByBullets();
+		//List<GravePoint> bulletPoints = createGravePointsByBulletsLines();
+		//List<GravePoint> hitPoints = createGravePointsByHit();
 		// List<GravePoint> randomPoints = createGravePointsByRandom();
 
 		mGravePoints.addAll(enemyPoints);
 		mGravePoints.addAll(friendPoints);
 		mGravePoints.addAll(blockPoints);
-		mGravePoints.addAll(bulletPoints);
-		// mGravePoints.addAll(randomPoints);
+		//mGravePoints.addAll(bulletPoints);
+		//mGravePoints.addAll(hitPoints);
 
 	}
 
@@ -235,21 +238,21 @@ public class AntiGraveMover {
 			// 射界被遮挡
 			boolean fireBlock = mDatabase.fireInBlocks(nowX, nowY, tank.x, tank.y);
 			boolean fireNearReady = mFireHelper.nearFire();
-			int power = -200;
+			int power = -300;
 			if (tank.id == targetId) {
 				if (fireBlock || dis > AppConfig.COMBAT_MAX_DISTANCE) {
 					power = 200;
 				} else if (fireNearReady) {
-					power = 200;
+					power = -200;
 				}
 			}
 
 			else if (bulletSize >= 2 && attackMe) {
-				power = -300;
+				power = -1000;
 			} else if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
-				power = 1000;
+				power = 200;
 			} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
-				power = -200;
+				power = -300;
 			}
 			GravePoint gPoint = new GravePoint(tank.x, tank.y, power);
 			points.add(gPoint);
@@ -303,7 +306,7 @@ public class AntiGraveMover {
 //			points.add(point);
 //		}
 
-		if (mTurn > 5) {
+		if (mTurn > 50) {
 			mTurn = 0;
 			boolean b = mRandom.nextBoolean();
 			int seed = b ? 1 : -1;
@@ -314,23 +317,33 @@ public class AntiGraveMover {
 		return points;
 	}
 
+	protected List<GravePoint> createGravePointsByBulletsLines() {
+		List<GravePoint> points = new ArrayList<>();
+		List<Bullet> bullets = mDatabase.getBullets();
+		for (Bullet bullet : bullets) {
+			int x = bullet.currentX;
+			int y = bullet.currentY;
+			for (int i = 0; i < 5; i++) {
+				Position position = Utils.getNextBulletByTick(x, y, bullet.r, i);
+				GravePoint gPoint = new GravePoint(position.x, position.y, -100);
+				points.add(gPoint);
+			}
+		}
+		return points;
+	}
+
 	protected List<GravePoint> createGravePointsByBullets() {
 		List<GravePoint> points = new ArrayList<>();
 		List<Bullet> bullets = mDatabase.getBullets();
+		int bulletSize = mDatabase.getBullets().size();
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
 		for (Bullet bullet : bullets) {
-			int power = -200;
-			int dis = Utils.distanceTo(nowX, nowY, bullet.currentX, bullet.currentY);
-			if (dis > 0 && dis < 100) {
-				power = -500;
-			} else if (dis > 100 && dis < 200) {
-				power = -300;
-			} else if (dis > 200 && dis < 300) {
-				power = -200;
-			} else {
-
+			int power = -500;
+			if (bulletSize >= 2) {
+				power = -800;
 			}
+
 			GravePoint gPoint = new GravePoint(bullet.currentX, bullet.currentY, power);
 			points.add(gPoint);
 		}
@@ -350,18 +363,100 @@ public class AntiGraveMover {
 		TankGameInfo leader = mDatabase.getLeader();
 		for (TankGameInfo tank : friends) {
 			int dis = Utils.distanceTo(nowX, nowY, tank.x, tank.y);
-			int power = -100;
+			int power = -500;
 			if (tank.id == leader.id) {
 				if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
-					power = 200;
+					power = 300;
 				} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
-					power = -100;
+					power = -500;
 				}
 			}
 			GravePoint gPoint = new GravePoint(tank.x, tank.y, power);
 			points.add(gPoint);
 		}
 		return points;
+	}
+
+	/**
+	 * 创建弹着点斥力
+	 * 
+	 * @return
+	 */
+	protected List<GravePoint> createGravePointsByHit() {
+		List<GravePoint> points = new ArrayList<>();
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		List<Bullet> bullets = mDatabase.getBullets();
+
+		for (Bullet bullet : bullets) {
+			int dis = Utils.distanceTo(nowX, nowY, bullet.currentX, bullet.currentY);
+			Position position = getHitPosition(bullet, nowX, nowY);
+			if (position != null) {
+				GravePoint gPoint = new GravePoint(position.x, position.y, -400);
+				points.add(gPoint);
+			}
+		}
+
+		List<Position> crossPositions = getCrossHitPosition(bullets);
+		for (Position position : crossPositions) {
+			GravePoint gPoint = new GravePoint(position.x, position.y, -400);
+			points.add(gPoint);
+		}
+		return points;
+	}
+
+	public Position getHitPosition(Bullet bullet, int nowX, int nowY) {
+		HitResult result = new HitResult();
+		result.willHitMe = false;
+		// 計算圓心到彈道的垂足 ，p1,p2为弹道 p3圆心
+		Position p1 = new Position(bullet.currentX, bullet.currentY);
+		Position p2 = Utils.getNextBulletByTick(bullet.startX, bullet.startY, bullet.r, 2);
+		Position p3 = new Position(nowX, nowY);
+		// 垂足
+		Position p4 = Utils.getFoot(p1, p2, p3);
+
+		int angleHit = Utils.angleTo(bullet.startX, bullet.startY, p4.x, p4.y);
+		// System.out.println("angleHit=" + angleHit);
+		// 子弹已远离
+		if (Math.abs(angleHit - bullet.r) >= 170) {
+			return null;
+		}
+		// 垂足到圆心距离，即我与弹道垂足的位置， 半径减去此值就是最小移动距离
+		int a = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
+		// System.out.println("a=" + a);
+		// 小于半径会被击中
+		if (a < AppConfig.TANK_WIDTH) {
+			int b = (int) Math.sqrt(AppConfig.TANK_WIDTH * AppConfig.TANK_WIDTH - a * a);
+			// 总距离，子弹到圆心的距离
+			int totalDistance = Utils.distanceTo(p4.x, p4.y, p1.x, p1.y);
+			// 子弹到我的距离，不是到圆心的距离，而是到弹着点的距离 =
+			int distance = totalDistance - b;
+
+			Position hitPosition = Utils.getNextPositionByDistance(bullet.currentX, bullet.currentY, bullet.createTick,
+					distance);
+			return hitPosition;
+		}
+		return null;
+	}
+
+	public List<Position> getCrossHitPosition(List<Bullet> bullets) {
+		List<Position> list = new ArrayList<Position>();
+		for (int i = 0; i < bullets.size(); i++) {
+			if (i >= bullets.size() - 1) {
+				break;
+			}
+			Bullet bullet1 = bullets.get(i);
+			for (int j = i + 1; j < bullets.size(); j++) {
+				Bullet bullet2 = bullets.get(j);
+				Position position = Utils.crossPoint(new Position(bullet1.startX, bullet1.startY),
+						new Position(bullet1.currentX, bullet1.currentY), new Position(bullet2.startX, bullet2.startY),
+						new Position(bullet2.currentX, bullet2.currentY));
+				if (position != null) {
+					list.add(position);
+				}
+			}
+		}
+		return list;
 	}
 
 }

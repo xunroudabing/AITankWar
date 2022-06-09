@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.antigrave.AntiGraveMover;
 import com.hisense.codewar.data.CombatAttackRadar;
+import com.hisense.codewar.data.CombatController;
 import com.hisense.codewar.data.CombatEnemyDatabase;
 import com.hisense.codewar.data.CombatMovementHelper;
 import com.hisense.codewar.data.CombatRealTimeDatabase;
@@ -23,6 +24,7 @@ import com.hisense.codewar.model.TankGamePlayInterface;
 import com.hisense.codewar.model.TankMapProjectile;
 import com.hisense.codewar.utils.Utils;
 import com.hisense.codewar.wave.WaveSurfing;
+import com.jfinal.kit.Ret;
 
 public class AutoBotsPlayer implements TankGamePlayInterface {
 
@@ -39,6 +41,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 	private CombatAttackRadar mAttackRadar;
 	private CombatWarningRadar mCombatWarningRadar;
 	private CombatRealTimeDatabase mCombatRealTimeDatabase;
+	private CombatController mController;
 	private static final Logger log = LoggerFactory.getLogger(AutoBotsPlayer.class);
 
 	public AutoBotsPlayer() {
@@ -55,7 +58,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		mWaveSurfing = new WaveSurfing(mCombatRealTimeDatabase, mEnemyDatabase);
 		mCombatStatistics = new CombatStatistics();
 		mFireHelper.setStatistics(mCombatStatistics);
-
+		mController = new CombatController(mMovementHelper, mFireHelper, mAttackRadar, mCombatRealTimeDatabase);
 	}
 
 	@Override
@@ -63,68 +66,110 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 		// TODO Auto-generated method stub
 		// log.info("gametick");
 		long start = System.currentTimeMillis();
-		try {
-			
-			boolean canTrack = mMovementHelper.needTrack(mTick.get());
-			boolean canPolling = mMovementHelper.canPolling();
-			boolean canFire = mFireHelper.canFire();
-			boolean needDodge = mMovementHelper.needDodge(mTick.get());
-			boolean canMove = mMovementHelper.canMove();
-			log.debug(String.format("[T%d][Status] canFire[%b]needDodge[%b]", mTick.get(), canFire, needDodge));
-			if (needDodge) {
-				boolean dodgeDone = mMovementHelper.dodge(tank, mTick.get());
-				if (!dodgeDone && canMove) {
-					mMovementHelper.move(tank, mTick.get());
-				}
-			} else if (canFire) {
-				// randomMove(tank);
-				boolean fireBlock = false;
-				TankGameInfo enemyTank = mAttackRadar.getTargetTank();
-				int nowX = mCombatRealTimeDatabase.getNowX();
-				int nowY = mCombatRealTimeDatabase.getNowY();
-				if (enemyTank != null) {
-					fireBlock = mCombatRealTimeDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
-					int dis = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
-					if (fireBlock) {
-						if (canTrack) {
-							mMovementHelper.track(tank, mTick.get());
-						} else if (canMove) {
-							mMovementHelper.move(tank, mTick.get());
-						}
-					} else {
-						// boolean ret = mFireHelper.wavefire(tank,mWaveSurfing);
-						boolean ret = mFireHelper.fire(tank);
-						// 无法射击
-						if (!ret) {
-							if (canMove) {
-								mMovementHelper.move(tank, mTick.get());
-							}
-						}
-					}
-				} else {
-					if (canMove) {
-						mMovementHelper.move(tank, mTick.get());
-					}
-				}
-
-			} else if (canTrack) {
-				mMovementHelper.track(tank, mTick.get());
-			} else if (canMove) {
-				mMovementHelper.move(tank, mTick.get());
-				// mMovementHelper.lock(tank, mTick.get());
-			} else if (canPolling) {
-				mMovementHelper.polling(tank, mTick.get());
-			} else {
-				mMovementHelper.move(tank, mTick.get());
-			}
-
-		} catch (Exception e) {
-			// TODO: handle exception
-			log.error(e.fillInStackTrace().getLocalizedMessage());
-		}
+		mController.gameTick(tank, mTick.get());
+//		try {
+//
+//			boolean canTrack = mMovementHelper.needTrack(mTick.get());
+//			boolean canPolling = mMovementHelper.canPolling();
+//			boolean canFire = mFireHelper.canFire();
+//			boolean needDodge = mMovementHelper.needDodge(mTick.get());
+//			boolean canMove = mMovementHelper.canMove();
+//			log.debug(String.format("[T%d][Status] canFire[%b]needDodge[%b]", mTick.get(), canFire, needDodge));
+//
+//			if (needDodge) {
+//				boolean dodgeDone = mMovementHelper.dodge2(tank, mTick.get());
+//				if (dodgeDone) {
+//					return;
+//				}
+//			} else if (canFire) {
+//				// randomMove(tank);
+//				boolean fireBlock = false;
+//				TankGameInfo enemyTank = mAttackRadar.getTargetTank();
+//				int nowX = mCombatRealTimeDatabase.getNowX();
+//				int nowY = mCombatRealTimeDatabase.getNowY();
+//				if (enemyTank != null) {
+//					fireBlock = mCombatRealTimeDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
+//					int dis = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
+//					if (dis <= 80) {
+//						boolean ret = mFireHelper.fire3(tank);
+//						if (ret) {
+//							return;
+//						}
+//						// 无法射击
+//						if (!ret) {
+//							if (needDodge) {
+//								boolean dodgeDone = mMovementHelper.dodge2(tank, mTick.get());
+//								if (dodgeDone) {
+//									return;
+//								}
+//								if (!dodgeDone && canMove) {
+//									mMovementHelper.move(tank, mTick.get());
+//								}
+//							}
+//						}
+//					} else if (fireBlock) {
+//						if (needDodge) {
+//							boolean dodgeDone = mMovementHelper.dodge2(tank, mTick.get());
+//							if (dodgeDone) {
+//								return;
+//							} else if (!dodgeDone && canMove) {
+//								boolean ret = mMovementHelper.move(tank, mTick.get());
+//								if (ret) {
+//									return;
+//								}
+//							}
+//						}
+//						if (canTrack) {
+//							mMovementHelper.track(tank, mTick.get());
+//						} else if (canMove) {
+//							boolean ret = mMovementHelper.move(tank, mTick.get());
+//							if (ret) {
+//								return;
+//							}
+//						}
+//					} else {
+//						// boolean ret = mFireHelper.wavefire(tank,mWaveSurfing);
+//						boolean ret = mFireHelper.fire3(tank);
+//						// 无法射击
+//						if (!ret) {
+//							if (needDodge) {
+//								boolean dodgeDone = mMovementHelper.dodge2(tank, mTick.get());
+//								if (dodgeDone) {
+//									return;
+//								}
+//								if (!dodgeDone && canMove) {
+//									mMovementHelper.move(tank, mTick.get());
+//								}
+//							}
+//						}
+//					}
+//				} else {
+//					if (canMove) {
+//						boolean ret = mMovementHelper.move(tank, mTick.get());
+//						if (ret) {
+//							return;
+//						}
+//					}
+//				}
+//
+//			} else if (canTrack) {
+//				mMovementHelper.track(tank, mTick.get());
+//			} else if (canMove) {
+//				boolean ret = mMovementHelper.move(tank, mTick.get());
+//				// mMovementHelper.lock(tank, mTick.get());
+//			} else if (canPolling) {
+//				// mMovementHelper.polling(tank, mTick.get());
+//			} else {
+//				mMovementHelper.move(tank, mTick.get());
+//			}
+//
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			log.error(e.fillInStackTrace().getLocalizedMessage());
+//		}
 		long end = System.currentTimeMillis();
 		long cost = end - start;
-		log.debug(String.format("[GameTickCost][%d]cost %d ms", mTick.get(), cost));
+		log.info(String.format("[GameTickCost][%d]tank[%d]cost %d ms", mTick.get(),mTankId, cost));
 	}
 
 	@Override
@@ -145,8 +190,8 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			mEnemyDatabase.scan(mTick.get());
 			mAttackRadar.scan(mTick.get());
 			mMoveMentRadar.scan(mTick.get());
-			mAntiGraveMover.move(mTick.get());
-			mWaveSurfing.scan(mTick.get());
+			//mAntiGraveMover.move(mTick.get());
+			// mWaveSurfing.scan(mTick.get());
 			hitEnemyCount(hits);
 			long end = System.currentTimeMillis();
 			long cost = end - start;

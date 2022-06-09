@@ -5,7 +5,6 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.utils.Utils;
 
 public class Bullet {

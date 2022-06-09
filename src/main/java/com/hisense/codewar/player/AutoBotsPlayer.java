@@ -190,7 +190,7 @@ public class AutoBotsPlayer implements TankGamePlayInterface {
 			mEnemyDatabase.scan(mTick.get());
 			mAttackRadar.scan(mTick.get());
 			mMoveMentRadar.scan(mTick.get());
-			mAntiGraveMover.move(mTick.get());
+			//mAntiGraveMover.move(mTick.get());
 			// mWaveSurfing.scan(mTick.get());
 			hitEnemyCount(hits);
 			long end = System.currentTimeMillis();

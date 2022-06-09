@@ -92,7 +92,7 @@ public class DodageLvl3Algorithm implements IDodageAlgorithm {
 			suggestion.coutdownTimer = result.coutdownTimer;
 			suggestion.dodgeBestMoveToPosition = result.dodgeBestMoveToPosition;
 			bullet.suggestion = suggestion;
-			
+
 			toDoList.add(bullet);
 		}
 
@@ -176,7 +176,8 @@ public class DodageLvl3Algorithm implements IDodageAlgorithm {
 			int suggestDisB = Utils.distanceTo(nowX, nowY, positionB.x, positionB.y);
 
 			int suggestDis = Math.min(suggestDisA, suggestDisB);
-			int suggestNeedTick = Utils.getTicks(suggestDis, AppConfig.TANK_SPEED);
+			// int suggestNeedTick = Utils.getTicks(suggestDis, AppConfig.TANK_SPEED);
+
 			int suggestAngle = 0;
 			Position moveToPosition;
 			if (suggestDisA < suggestDisB) {
@@ -186,6 +187,7 @@ public class DodageLvl3Algorithm implements IDodageAlgorithm {
 				suggestAngle = Utils.angleTo(nowX, nowY, positionB.x, positionB.y);
 				moveToPosition = positionB;
 			}
+			int suggestNeedTick = Utils.getTicks2(nowX, nowY, moveToPosition.x, moveToPosition.y, AppConfig.TANK_SPEED);
 			// ****判断最佳方向上有无block或出界，有则采用PlanB****
 			boolean haveBlocks = mDatabase.isNextPointCrossBlocks(nowX, nowY, suggestAngle, suggestDis);
 			boolean outRange = mDatabase.isNearBorderCantMoveByDistance(nowX, nowY, suggestAngle, suggestDis);
@@ -295,7 +297,7 @@ public class DodageLvl3Algorithm implements IDodageAlgorithm {
 		}
 		// 垂足到圆心距离，即我与弹道垂足的位置， 半径减去此值就是最小移动距离
 		int a = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
-		System.out.println("a=" + a);
+		// System.out.println("a=" + a);
 		// 小于半径会被击中
 		if (a < AppConfig.TANK_WIDTH) {
 			int b = (int) Math.sqrt(AppConfig.TANK_WIDTH * AppConfig.TANK_WIDTH - a * a);
@@ -322,14 +324,14 @@ public class DodageLvl3Algorithm implements IDodageAlgorithm {
 		Position p4 = Utils.getFoot(p1, p2, p3);
 
 		int angleHit = Utils.angleTo(bulletX, bulletY, p4.x, p4.y);
-		System.out.println("angleHit=" + angleHit);
+		// System.out.println("angleHit=" + angleHit);
 		// 子弹已远离
 		if (Math.abs(Utils.formatAngle(angleHit) - Utils.formatAngle(bulletR)) >= 170) {
 			return result;
 		}
 		// 垂足到圆心距离，即我与弹道垂足的位置， 半径减去此值就是最小移动距离
 		int a = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
-		System.out.println("a=" + a);
+		// System.out.println("a=" + a);
 		// 小于半径会被击中
 		if (a < AppConfig.TANK_WIDTH) {
 
@@ -345,13 +347,18 @@ public class DodageLvl3Algorithm implements IDodageAlgorithm {
 			int dodgeBestAngle = Utils.angleTo(p4.x, p4.y, nowX, nowY);
 			// 所需移动距离
 			int dodgeBestDistance = AppConfig.TANK_WIDTH - a;
-			// 闪避所需时间 dodgeDistance / AppConfig.TANK_SPEED;
-			int dodgeBestNeedTick = Utils.getTicks(dodgeBestDistance, AppConfig.TANK_SPEED);
-			// 1个action走3米，移动distance需要多少个action，向上取整
-			int dodgeActionCount = Utils.getTicks(dodgeBestDistance, 3);
 			// 闪避需要移动到的位置
 			Position dodgeBestMoveToPosition = Utils.getNextPositionByDistance(nowX, nowY, dodgeBestAngle,
 					dodgeBestDistance);
+			// 目前已在目标位置
+			if (Utils.isNear(new Position(nowX, nowY), dodgeBestMoveToPosition, 2)) {
+				return result;
+			}
+			// 闪避所需时间 dodgeDistance / AppConfig.TANK_SPEED;
+			// int dodgeBestNeedTick = Utils.getTicks(dodgeBestDistance,
+			// AppConfig.TANK_SPEED);
+			int dodgeBestNeedTick = Utils.getTicks2(nowX, nowY, dodgeBestMoveToPosition.x, dodgeBestMoveToPosition.y,
+					AppConfig.TANK_SPEED);
 			// 行动倒计时
 			int timer = hitTickleft - dodgeBestNeedTick;
 

@@ -284,42 +284,62 @@ public class CombatMovementHelper {
 				int heading = mDodgeEvent.heading;
 				int headingFix = Utils.angleTo(nowX, nowY, dx, dy);
 				int dis = Utils.distanceTo(nowX, nowY, dx, dy);
+
+				int xSeg = Math.abs(nowX - dx);
+				int ySeg = Math.abs(nowY - dy);
+
+				int xAngle = Utils.angleTo(nowX, nowY, dx, nowY);
+				int yAngle = Utils.angleTo(nowX, nowY, nowX, dy);
+
 				// 当前已经移动至目标点，考虑误差
-				if (Utils.isNear(nowX, nowY, dx, dy)) {
+//				if (xSeg <= 2 && ySeg <= 2) {
+//					log.debug(String.format(
+//							"[Command-Dodge2-skip]tank[%d]currentPos[%d,%d]dstPos[%d,%d]chead[%d]r[%d]tick[%d]xSeg[%d]ySeg[%d]",
+//							tank.id, nowX, nowY, dx, dy, heading, heading, i,xSeg,ySeg));
+//					// 已到达指定位置
+//					break;
+//				} else
 
+				// 判断出界
+				Position nextPosition = Utils.getNextPositionByDistance(nowX, nowY, heading, AppConfig.TANK_WIDTH * 2);
+				if (mDatabase.isOut(nextPosition.x, nextPosition.y)) {
+					// 出界，不执行此次命令
 					log.debug(String.format(
-							"[Command-Dodge2-skip]tank[%d]currentPos[%d,%d]dstPos[%d,%d]chead[%d]r[%d]tick[%d]",
-							tank.id, nowX, nowY, dx, dy, heading, heading, i));
-					// 已到达指定位置
+							"[Command-Dodge2-Ignore][T%d]tank[%d]pos[%d,%d]r[%d]nextpos[%d,%d] will out of range", tick,
+							tank.id, nowX, nowY, heading, nextPosition.x, nextPosition.y));
 					break;
-				} else {
-					// 判断出界
-					Position nextPosition = Utils.getNextPositionByDistance(nowX, nowY, heading,
-							AppConfig.TANK_WIDTH * 2);
-					if (mDatabase.isOut(nextPosition.x, nextPosition.y)) {
-						// 出界，不执行此次命令
-						log.debug(String.format(
-								"[Command-Dodge2-Ignore][T%d]tank[%d]pos[%d,%d]r[%d]nextpos[%d,%d] will out of range",
-								tick, tank.id, nowX, nowY, heading, nextPosition.x, nextPosition.y));
-						break;
-					}
-
-					int span = dis / 3;
-					if (span >= 3) {
-						tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, headingFix);
-						tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, headingFix);
-						tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, headingFix);
-					} else if (span == 2) {
-						tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, headingFix);
-						tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, headingFix);
-					} else {
-						tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, headingFix);
-					}
-					log.debug(String.format(
-							"[Command-Dodge]tank[%d]startpos[%d,%d]pos[%d,%d]dstPos[%d,%d]errorDis[%d]heading[%d]headFix[%d]tick[%d]",
-							tank.id, startX, startY, nowX, nowY, dx, dy, dis, heading, headingFix, span));
-
 				}
+
+				int moveAngle = 0;
+				int moveSeg = 0;
+				if (xSeg > ySeg && xSeg > 2) {
+					moveAngle = xAngle;
+					moveSeg = xSeg;
+				} else if (xSeg <= ySeg && ySeg > 2) {
+					moveAngle = yAngle;
+					moveSeg = ySeg;
+				} else {
+					log.debug(String.format(
+							"[Command-Dodge2-break]tank[%d]currentPos[%d,%d]dstPos[%d,%d]xSeg[%d]ySeg[%d]tick[%d]",
+							tank.id, nowX, nowY, dx, dy, xSeg, ySeg, i));
+					break;
+				}
+
+				int span = moveSeg / 3;
+				if (span >= 3) {
+					tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+					tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+					tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+				} else if (span == 2) {
+					tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+					tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+				} else {
+					tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+				}
+				log.debug(String.format(
+						"[Command-Dodge]tank[%d]startpos[%d,%d]pos[%d,%d]dstPos[%d,%d]errorDis[%d]heading[%d]headFix[%d]tick[%d]",
+						tank.id, startX, startY, nowX, nowY, dx, dy, dis, heading, moveAngle, span));
+
 			}
 			i++;
 		}

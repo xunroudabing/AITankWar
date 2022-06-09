@@ -206,14 +206,14 @@ public class AntiGraveMover {
 		List<GravePoint> enemyPoints = createGravePointsByEnemys();
 		List<GravePoint> friendPoints = createGravePointsByFriends();
 		List<GravePoint> blockPoints = createGravePointsByBlocks();
-		List<GravePoint> bulletPoints = createGravePointsByBulletsLines();
+		//List<GravePoint> bulletPoints = createGravePointsByBulletsLines();
 		//List<GravePoint> hitPoints = createGravePointsByHit();
 		// List<GravePoint> randomPoints = createGravePointsByRandom();
 
 		mGravePoints.addAll(enemyPoints);
 		mGravePoints.addAll(friendPoints);
 		mGravePoints.addAll(blockPoints);
-		mGravePoints.addAll(bulletPoints);
+		//mGravePoints.addAll(bulletPoints);
 		//mGravePoints.addAll(hitPoints);
 
 	}
@@ -325,7 +325,7 @@ public class AntiGraveMover {
 			int y = bullet.currentY;
 			for (int i = 0; i < 5; i++) {
 				Position position = Utils.getNextBulletByTick(x, y, bullet.r, i);
-				GravePoint gPoint = new GravePoint(position.x, position.y, -150);
+				GravePoint gPoint = new GravePoint(position.x, position.y, -100);
 				points.add(gPoint);
 			}
 		}

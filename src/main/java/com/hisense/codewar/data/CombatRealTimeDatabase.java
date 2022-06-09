@@ -295,7 +295,7 @@ public class CombatRealTimeDatabase {
 	}
 
 	public boolean isNextPointCrossBlocks(int nowX, int nowY, int r, int distance) {
-		Position nextPostion = Utils.getNextPositionByDistance(nowX, nowY, r, 9);
+		Position nextPostion = Utils.getNextPositionByDistance(nowX, nowY, r, distance);
 		// return Utils.isNextPointInBlocks(nowX, nowY, r, distance, getBlocks(),
 		// AppConfig.BLOCK_SIZE);
 		boolean inBlock = inBlocks(nextPostion.x, nextPostion.y);

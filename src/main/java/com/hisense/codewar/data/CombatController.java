@@ -30,10 +30,10 @@ public class CombatController {
 		try {
 			boolean canTrack = mHelper.needTrack(tick);
 			//boolean canTrack = false;
-			boolean canMove = false;
+			//boolean canMove = false;
 			boolean canFire = mFireHelper.canFire();
 			boolean needDodge = mHelper.needDodge(tick);
-			//boolean canMove = mHelper.canMove();
+			boolean canMove = mHelper.canMove();
 
 			boolean fireBlock = false;
 			TankGameInfo enemyTank = mRadar.getTargetTank();

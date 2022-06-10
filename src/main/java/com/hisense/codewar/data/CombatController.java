@@ -28,6 +28,7 @@ public class CombatController {
 
 	public void gameTick(ITtank tank, int tick) {
 		try {
+			mHelper.dodge3(tank, tick);
 			boolean canTrack = mHelper.needTrack(tick);
 			//boolean canTrack = false;
 			//boolean canMove = false;

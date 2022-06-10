@@ -106,16 +106,17 @@ public class DodageLvl3Algorithm implements IDodageAlgorithm {
 			}
 		});
 
-		int bulletCount = toDoList.size();
-		// 处理会击中我的子弹,目前只处理前2个
-		if (bulletCount == 1) {
-			handleBullet1(toDoList.get(0));
-
-		} else if (bulletCount >= 2) {
-			Bullet bullet1 = toDoList.get(0);
-			Bullet bullet2 = toDoList.get(1);
-			handleBullet2(bullet1, bullet2, nowX, nowY);
-		}
+//		int bulletCount = toDoList.size();
+//		// 处理会击中我的子弹,目前只处理前2个
+//		if (bulletCount == 1) {
+//			handleBullet1(toDoList.get(0));
+//
+//		} else if (bulletCount >= 2) {
+//			Bullet bullet1 = toDoList.get(0);
+//			Bullet bullet2 = toDoList.get(1);
+//			handleBullet2(bullet1, bullet2, nowX, nowY);
+//		}
+		mDatabase.setToDoList(toDoList);
 
 		return 0;
 	}

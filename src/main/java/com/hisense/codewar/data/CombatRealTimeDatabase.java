@@ -53,6 +53,7 @@ public class CombatRealTimeDatabase {
 	private List<TankGameInfo> mEnemyTanks;
 	private List<TankGameInfo> mFriendTanks;
 	private List<Bullet> mBullets;
+	private List<Bullet> mToDoList;
 
 	private static final Logger log = LoggerFactory.getLogger(CombatRealTimeDatabase.class);
 
@@ -63,6 +64,7 @@ public class CombatRealTimeDatabase {
 		mFriendTanks = new ArrayList<>();
 		mEnemyTanks = new ArrayList<>();
 		mBullets = new ArrayList<>();
+		mToDoList = new ArrayList<Bullet>();
 		mBlocks = new ArrayList<TankMapBlock>();
 
 		minX = 0;
@@ -100,7 +102,13 @@ public class CombatRealTimeDatabase {
 		mMap.maxY = maxY;
 		mMapNodeArrys = new int[1601][901];
 	}
-
+	public List<Bullet> getToDoList() {
+		return mToDoList;
+	}
+	public void setToDoList(List<Bullet> list) {
+		mToDoList.clear();
+		mToDoList.addAll(list);
+	}
 	public int getThreatBulletsCount() {
 		return mThreadBulletsCount;
 	}

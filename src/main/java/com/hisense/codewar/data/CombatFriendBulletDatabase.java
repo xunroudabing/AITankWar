@@ -1,14 +1,19 @@
 package com.hisense.codewar.data;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.model.Bullet;
 
 public class CombatFriendBulletDatabase {
 	List<Bullet> mBullets;
 	private static volatile CombatFriendBulletDatabase instance;
+	private static final Logger log = LoggerFactory.getLogger(CombatFriendBulletDatabase.class);
 
 	private CombatFriendBulletDatabase() {
 		mBullets = new CopyOnWriteArrayList<Bullet>();
@@ -37,6 +42,17 @@ public class CombatFriendBulletDatabase {
 		bullet.startY = starty;
 		bullet.r = fireangle;
 		createBullet(bullet);
+		log.info(String.format("[EnemyData]me[%d]dest[%d]---->enemy[%d]", myid, fireangle, dstid));
+	}
+
+	public List<Bullet> getBullets(int dstId) {
+		List<Bullet> list = new ArrayList<Bullet>();
+		for (Bullet b : mBullets) {
+			if (b.dstid == dstId) {
+				list.add(b);
+			}
+		}
+		return list;
 	}
 
 	public void createBullet(Bullet bullet) {
@@ -46,7 +62,9 @@ public class CombatFriendBulletDatabase {
 				break;
 			}
 		}
-		mBullets.add(bullet);
+		if (!mBullets.contains(bullet)) {
+			mBullets.add(bullet);
+		}
 	}
 
 	public boolean exist(int dstid, int tick, int myId) {

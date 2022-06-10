@@ -13,6 +13,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.util.IOUtils;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.EnemyCombatData.MovementTrack;
+import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.TankGameInfo;
 import com.hisense.codewar.utils.Utils;
@@ -40,7 +41,7 @@ public class CombatEnemyDatabase {
 		int adSeg = (int) (speed * Math.cos(Utils.a2r(r)));
 
 		System.out.println("r=" + r + ",speed=" + speed + ",velSeg=" + velSeg + ",adSeg=" + adSeg);
-		
+
 		LinkedList<MovementTrack> list = new LinkedList<>();
 		for (int i = 0; i < 10; i++) {
 			MovementTrack track = new MovementTrack();
@@ -50,7 +51,7 @@ public class CombatEnemyDatabase {
 			track.y = i;
 			list.add(track);
 		}
-		String json =JSON.toJSONString(list);
+		String json = JSON.toJSONString(list);
 		System.out.println(json);
 	}
 
@@ -97,13 +98,28 @@ public class CombatEnemyDatabase {
 				currentTrack.tick = tick;
 				// 计算角度速度，更新数据
 				data.trackData = compareGetMovement(currentTrack, lastTrack);
-				// log.debug("update " + currentTrack.toString());
+				// 分析数据用
+				log.info(String.format("[EnemyData]enemy[%d]-%s", tank.id, data.toString()));
+				log.info(String.format(
+						"***************************************[EnemyData]enemy[%d]***************************************",
+						tank.id));
+				List<Bullet> bullets = CombatFriendBulletDatabase.getInstance().getBullets(tank.id);
+				for (Bullet bullet : bullets) {
+					// 夹角
+					int bearing = Utils.bearing(currentTrack.absAngle, bullet.r);
+					int dis = Utils.distanceTo(tank.x, tank.y, bullet.currentX, bullet.currentY);
+					log.info(String.format("[EnemyData]enemy[%d]bearing[%d]bulletDis[%d]-Bullet-%s", tank.id, bearing,
+							dis, bullet.toString()));
+				}
+				log.info(String.format(
+						"***************************************[EnemyData]enemy[%d]***************************************",
+						tank.id));
 				try {
 					// 保存至历史记录
 					if (data.trackData.speed != -1 && data.trackData.velSeg != -1 && data.trackData.adSeg != -1) {
 						MovementTrack hisTrack = data.trackData.clone();
 						data.addToHistroy(hisTrack);
-						//log.debug("addToHis " + hisTrack.toString());
+						// log.debug("addToHis " + hisTrack.toString());
 					}
 				} catch (CloneNotSupportedException e) {
 					// TODO Auto-generated catch block
@@ -126,7 +142,7 @@ public class CombatEnemyDatabase {
 				track.tick = tick;
 				newData.trackData = track;
 				mEnemyCombatHistoryDatas.add(newData);
-				//log.debug("add");
+				// log.debug("add");
 			}
 
 		}
@@ -151,7 +167,7 @@ public class CombatEnemyDatabase {
 			currentTrack.adSeg = adSeg;
 			currentTrack.velSeg = velSeg;
 			currentTrack.absAngle = r;
-			//log.debug(currentTrack.toString());
+			// log.debug(currentTrack.toString());
 			return currentTrack;
 		}
 

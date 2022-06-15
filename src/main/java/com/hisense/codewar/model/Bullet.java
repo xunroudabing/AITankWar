@@ -5,9 +5,10 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.utils.Utils;
 
-public class Bullet {
+public class Bullet implements Cloneable{
 	public DodgeSuggestion suggestion;
 	public String id;
 	public int startX;
@@ -23,6 +24,8 @@ public class Bullet {
 	public int createTick;
 	// 更新时间
 	public int updateTick;
+	// 剩余存活时间
+	public int leftTick;
 	// 预测弹道的长度，50tick * 12 = 600m
 	private static final int MAX_TICK = 50;
 	private static final Logger log = LoggerFactory.getLogger(Bullet.class);
@@ -41,7 +44,18 @@ public class Bullet {
 		int span = currentTick - createTick;
 		return span <= 74;
 	}
+	public Bullet nextBullet(int tick) throws CloneNotSupportedException {
+		float rr = Utils.a2r(r);
 
+		int x = (int) (currentX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick);
+		int y = (int) (currentY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick);
+
+		Bullet bullet = (Bullet) clone();
+		bullet.currentX = x;
+		bullet.currentY = y;
+		bullet.leftTick -= tick;
+		return bullet;
+	}
 	public boolean isChild(int x, int y) {
 		for (int i = 0; i < MAX_TICK; i++) {
 			Position position = Utils.getNextBulletByTick(startX, startY, r, i);
@@ -62,6 +76,20 @@ public class Bullet {
 			}
 		}
 		return false;
+	}
+	
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		// TODO Auto-generated method stub
+		Bullet ret = (Bullet) super.clone();
+		ret.id = this.id;
+		ret.startX = this.startX;
+		ret.startY = this.startY;
+		ret.currentX = this.currentX;
+		ret.currentY = this.currentY;
+		ret.r = this.r;
+		ret.leftTick = this.leftTick;
+		return ret;
 	}
 
 	@Override

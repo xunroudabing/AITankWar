@@ -89,7 +89,7 @@ public class Utils {
 	public static int getTicks2(int nowX, int nowY, int dstX, int dstY, int speed) {
 		int xSeg = Math.abs(nowX - dstX);
 		int ySeg = Math.abs(nowY - dstY);
-		
+
 		int distance = xSeg + ySeg;
 		BigDecimal b = BigDecimal.valueOf(distance);
 		// distance / AppConfig.TANK_SPEED; CEILING，向上取整
@@ -108,7 +108,7 @@ public class Utils {
 	 */
 	public static int angleTo(int nowx, int nowy, int tx, int ty) {
 		int ret = 0;
-		if (tx == nowx) {
+		if (isNear(tx, nowx)) {
 			if (ty > nowy) {
 				ret = 90;
 			} else {
@@ -116,7 +116,7 @@ public class Utils {
 			}
 		}
 
-		else if (ty == nowy) {
+		else if (isNear(ty, nowy)) {
 			if (tx > nowx) {
 				ret = 0;
 			} else {
@@ -456,15 +456,20 @@ public class Utils {
 //		}
 //		return false;
 //	}
-	public static boolean isNear(Position p1, Position p2,int dis) {
+	public static boolean isNear(Position p1, Position p2, int dis) {
 		return (Math.abs(p1.x - p2.x) <= dis) && (Math.abs(p1.y - p2.y) <= dis);
 	}
+
 	public static boolean isNear(Position p1, Position p2) {
 		return (Math.abs(p1.x - p2.x) <= 2) && (Math.abs(p1.y - p2.y) <= 2);
 	}
 
 	public static boolean isNear(int x1, int y1, int x2, int y2) {
 		return Math.abs(x1 - x2) <= 2 && Math.abs(y1 - y2) <= 2;
+	}
+
+	public static boolean isNear(int x1, int x2) {
+		return Math.abs(x1 - x2) <= 2;
 	}
 
 	public static int getFireRange(int nowx, int nowy, int tx, int ty) {

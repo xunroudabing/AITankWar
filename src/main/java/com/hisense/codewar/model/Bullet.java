@@ -46,9 +46,9 @@ public class Bullet implements Cloneable{
 	}
 	public Bullet nextBullet(int tick) throws CloneNotSupportedException {
 		float rr = Utils.a2r(r);
-
-		int x = (int) (currentX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick);
-		int y = (int) (currentY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick);
+		
+		int x = Utils.doubleToInt((currentX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick));
+		int y = Utils.doubleToInt((currentY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick));
 
 		Bullet bullet = (Bullet) clone();
 		bullet.currentX = x;

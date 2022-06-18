@@ -2,13 +2,11 @@ package com.hisense.codewar.algorithm;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hisense.codewar.algorithm.DodageLvl3Algorithm.HitResult;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.CombatMovementHelper;
 import com.hisense.codewar.data.CombatRealTimeDatabase;
@@ -18,9 +16,40 @@ import com.hisense.codewar.model.Bullet.DodgeSuggestion;
 import com.hisense.codewar.utils.Utils;
 
 public class DodageLvl4Algorithm implements IDodageAlgorithm {
+	public static void main(String[] args) throws CloneNotSupportedException {
+		Bullet bullet1 = new Bullet();
+		bullet1.startX = 100;
+		bullet1.startY = 100;
+		bullet1.currentX = 100;
+		bullet1.currentY = 100;
+		bullet1.r = 90;
+		bullet1.leftTick = 33;
+
+		Bullet bullet2 = new Bullet();
+		bullet2.startX = 300;
+		bullet2.startY = 150;
+		bullet2.currentX = 300;
+		bullet2.currentY = 150;
+		bullet2.r = 180;
+		bullet2.leftTick = 33;
+
+		int nowX = 100;
+		int nowY = 150;
+		
+		List<Bullet> list = new ArrayList<>();
+		list.add(bullet1);
+		list.add(bullet2);
+		
+		DodageLvl4Algorithm algorithm = new DodageLvl4Algorithm(null, null);
+		Position position = algorithm.dodage(nowX, nowY, list);
+		
+		System.out.print(position.toString());
+	}
+
 	private int mTick;
 	private CombatMovementHelper mMovementHelper;
 	private CombatRealTimeDatabase mDatabase;
+	public static final int[] DIRECTION = { 0, 180, 270, 90 };
 	private static final Logger log = LoggerFactory.getLogger(DodageLvl4Algorithm.class);
 
 	public DodageLvl4Algorithm(CombatRealTimeDatabase database, CombatMovementHelper helper) {
@@ -39,6 +68,7 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 
 		while (iterator2.hasNext()) {
 			Bullet bullet = (Bullet) iterator2.next();
+			//还需要计算能不能寿命长到能打到我
 			if (!bullet.isActive(tick)) {
 				iterator2.remove();
 			}
@@ -72,8 +102,84 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 		return 0;
 	}
 
-	public boolean dodage(int nowX, int nowY, int moveAngle, List<Bullet> bullets, int tick)
-			throws CloneNotSupportedException {
+	public Position dodage(int nowX, int nowY, List<Bullet> bullets) throws CloneNotSupportedException {
+		List<Position> list = new ArrayList<>();
+		int size = bullets.size();
+		for (int i = 0; i < size; i++) {
+
+			Bullet bullet = bullets.get(i);
+			int line1_r = bullet.r + 90;
+			int line2_r = bullet.r - 90;
+
+			Position line1_p1 = Utils.getNextPositionByDistance(bullet.startX, bullet.startY, line1_r,
+					AppConfig.TANK_WIDTH);
+			Position line2_p1 = Utils.getNextPositionByDistance(bullet.startX, bullet.startY, line2_r,
+					AppConfig.TANK_WIDTH);
+
+			Position line1_p2 = Utils.getNextPositionByDistance(line1_p1.x, line1_p1.y, bullet.r, 9);
+			Position line2_p2 = Utils.getNextPositionByDistance(line2_p1.x, line2_p1.y, bullet.r, 9);
+			Position mPosition = new Position(nowX, nowY);
+			Position line1_cp = Utils.getFoot(line1_p1, line1_p2, mPosition);
+			Position line2_cp = Utils.getFoot(line2_p1, line2_p2, mPosition);
+			list.add(line1_cp);
+			list.add(line2_cp);
+
+			int n = i + 1;
+			if (n >= size) {
+				break;
+			}
+			for (int j = i + 1; j < size; j++) {
+				Bullet bullet2 = bullets.get(j);
+				int line3_r = bullet2.r + 90;
+				int line4_r = bullet2.r - 90;
+
+				Position line3_p1 = Utils.getNextPositionByDistance(bullet2.startX, bullet2.startY, line3_r,
+						AppConfig.TANK_WIDTH);
+				Position line4_p1 = Utils.getNextPositionByDistance(bullet2.startX, bullet2.startY, line4_r,
+						AppConfig.TANK_WIDTH);
+
+				Position line3_p2 = Utils.getNextPositionByDistance(line3_p1.x, line3_p1.y, bullet2.r, 9);
+				Position line4_p2 = Utils.getNextPositionByDistance(line4_p1.x, line4_p1.y, bullet2.r, 9);
+
+				Position safe_cp1 = Utils.crossPoint(line1_p1, line1_p2, line3_p1, line3_p2);
+				Position safe_cp2 = Utils.crossPoint(line1_p1, line1_p2, line4_p1, line4_p2);
+
+				list.add(safe_cp1);
+				list.add(safe_cp2);
+
+			}
+		}
+		int minDis = Integer.MAX_VALUE;
+		Position bestPosition = null;
+		for (Position position : list) {
+			System.out.println("list:" + position.toString());
+			if (!isValid(position.x, position.y)) {
+				continue;
+			}
+			boolean isSafe = true;
+			for (Bullet bullet : bullets) {
+				boolean willHitme = willHitMe(position.x, position.y, bullet);
+				if (willHitme) {
+					isSafe = false;
+					break;
+				}
+			}
+			// 安全
+			if (isSafe) {
+				int dis = Utils.distanceTo(nowX, nowY, position.x, position.y);
+				// 且最短距离
+				if (dis < minDis) {
+					bestPosition = position;
+					minDis = dis;
+				}
+			}
+		}
+
+		return bestPosition;
+
+	}
+
+	public boolean dodage(int nowX, int nowY, List<Bullet> bullets, int tick) throws CloneNotSupportedException {
 		if (!isValid(nowX, nowY)) {
 			return false;
 		}
@@ -109,11 +215,20 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 		if (!existDangerBullets || bullets.size() <= 0) {
 			return true;
 		}
-		
-		Bullet bullet = list.get(0);
-		
-		dodage(nowX, nowY, moveAngle, bullets, tick)
 
+		Bullet bullet = list.get(0);
+		for (int i = 0; i < DIRECTION.length; i++) {
+			int move = bullet.suggestion.dodgeBestAngle + DIRECTION[i];
+			int t = tick + 1;
+			Position nextPostion = Utils.getNextTankPostion(nowX, nowY, move, 1);
+			boolean ret = dodage(nextPostion.x, nextPostion.y, bullets, t);
+			if (ret) {
+				bullet.suggestion.dodgeBestAngle = move;
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	List<Bullet> cloneBullets(List<Bullet> bullets) throws CloneNotSupportedException {
@@ -179,9 +294,18 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 
 		// 垂足到圆心距离，即我与弹道垂足的位置， 半径减去此值就是最小移动距离
 		int a = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
+
+		int bulletR = Utils.angleTo(bullet.currentX, bullet.currentY, p4.x, p4.y);
+
+		bulletR = Utils.formatAngle(bulletR);
+		// 远离
+		if (Math.abs(bulletR - Utils.formatAngle(bullet.r)) > 170) {
+			return false;
+		}
+
 		// System.out.println("a=" + a);
 		// 小于半径会被击中
-		if (a < AppConfig.TANK_WIDTH) {
+		if (a < AppConfig.TANK_WIDTH - 2) {
 			return true;
 		}
 		return false;

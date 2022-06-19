@@ -1,6 +1,8 @@
 package com.hisense.codewar.algorithm;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -35,14 +37,14 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 
 		int nowX = 100;
 		int nowY = 150;
-		
+
 		List<Bullet> list = new ArrayList<>();
 		list.add(bullet1);
 		list.add(bullet2);
-		
+
 		DodageLvl4Algorithm algorithm = new DodageLvl4Algorithm(null, null);
 		Position position = algorithm.dodage(nowX, nowY, list);
-		
+
 		System.out.print(position.toString());
 	}
 
@@ -68,7 +70,7 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 
 		while (iterator2.hasNext()) {
 			Bullet bullet = (Bullet) iterator2.next();
-			//还需要计算能不能寿命长到能打到我
+			// 还需要计算能不能寿命长到能打到我
 			if (!bullet.isActive(tick)) {
 				iterator2.remove();
 			}
@@ -99,6 +101,18 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 
 			toDoList.add(bullet);
 		}
+
+		// 排序,hitTickleft升序排列，小的在前
+		Collections.sort(toDoList, new Comparator<Bullet>() {
+
+			@Override
+			public int compare(Bullet o1, Bullet o2) {
+				// TODO Auto-generated method stub
+				return o1.suggestion.hitTickleft - o2.suggestion.hitTickleft;
+			}
+		});
+
+		mDatabase.setToDoList(toDoList);
 		return 0;
 	}
 
@@ -150,18 +164,22 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 			}
 		}
 		int minDis = Integer.MAX_VALUE;
+		int minHitCount = Integer.MAX_VALUE;
+		int minHitDis = Integer.MAX_VALUE;
 		Position bestPosition = null;
+		Position betterPosition = null;
 		for (Position position : list) {
 			System.out.println("list:" + position.toString());
 			if (!isValid(position.x, position.y)) {
 				continue;
 			}
 			boolean isSafe = true;
+			int hitCount = 0;
 			for (Bullet bullet : bullets) {
 				boolean willHitme = willHitMe(position.x, position.y, bullet);
 				if (willHitme) {
 					isSafe = false;
-					break;
+					hitCount++;
 				}
 			}
 			// 安全
@@ -173,8 +191,22 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 					minDis = dis;
 				}
 			}
+			//不安全
+			else {
+				//被击中次数最少
+				int dis = Utils.distanceTo(nowX, nowY, position.x, position.y);
+				if(hitCount <= minHitCount && dis <= minHitDis) {
+					minHitCount = hitCount;
+					minHitDis = dis;
+					betterPosition = position;					
+				}
+			}
+			
 		}
-
+		
+		if(bestPosition == null) {
+			return betterPosition;
+		}
 		return bestPosition;
 
 	}
@@ -245,39 +277,20 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 			return true;
 		}
 		int R = mDatabase.getPoisionR();
-		int[][] map = mDatabase.getMapNodeArrays();
-//			if ((x > (800 + R - 20)) || (y > (0.5625 * (800 + R) - 20)) || (x < (800 - R + 20))
-//					|| (y < (0.5625 * (800 - R) + 20))) {
-//				// System.out.print("主动进攻路线规划 毒圈避开angel: " + angel + "\n");
-//				return false;
-//			}
-//			boolean inBlocks = mDatabase.inBlocks(x, y);
-//			if (inBlocks) {
-//				// System.out.print("主动进攻路线规划 block避开angel: " + angel + "\n");
-//				return false;
-//			}
-//			if(mDatabase.isOut(x, y)) {
-//				return false;
-//			}
-//			if (x > 1580 || y > 880 || x < 20 || y < 20) {
-//				return false;
-//			}
-
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
 		if (x > 1580 || y > 880 || x < 20 || y < 20) {
 			return false;
 		}
-		if (map[x + 20][y + 20] == -1 || map[x - 20][y - 20] == -1 || map[x + 20][y - 20] == -1
-				|| map[x - 20][y + 20] == -1 || map[x][y + 20] == -1 || map[x][y - 20] == -1 || map[x + 20][y] == -1
-				|| map[x - 20][y] == -1) {
+
+		if (mDatabase.isNearBorderCantMove(x, y)) {
 			return false;
 		}
-		if ((x >= (800 + R - 40)) || (y >= (0.5625 * (800 + R) - 40)) || (x <= (800 - R + 40))
-				|| (y <= (0.5625 * (800 - R) + 40))) {
+		if (mDatabase.isNextPointCantReach(nowX, nowY, x, y)) {
 			return false;
 		}
 		boolean inBlocks = mDatabase.inBlocks(x, y);
 		if (inBlocks) {
-			// System.out.print("主动进攻路线规划 block避开angel: " + angel + "\n");
 			return false;
 		}
 		return true;
@@ -356,7 +369,7 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 		int a = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
 		// System.out.println("a=" + a);
 		// 小于半径会被击中
-		if (a < AppConfig.TANK_WIDTH) {
+		if (a < AppConfig.TANK_WIDTH - 2) {
 
 			int b = (int) Math.sqrt(AppConfig.TANK_WIDTH * AppConfig.TANK_WIDTH - a * a);
 			// 总距离，子弹到圆心的距离

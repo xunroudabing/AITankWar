@@ -92,15 +92,14 @@ public class MoveMentRadar {
 		int nowY = mDatabase.getNowY();
 		int mTankId = mDatabase.getMyTankId();
 		TankGameInfo target = null;
+		
+		//target = mAttackRadar.getTargetTank();
 		if (mDatabase.isLeader()) {
 			target = mAttackRadar.getTargetTank();
 		} else {
 			target = mDatabase.getLeader();
 		}
 
-//		if (target == null) {
-//			target = mAttackRadar.getTargetTank();
-//		}
 		if (mTick > 600) {
 			target = mAttackRadar.getTargetTank();
 		}
@@ -119,7 +118,7 @@ public class MoveMentRadar {
 		}
 
 		if (fireInBlock||distance > AppConfig.COMBAT_MAX_DISTANCE) {
-			AStarUtil AHandler = new AStarUtil(mDatabase.getMapNodeArrays(), mDatabase.getPoisionR());
+			AStarUtil AHandler = new AStarUtil(mDatabase,mDatabase.getMapNodeArrays(), mDatabase.getPoisionR());
 			Node startNode = new Node(nowX, nowY);
 			TankGameInfo end = target;
 			/*

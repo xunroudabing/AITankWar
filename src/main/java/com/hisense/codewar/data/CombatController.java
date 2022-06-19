@@ -26,14 +26,87 @@ public class CombatController {
 		mDatabase = database;
 	}
 
+	public void gameTick2(ITtank tank, int tick) {
+		try {
+
+			boolean canTrack = mHelper.needTrack(tick);
+			// boolean canTrack = false;
+			// boolean canMove = false;
+			boolean canFire = mFireHelper.canFire();
+			boolean needDodge = mHelper.needDodage(tank, tick);
+			boolean canMove = mHelper.canMove();
+
+			boolean fireBlock = false;
+			TankGameInfo enemyTank = mRadar.getTargetTank();
+			if (enemyTank == null) {
+				mHelper.move(tank, tick);
+				return;
+			}
+			int nowX = mDatabase.getNowX();
+			int nowY = mDatabase.getNowY();
+			List<Bullet> bullets = mDatabase.getBullets();
+			int distance = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
+			if (needDodge) {
+				mHelper.dodgeV4(tank, 3, tick);
+				int ret = tank.getRestActions();
+				if (ret <= 0) {
+					return;
+				} else {
+					boolean a = mHelper.moveAndFire(enemyTank.x, enemyTank.y, tank, ret, tick);
+
+				}
+			} else if (canFire) {
+				fireBlock = mDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
+				if (!fireBlock) {
+					mHelper.moveAndFire(enemyTank.x, enemyTank.y, tank, 3, tick);
+					int ret = tank.getRestActions();
+					if (ret == 0) {
+						return;
+					} else {
+						if (needDodge) {
+							mHelper.dodgeV4(tank, ret, tick);
+							return;
+						} else if (canTrack) {
+							mHelper.track(tank, ret, tick);
+							return;
+						}
+					}
+				}
+
+				// 遮挡，无法射击
+				else {
+					if (canTrack) {
+						mHelper.track(tank, tick);
+						return;
+					}
+					if (needDodge) {
+						mHelper.dodgeV4(tank, 3, tick);
+						return;
+					} else if (canMove) {
+						mHelper.move(tank, tick);
+						return;
+					}
+				}
+
+			} else {
+				mHelper.move(tank, tick);
+				return;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.error(e.toString());
+		}
+
+	}
+
 	public void gameTick(ITtank tank, int tick) {
 		try {
-			mHelper.dodge3(tank, tick);
+
 			boolean canTrack = mHelper.needTrack(tick);
-			//boolean canTrack = false;
-			//boolean canMove = false;
+			// boolean canTrack = false;
+			// boolean canMove = false;
 			boolean canFire = mFireHelper.canFire();
-			boolean needDodge = mHelper.needDodge(tick);
+			boolean needDodge = mHelper.needDodage(tank, tick);
 			boolean canMove = mHelper.canMove();
 
 			boolean fireBlock = false;
@@ -48,19 +121,19 @@ public class CombatController {
 			int distance = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
 			if (distance <= 70) {
 				if (canFire) {
-					mFireHelper.fire1(tank);
+					mFireHelper.fire2(tank);
 					int ret = tank.getRestActions();
 					if (ret <= 0) {
 						return;
 					} else {
 						if (needDodge) {
-							mHelper.dodge2(tank, ret, tick);
+							mHelper.dodgeV4(tank, ret, tick);
 							return;
 						}
 					}
 				}
 			} else if (needDodge) {
-				mHelper.dodge2(tank, tick);
+				mHelper.dodgeV4(tank, 3, tick);
 				int ret = tank.getRestActions();
 				if (ret <= 0) {
 					return;
@@ -89,7 +162,7 @@ public class CombatController {
 						return;
 					} else {
 						if (needDodge) {
-							mHelper.dodge2(tank, ret, tick);
+							mHelper.dodgeV4(tank, ret, tick);
 							return;
 						}
 					}
@@ -99,12 +172,11 @@ public class CombatController {
 					if (canTrack) {
 						mHelper.track(tank, tick);
 						return;
-					} 
+					}
 					if (needDodge) {
-						mHelper.dodge2(tank, 3, tick);
+						mHelper.dodgeV4(tank, 3, tick);
 						return;
-					}  
-					else if (canMove) {
+					} else if (canMove) {
 						mHelper.move(tank, tick);
 						return;
 					}
@@ -116,7 +188,7 @@ public class CombatController {
 				mHelper.move(tank, tick);
 				return;
 			} else {
-				//mHelper.move(tank, tick);
+				// mHelper.move(tank, tick);
 				return;
 			}
 

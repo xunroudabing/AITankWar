@@ -6,6 +6,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.algorithm.DodageLvl4Algorithm;
+import com.hisense.codewar.algorithm.IDodageAlgorithm;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.ITtank;
@@ -17,12 +19,14 @@ import com.hisense.codewar.utils.Utils;
 public class CombatMovementHelper {
 
 	public static void main(String[] args) {
+		System.out.println(Math.min(3, 3));
 		BigDecimal b = BigDecimal.valueOf(28);
 		// distance / AppConfig.TANK_SPEED; CEILING，向上取整
 		int tick = b.divide(BigDecimal.valueOf(AppConfig.TANK_SPEED), 0, BigDecimal.ROUND_CEILING).intValue();
 		System.out.println(tick);
 	}
 
+	private DodageLvl4Algorithm mAlgorithm;
 	private int mLastDodageTick = 0;
 	private FireHelper mFireHelper;
 	private CombatAttackRadar mAttackRadar;
@@ -45,6 +49,7 @@ public class CombatMovementHelper {
 		mDatabase = database;
 		mAttackRadar = radar;
 		mFireHelper = fireHelper;
+		mAlgorithm = new DodageLvl4Algorithm(mDatabase, this);
 
 	}
 
@@ -172,15 +177,17 @@ public class CombatMovementHelper {
 		event.heading = r;
 		mTrackQueue.add(event);
 	}
-
-	public boolean track(ITtank tank, int tick) {
+	public boolean track(ITtank tank,int tick) {
+		return track(tank, 3, tick);
+	}
+	public boolean track(ITtank tank,int actionSize, int tick) {
 		if (mTrackQueue.isEmpty()) {
 			return false;
 		}
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
 		int heading = mDatabase.getHeading();
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < actionSize; i++) {
 			if (mTrackQueue.isEmpty()) {
 				break;
 			}
@@ -268,6 +275,185 @@ public class CombatMovementHelper {
 		return false;
 	}
 
+	public boolean moveAndFire(int dx, int dy, ITtank tank, int actionSize, int tick) {
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		boolean canFire = mFireHelper.canFire();
+
+		int distance = Utils.distanceTo(nowX, nowY, dx, dy);
+		int dest = Utils.angleTo(nowX, nowY, dx, dy);
+		if (canFire) {
+			if (distance <= 70) {
+				if (actionSize >= 2) {
+					tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+					tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+					return true;
+				}
+				return false;
+
+			} else {
+
+				int xSeg = Math.abs(nowX - dx);
+				int ySeg = Math.abs(nowY - dy);
+
+				int xAngle = Utils.angleTo(nowX, nowY, dx, nowY);
+				int yAngle = Utils.angleTo(nowX, nowY, nowX, dy);
+
+				int moveAngle = 0;
+				int moveSeg = 0;
+				if (xSeg > ySeg && xSeg > 2) {
+					moveAngle = xAngle;
+					moveSeg = xSeg;
+				} else if (xSeg <= ySeg && ySeg > 2) {
+					moveAngle = yAngle;
+					moveSeg = ySeg;
+				} else {
+					log.debug(String.format(
+							"[Command-Dodge2-break]tank[%d]currentPos[%d,%d]dstPos[%d,%d]xSeg[%d]ySeg[%d]tick[%d]",
+							tank.id, nowX, nowY, dx, dy, xSeg, ySeg, tick));
+					return false;
+				}
+
+				Position nextPosition = Utils.getNextPositionByDistance(nowX, nowY, moveAngle, 9);
+				if (mDatabase.inBlocks(nextPosition.x, nextPosition.y,AppConfig.BLOCK_SIZE * 2)) {
+					return false;
+				}
+				int span = moveSeg / 3;
+				if (span >= 3) {
+					int size = Math.min(3, actionSize);
+					for (int i = 0; i < size; i++) {
+						tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+					}
+					return true;
+				} else if (span == 2) {
+					int size = Math.min(2, actionSize);
+					for (int i = 0; i < size; i++) {
+						tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+					}
+					return true;
+
+				} else {
+					if (actionSize > 0) {
+						tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+					}
+					return true;
+				}
+
+			}
+		}
+
+		return false;
+	}
+
+	public boolean needDodage(ITtank tank, int tick) {
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		List<Bullet> toDoList = mDatabase.getToDoList();
+		int bulletCount = toDoList.size();
+		try {
+			Position position = mAlgorithm.dodage(nowX, nowY, toDoList);
+			if (position != null) {
+				int heading = Utils.angleTo(nowX, nowY, position.x, position.y);
+				MoveEvent event = new MoveEvent();
+				event.startX = nowX;
+				event.startY = nowY;
+				event.dstX = position.x;
+				event.dstY = position.y;
+				event.heading = heading;
+
+				mDodgeQueue.add(event);
+			}
+		} catch (CloneNotSupportedException e) {
+			// TODO Auto-generated catch block
+			log.error(e.toString());
+		}
+		return bulletCount > 0;
+	}
+
+	public boolean dodgeV4(ITtank tank, int actionSize, int tick) {
+		boolean firstRunning = false;
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		if (mDodgeQueue.isEmpty()) {
+			return false;
+		}
+		MoveEvent mDodgeEvent = mDodgeQueue.poll();
+		if (mDodgeEvent != null) {
+			int startX = mDodgeEvent.startX;
+			int startY = mDodgeEvent.startY;
+			int dx = mDodgeEvent.dstX;
+			int dy = mDodgeEvent.dstY;
+			int heading = mDodgeEvent.heading;
+			int headingFix = Utils.angleTo(nowX, nowY, dx, dy);
+			int dis = Utils.distanceTo(nowX, nowY, dx, dy);
+
+			int xSeg = Math.abs(nowX - dx);
+			int ySeg = Math.abs(nowY - dy);
+
+			int xAngle = Utils.angleTo(nowX, nowY, dx, nowY);
+			int yAngle = Utils.angleTo(nowX, nowY, nowX, dy);
+
+			// 当前已经移动至目标点，考虑误差
+//				if (xSeg <= 2 && ySeg <= 2) {
+//					log.debug(String.format(
+//							"[Command-Dodge2-skip]tank[%d]currentPos[%d,%d]dstPos[%d,%d]chead[%d]r[%d]tick[%d]xSeg[%d]ySeg[%d]",
+//							tank.id, nowX, nowY, dx, dy, heading, heading, i,xSeg,ySeg));
+//					// 已到达指定位置
+//					break;
+//				} else
+
+			// 判断出界
+			Position nextPosition = Utils.getNextPositionByDistance(nowX, nowY, heading, AppConfig.TANK_WIDTH * 2);
+			if (mDatabase.isOut(nextPosition.x, nextPosition.y)) {
+				// 出界，不执行此次命令
+				log.debug(String.format(
+						"[Command-Dodge2-Ignore][T%d]tank[%d]pos[%d,%d]r[%d]nextpos[%d,%d] will out of range", tick,
+						tank.id, nowX, nowY, heading, nextPosition.x, nextPosition.y));
+				return false;
+			}
+
+			int moveAngle = 0;
+			int moveSeg = 0;
+			if (xSeg > ySeg && xSeg > 2) {
+				moveAngle = xAngle;
+				moveSeg = xSeg;
+			} else if (xSeg <= ySeg && ySeg > 2) {
+				moveAngle = yAngle;
+				moveSeg = ySeg;
+			} else {
+				log.debug(String.format(
+						"[Command-Dodge2-break]tank[%d]currentPos[%d,%d]dstPos[%d,%d]xSeg[%d]ySeg[%d]tick[%d]", tank.id,
+						nowX, nowY, dx, dy, xSeg, ySeg, tick));
+				return false;
+			}
+
+			int span = moveSeg / 3;
+			if (span >= 3) {
+				int size = Math.min(3, actionSize);
+				for (int i = 0; i < size; i++) {
+					tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+				}
+			} else if (span == 2) {
+				int size = Math.min(2, actionSize);
+				for (int i = 0; i < size; i++) {
+					tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+				}
+			} else {
+				if (actionSize > 0) {
+					tank.tank_action(TankGameActionType.TANK_ACTION_MOVE, moveAngle);
+				}
+			}
+			log.debug(String.format(
+					"[Command-Dodge]tank[%d]startpos[%d,%d]pos[%d,%d]dstPos[%d,%d]errorDis[%d]heading[%d]headFix[%d]tick[%d]",
+					tank.id, startX, startY, nowX, nowY, dx, dy, dis, heading, moveAngle, span));
+
+		}
+
+		mDodgeQueue.clear();
+		return true;
+
+	}
+
 	public boolean dodge3(ITtank tank, int tick) {
 		int nowX = mDatabase.getNowX();
 		int nowY = mDatabase.getNowY();
@@ -275,12 +461,12 @@ public class CombatMovementHelper {
 		int bulletCount = toDoList.size();
 		// 处理会击中我的子弹,目前只处理前2个
 		if (bulletCount == 1) {
-			handleBullet1(toDoList.get(0),tick);
+			handleBullet1(toDoList.get(0), tick);
 
 		} else if (bulletCount >= 2) {
 			Bullet bullet1 = toDoList.get(0);
 			Bullet bullet2 = toDoList.get(1);
-			handleBullet2(bullet1, bullet2, nowX, nowY,tick);
+			handleBullet2(bullet1, bullet2, nowX, nowY, tick);
 		}
 		return true;
 	}

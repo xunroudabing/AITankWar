@@ -102,13 +102,16 @@ public class CombatRealTimeDatabase {
 		mMap.maxY = maxY;
 		mMapNodeArrys = new int[1601][901];
 	}
+
 	public List<Bullet> getToDoList() {
 		return mToDoList;
 	}
+
 	public void setToDoList(List<Bullet> list) {
 		mToDoList.clear();
 		mToDoList.addAll(list);
 	}
+
 	public int getThreatBulletsCount() {
 		return mThreadBulletsCount;
 	}
@@ -280,15 +283,37 @@ public class CombatRealTimeDatabase {
 		}
 		return ret;
 	}
-
-	public boolean inBlocks(int x, int y) {
-		// 队友也算障碍物
-		for (TankGameInfo tank : mFriendTanks) {
-			if (Utils.inBlock(x, y, AppConfig.BLOCK_SIZE, tank.x, tank.y, AppConfig.BLOCK_SIZE)) {
+	public boolean inBlocks(int x, int y, int blockSize) {
+		// 敌人算障碍物
+		for (TankGameInfo tank : mEnemyTanks) {
+			if (Utils.inBlock(x, y, blockSize, tank.x, tank.y, blockSize)) {
 				return true;
 			}
 		}
-		return Utils.inBlocks(x, y, AppConfig.BLOCK_SIZE, getBlocks(), AppConfig.BLOCK_SIZE);
+		// 队友也算障碍物
+		for (TankGameInfo tank : mFriendTanks) {
+			if (Utils.inBlock(x, y, blockSize, tank.x, tank.y, blockSize)) {
+				return true;
+			}
+		}
+		return Utils.inBlocks(x, y, blockSize, getBlocks(), blockSize);
+	}
+
+	public boolean inBlocks(int x, int y) {
+//		// 敌人算障碍物
+//		for (TankGameInfo tank : mEnemyTanks) {
+//			if (Utils.inBlock(x, y, AppConfig.BLOCK_SIZE, tank.x, tank.y, AppConfig.BLOCK_SIZE)) {
+//				return true;
+//			}
+//		}
+//		// 队友也算障碍物
+//		for (TankGameInfo tank : mFriendTanks) {
+//			if (Utils.inBlock(x, y, AppConfig.BLOCK_SIZE, tank.x, tank.y, AppConfig.BLOCK_SIZE)) {
+//				return true;
+//			}
+//		}
+//		return Utils.inBlocks(x, y, AppConfig.BLOCK_SIZE, getBlocks(), AppConfig.BLOCK_SIZE);
+		return inBlocks(x, y, AppConfig.BLOCK_SIZE);
 	}
 
 	public boolean isNearBorderCantMoveByDistance(int nowX, int nowY, int r, int distance) {
@@ -300,6 +325,18 @@ public class CombatRealTimeDatabase {
 	public boolean isOutRangeByDistance(int nowX, int nowY, int r, int distance) {
 		Position endPosition = Utils.getNextPositionByDistance(nowX, nowY, r, distance);
 		return isOut(endPosition.x, endPosition.y);
+	}
+
+	public boolean isNextPointCantReach(int nowX, int nowY, int dstX, int dstY) {
+		Position nextPostion = new Position(dstX, dstY);
+		// return Utils.isNextPointInBlocks(nowX, nowY, r, distance, getBlocks(),
+		// AppConfig.BLOCK_SIZE);
+		boolean inBlock = inBlocks(nextPostion.x, nextPostion.y);
+		boolean crossBlocks = Utils.isCrossBlock(nowX, nowY, nextPostion.x, nextPostion.y, getBlocks(),
+				AppConfig.BLOCK_SIZE);
+		boolean crossFriends = Utils.isCrossBlock(nowX, nowY, nextPostion.x, nextPostion.y, getFriendAsBlocks(),
+				AppConfig.BLOCK_SIZE);
+		return inBlock || crossBlocks || crossFriends;
 	}
 
 	public boolean isNextPointCrossBlocks(int nowX, int nowY, int r, int distance) {

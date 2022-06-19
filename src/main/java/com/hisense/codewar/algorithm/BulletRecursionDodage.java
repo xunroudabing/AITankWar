@@ -65,7 +65,7 @@ public class BulletRecursionDodage {
 
 	}
 
-	public static final int TANK_DIS = 3;
+	public static final int TANK_DIS = 9;
 	public static final int[] DIRECTION = { 0, 90, 180, 270 };
 	private static final Logger log = LoggerFactory.getLogger(BulletRecursionDodage.class);
 	private CombatRealTimeDatabase mDatabase;
@@ -123,7 +123,7 @@ public class BulletRecursionDodage {
 			nodes.addLast(node);
 		}
 		//
-		int t = nodes.size() / 3;
+		int t = nodes.size();
 		LinkedList<Node> min_paths = null;
 		// 继续躲避子弹
 		for (int i = 0; i < DIRECTION.length; i++) {
@@ -264,7 +264,7 @@ public class BulletRecursionDodage {
 		int a = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
 		// System.out.println("a=" + a);
 		// 小于半径会被击中
-		if (a < AppConfig.TANK_WIDTH) {
+		if (a < AppConfig.TANK_WIDTH - 3) {
 			return true;
 		}
 		return false;
@@ -297,8 +297,8 @@ public class BulletRecursionDodage {
 
 	protected Position getNextTankPositionByDistance(int nowX, int nowY, int r, int distance) {
 		float rr = Utils.a2r(r);
-		int x = (int) (nowX + Math.cos(rr) * distance);
-		int y = (int) (nowY + Math.sin(rr) * distance);
+		int x = Utils.doubleToInt((nowX + Math.cos(rr) * distance));
+		int y = Utils.doubleToInt((nowY + Math.sin(rr) * distance));
 		return new Position(x, y);
 	}
 }

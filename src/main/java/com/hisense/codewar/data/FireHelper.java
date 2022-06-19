@@ -132,9 +132,9 @@ public class FireHelper {
 		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
 
 		// 避免误伤
-		if (willHitFriends(dest)) {
-			return false;
-		}
+//		if (willHitFriends(dest)) {
+//			return false;
+//		}
 
 		// 射界内，不需要转向，直接开火
 		if (heading > Math.abs(dest - range) && heading < Math.abs(dest + range)) {
@@ -265,7 +265,7 @@ public class FireHelper {
 	}
 
 	public boolean fire3(ITtank tank) {
-		boolean guessFireEnable = true;
+		boolean guessFireEnable = false;
 		boolean guessFire = false;
 		TankGameInfo target = mAttackRadar.getTargetTank();
 		if (target == null) {

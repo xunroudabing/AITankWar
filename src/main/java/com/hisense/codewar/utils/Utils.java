@@ -370,9 +370,9 @@ public class Utils {
 	public static Position getNextBulletByTick(int nowX, int nowY, int r, int tick) {
 		float rr = Utils.a2r(r);
 		// startx + kProjectileSpeed * cosf(rr) * elapsed;
-		int x = (int) (nowX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick);
+		int x = Utils.doubleToInt((nowX + AppConfig.BULLET_SPEED * Math.cos(rr) * tick));
 		// starty + kProjectileSpeed * sinf(rr) * elapsed;
-		int y = (int) (nowY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick);
+		int y = Utils.doubleToInt((nowY + AppConfig.BULLET_SPEED * Math.sin(rr) * tick));
 		return new Position(x, y);
 	}
 
@@ -566,10 +566,22 @@ public class Utils {
 	}
 
 	public static boolean inBlock(int x, int y, int width, int blockX, int blockY, int blockWidth) {
-		int totalR = width + blockWidth;
-		int distance = Utils.distanceTo(x, y, blockX, blockY);
+//		int totalR = width + blockWidth;
+//		int distance = Utils.distanceTo(x, y, blockX, blockY);
+//		
+//		return distance < totalR;
+		//考虑误差，
+		int blockWidthBigger = blockWidth + 2;
+		int minX = blockX - blockWidthBigger;
+		int maxX = blockX + blockWidthBigger;
+		int minY = blockY - blockWidthBigger;
+		int maxY = blockY + blockWidthBigger;
 
-		return distance < totalR;
+		if ((x >= minX && x <= maxX) && (y >= minY && y <= maxY)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -630,7 +642,7 @@ public class Utils {
 			// 垂足到圆心距离
 			int c = Utils.distanceTo(p3.x, p3.y, p4.x, p4.y);
 			// 会打中block
-			if (c <= blockWidth) {
+			if (c < blockWidth - 2) {
 				// 我到垂足的距离
 				int d = Utils.distanceTo(x, y, p4.x, p4.y);
 				if (d <= distance) {
@@ -641,141 +653,4 @@ public class Utils {
 		return false;
 	}
 
-	/**
-	 * 判断射击路线是否被障碍物阻挡
-	 * 
-	 * @param xs     坦克中心点的横坐标
-	 * @param ys     坦克中心点的纵坐标
-	 * @param xe     目标坦克中心点的横坐标
-	 * @param ye     目标坦克中心点的纵坐标
-	 * @param r      射击角度
-	 * @param blocks 障碍物列表
-	 * @return Boolean
-	 */
-	public static boolean isStopFireByBlock(Double xs, Double ys, Double xe, Double ye, Double r,
-			List<TankMapBlock> blocks) {
-//        for(TankMapBlock i : blocks){
-//            System.out.println("block X: " + i.getX() + " Y: " + i.getY());
-//        }
-//        System.out.println("isStopFireByBlock: xs=" + xs + ", ys=" + ys + ", xe=" + xe + ", ye=" + ye + ", r=" + r );
-		List<Double> rectangle = getRectangleByLine(xs, ys, xe, ye, r, 30.0);
-		for (TankMapBlock tankMapBlock : blocks) {
-			if (judgeIsPointInRectangle((double) tankMapBlock.getX(), (double) tankMapBlock.getY(), rectangle.get(0),
-					rectangle.get(1), rectangle.get(2), rectangle.get(3), rectangle.get(4), rectangle.get(5),
-					rectangle.get(6), rectangle.get(7))) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * 根据线段、角度以及宽度获取长方形
-	 * 
-	 * @param xs   起点的横坐标
-	 * @param ys   起点的纵坐标
-	 * @param xe   终点的横坐标
-	 * @param ys   终点的纵坐标
-	 * @param r    字段方向
-	 * @param edge 边长的一半
-	 * @return Double
-	 */
-	private static List<Double> getRectangleByLine(Double xs, Double ys, Double xe, Double ye, Double r, Double edge) {
-		Double x1 = Math.cos(r / 180.0 * Math.PI + Math.PI / 2.0) * edge + xe;
-		Double y1 = Math.sin(r / 180.0 * Math.PI + Math.PI / 2.0) * edge + ye;
-		Double x2 = Math.cos(r / 180.0 * Math.PI + Math.PI / 2.0) * edge + xs;
-		Double y2 = Math.sin(r / 180.0 * Math.PI + Math.PI / 2.0) * edge + ys;
-		Double x3 = Math.cos(r / 180.0 * Math.PI + Math.PI * 3 / 2.0) * edge + xs;
-		Double y3 = Math.sin(r / 180.0 * Math.PI + Math.PI * 3 / 2.0) * edge + ys;
-		Double x4 = Math.cos(r / 180.0 * Math.PI + Math.PI * 3 / 2.0) * edge + xe;
-		Double y4 = Math.sin(r / 180.0 * Math.PI + Math.PI * 3 / 2.0) * edge + ye;
-
-		List<Double> rectangle = new ArrayList<>();
-		rectangle.add(x1);
-		rectangle.add(y1);
-		rectangle.add(x2);
-		rectangle.add(y2);
-		rectangle.add(x3);
-		rectangle.add(y3);
-		rectangle.add(x4);
-		rectangle.add(y4);
-		return rectangle;
-	}
-
-	/**
-	 * 判断一个点是否造长方形内
-	 * 
-	 * @param x  点的横坐标
-	 * @param y  点的纵坐标
-	 * @param x1 长方形左上方顶点横坐标
-	 * @param y1 长方形左上方顶点纵坐标
-	 * @param x2 长方形左下方顶点横坐标
-	 * @param y2 长方形左下方顶点纵坐标
-	 * @param x3 长方形右下方顶点横坐标
-	 * @param y3 长方形右下方顶点纵坐标
-	 * @param x4 长方形右上方顶点横坐标
-	 * @param y4 长方形右上方顶点纵坐标
-	 * @return Double
-	 */
-	private static Boolean judgeIsPointInRectangle(Double x, Double y, Double x1, Double y1, Double x2, Double y2,
-			Double x3, Double y3, Double x4, Double y4) {
-		// 计算点到各边的距离之和
-		Double length1 = calDistanceOfPointToLine(x, y, x1, y1, x2, y2);
-		Double length2 = calDistanceOfPointToLine(x, y, x2, y2, x3, y3);
-		Double length3 = calDistanceOfPointToLine(x, y, x3, y3, x4, y4);
-		Double length4 = calDistanceOfPointToLine(x, y, x4, y4, x1, y1);
-		Double lengthSum = length1 + length2 + length3 + length4;
-
-		// 计算长方向周长
-		Double lengthAB = calLineSpace(x1, y1, x2, y2);
-		Double lengthBC = calLineSpace(x2, y2, x3, y3);
-		Double lengthCD = calLineSpace(x3, y3, x4, y4);
-		Double lengthDA = calLineSpace(x4, y4, x1, y1);
-		Double perimeter = lengthAB + lengthBC + lengthCD + lengthDA;
-		Double halfPerimeter = perimeter / 2.0;
-
-		// 当点到各边的距离等于长方形周长的一半的时候，点在长方向内
-		return Math.abs(halfPerimeter - lengthSum) < 0.00001;
-
-	}
-
-	/**
-	 * 计算点到线段的距离
-	 * 
-	 * @param x  点的横坐标
-	 * @param y  点的纵坐标
-	 * @param x1 线段起点的横坐标
-	 * @param y1 线段起点的纵坐标
-	 * @param x2 线段终点的横坐标
-	 * @param y2 线段终点的纵坐标
-	 * @return Double
-	 */
-	public static Double calDistanceOfPointToLine(Double x, Double y, Double x1, Double y1, Double x2, Double y2) {
-		// 1、计算各边长以及周长
-		Double lengthAB = calLineSpace(x, y, x1, y1);
-		Double lengthAC = calLineSpace(x, y, x2, y2);
-		Double lengthBC = calLineSpace(x1, y1, x2, y2);
-		Double perimeter = lengthAB + lengthAC + lengthBC;
-		Double halfPerimeter = perimeter / 2.0;
-
-		// 2、计算坦克位置、子弹初始位置、子弹末端位置三点构成的三角形面积
-		Double area = Math.sqrt(
-				halfPerimeter * (halfPerimeter - lengthAB) * (halfPerimeter - lengthAC) * (halfPerimeter - lengthBC));
-
-		// 3、计算点到直线的距离
-		return 2 * area / lengthBC;
-	}
-
-	/**
-	 * 计算两点间的距离
-	 * 
-	 * @param x1 起点的横坐标
-	 * @param y1 起点的纵坐标
-	 * @param x2 终点的横坐标
-	 * @param y2 终点的纵坐标
-	 * @return Double
-	 */
-	public static Double calLineSpace(Double x1, Double y1, Double x2, Double y2) {
-		return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-	}
 }

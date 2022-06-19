@@ -96,7 +96,7 @@ public class AntiGraveMover {
 	private CombatRealTimeDatabase mDatabase;
 	private CombatMovementHelper mHelper;
 	private static final int FRIEND_POWER = 1000;
-	private static final int BLOCK_POWER = -10;
+	private static final int BLOCK_POWER = -50;
 	private static final int FACTOR = 45;
 	private static final Logger log = LoggerFactory.getLogger(AntiGraveMover.class);
 
@@ -238,7 +238,7 @@ public class AntiGraveMover {
 			// 射界被遮挡
 			boolean fireBlock = mDatabase.fireInBlocks(nowX, nowY, tank.x, tank.y);
 			boolean fireNearReady = mFireHelper.nearFire();
-			int power = -300;
+			int power = -500;
 			if (tank.id == targetId) {
 				if (fireBlock || dis > AppConfig.COMBAT_MAX_DISTANCE) {
 					power = 200;
@@ -250,9 +250,9 @@ public class AntiGraveMover {
 			else if (bulletSize >= 2 && attackMe) {
 				power = -1000;
 			} else if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
-				power = 200;
+				power = -200;
 			} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
-				power = -300;
+				power = -500;
 			}
 			GravePoint gPoint = new GravePoint(tank.x, tank.y, power);
 			points.add(gPoint);
@@ -325,7 +325,7 @@ public class AntiGraveMover {
 			int y = bullet.currentY;
 			for (int i = 0; i < 5; i++) {
 				Position position = Utils.getNextBulletByTick(x, y, bullet.r, i);
-				GravePoint gPoint = new GravePoint(position.x, position.y, -20);
+				GravePoint gPoint = new GravePoint(position.x, position.y, -50);
 				points.add(gPoint);
 			}
 		}

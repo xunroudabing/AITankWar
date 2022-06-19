@@ -86,7 +86,7 @@ public class DodageLvl2Algorithm implements IDodageAlgorithm {
 			int angleHit = Utils.angleTo(bullet.currentX, bullet.currentY, p4.x, p4.y);
 
 			// 会被击中
-			if (a < c) {
+			if (a < c - 3) {
 				canHit = true;
 			}
 			// 子弹已远离

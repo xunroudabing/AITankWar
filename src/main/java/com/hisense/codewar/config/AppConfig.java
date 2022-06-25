@@ -4,6 +4,7 @@ import com.jfinal.kit.PropKit;
 
 public class AppConfig {
 	public static final String APPVERSION = "1.0.0.3"; 
+	public static int FIRE_DISTANCE = 60;
 	public static int MOVE_CHASE_SPEED = 5;
 	public static int MOVE_ESCAPE_SPEED = 3;
 	public static int BLOCK_SIZE = 21;
@@ -51,5 +52,6 @@ public class AppConfig {
 		MOVE_CHASE_SPEED = PropKit.getInt("battle.chase.speed");
 		MOVE_ESCAPE_SPEED = PropKit.getInt("battle.escape.speed");
 		WAVE_DB_MAXROWS = PropKit.getInt("wave.database.rows");
+		FIRE_DISTANCE = PropKit.getInt("battle.fireDistance");
 	}
 }

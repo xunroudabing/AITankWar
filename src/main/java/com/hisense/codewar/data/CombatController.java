@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.ITtank;
 import com.hisense.codewar.model.TankGameInfo;
@@ -119,9 +120,10 @@ public class CombatController {
 			int nowY = mDatabase.getNowY();
 			List<Bullet> bullets = mDatabase.getBullets();
 			int distance = Utils.distanceTo(nowX, nowY, enemyTank.x, enemyTank.y);
-			if (distance <= 70) {
+			TankGameInfo nearTank = mRadar.getEnemyTankNear(AppConfig.FIRE_DISTANCE);
+			if (nearTank != null) {
 				if (canFire) {
-					mFireHelper.fire2(tank);
+					mFireHelper.fire2(tank, nearTank);
 					int ret = tank.getRestActions();
 					if (ret <= 0) {
 						return;
@@ -129,8 +131,22 @@ public class CombatController {
 						if (needDodge) {
 							mHelper.dodgeV4(tank, ret, tick);
 							return;
+						} else {
+							mHelper.move(tank, ret, tick);
+							return;
 						}
 					}
+				} else if (needDodge) {
+					mHelper.dodgeV4(tank, 3, tick);
+					int ret = tank.getRestActions();
+					if (ret <= 0) {
+						return;
+					} else {
+						mHelper.move(tank, ret, tick);
+						return;
+					}
+				} else {
+					mHelper.move(tank, tick);
 				}
 			} else if (needDodge) {
 				mHelper.dodgeV4(tank, 3, tick);
@@ -138,31 +154,32 @@ public class CombatController {
 				if (ret <= 0) {
 					return;
 				} else {
-					if (canFire) {
-						if (ret == 1) {
-							mFireHelper.fire1(tank);
-							return;
-						} else if (ret == 2) {
-							mFireHelper.fire2(tank);
-						} else if (ret == 3) {
-							mFireHelper.fire3(tank);
-						}
-						return;
-					} else if (canMove) {
-						mHelper.move(tank, tick);
+					if (canMove) {
+						mHelper.move(tank, ret, tick);
 						return;
 					}
 				}
 			} else if (canFire) {
 				fireBlock = mDatabase.fireInBlocks(nowX, nowY, enemyTank.x, enemyTank.y);
 				if (!fireBlock) {
-					mFireHelper.fire3(tank);
-					int ret = tank.getRestActions();
-					if (ret == 0) {
-						return;
-					} else {
+					if (distance <= AppConfig.FIRE_DISTANCE) {
+						mFireHelper.fire2(tank, enemyTank);
+						int ret = tank.getRestActions();
+						if (ret == 0) {
+							return;
+						} else {
+							mHelper.move(tank, ret, tick);
+						}
+					}else {
+						if (canTrack) {
+							mHelper.track(tank, tick);
+							return;
+						}
 						if (needDodge) {
-							mHelper.dodgeV4(tank, ret, tick);
+							mHelper.dodgeV4(tank, 3, tick);
+							return;
+						} else if (canMove) {
+							mHelper.move(tank, tick);
 							return;
 						}
 					}
@@ -181,14 +198,18 @@ public class CombatController {
 						return;
 					}
 				}
-			} else if (canTrack) {
+			} else if (!canFire) {
+				mHelper.move(tank, tick);
+			}
+
+			else if (canTrack) {
 				mHelper.track(tank, tick);
 				return;
 			} else if (canMove) {
 				mHelper.move(tank, tick);
 				return;
 			} else {
-				// mHelper.move(tank, tick);
+				mHelper.move(tank, tick);
 				return;
 			}
 

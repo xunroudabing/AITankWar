@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hisense.codewar.algorithm.DodageLvl2Algorithm;
 import com.hisense.codewar.algorithm.DodageLvl3Algorithm;
+import com.hisense.codewar.algorithm.DodageLvl4Algorithm;
 import com.hisense.codewar.algorithm.IDodageAlgorithm;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.model.Bullet;
@@ -49,7 +50,7 @@ public class CombatWarningRadar {
 		mBulletInfos = new ArrayList<BulletInfo>();
 		mThreatTargets = new ArrayList<ThreatTarget>();
 		SCAN_RADIUS = AppConfig.RADAR_SCAN_RADIUS;
-		mDodageAlgorithm = new DodageLvl3Algorithm(mDatabase, mMoveHelper);
+		mDodageAlgorithm = new DodageLvl4Algorithm(mDatabase, mMoveHelper);
 	}
 
 	public void reset() {

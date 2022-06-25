@@ -108,7 +108,7 @@ public class Utils {
 	 */
 	public static int angleTo(int nowx, int nowy, int tx, int ty) {
 		int ret = 0;
-		if (isNear(tx, nowx)) {
+		if (tx==nowx) {
 			if (ty > nowy) {
 				ret = 90;
 			} else {
@@ -116,7 +116,7 @@ public class Utils {
 			}
 		}
 
-		else if (isNear(ty, nowy)) {
+		else if (ty==nowy) {
 			if (tx > nowx) {
 				ret = 0;
 			} else {

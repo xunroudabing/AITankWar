@@ -92,15 +92,15 @@ public class MoveMentRadar {
 		int nowY = mDatabase.getNowY();
 		int mTankId = mDatabase.getMyTankId();
 		TankGameInfo target = null;
-		
-		//target = mAttackRadar.getTargetTank();
+
+		// target = mAttackRadar.getTargetTank();
 		if (mDatabase.isLeader()) {
 			target = mAttackRadar.getTargetTank();
 		} else {
 			target = mDatabase.getLeader();
 		}
 
-		if (mTick > 600) {
+		if (mTick > 100) {
 			target = mAttackRadar.getTargetTank();
 		}
 		if (target == null) {
@@ -113,27 +113,27 @@ public class MoveMentRadar {
 		boolean underAttack = bulletSize > 0 ? true : false;
 		boolean fireInBlock = mDatabase.fireInBlocks(nowX, nowY, target.x, target.y);
 
-		if (underAttack) {
-			return;
-		}
+//		if (underAttack) {
+//			return;
+//		}
 
-		if (fireInBlock||distance > AppConfig.COMBAT_MAX_DISTANCE) {
-			AStarUtil AHandler = new AStarUtil(mDatabase,mDatabase.getMapNodeArrays(), mDatabase.getPoisionR());
+		if (distance > AppConfig.FIRE_DISTANCE - 20) {
+			AStarUtil AHandler = new AStarUtil(mDatabase, mDatabase.getMapNodeArrays(), mDatabase.getPoisionR());
 			Node startNode = new Node(nowX, nowY);
 			TankGameInfo end = target;
 			/*
 			 * if(end.getAngelToMytank() < 300){ return; }
 			 */
 			if (end == null || (end.x == 0 && end.y == 0)) {
-				//log.debug("activeAttack  没有目标坦克\n");
+				// log.debug("activeAttack 没有目标坦克\n");
 				return;
 			}
 			Node endNode = new Node(end.x, end.y);
 			Node res_node = AHandler.astarSearch(startNode, endNode);
 			if (res_node == null) {
-				//log.debug("activeAttack  没有路径\n");
+				// log.debug("activeAttack 没有路径\n");
 			} else {
-				//log.debug("activeAttack 发现路径 \n");
+				// log.debug("activeAttack 发现路径 \n");
 			}
 
 			Node lastNode = new Node(0, 0);
@@ -157,6 +157,41 @@ public class MoveMentRadar {
 					}
 				}
 			}
+
+		} 
+		
+		else {
+//				TankGameInfo tank = mDatabase.getTankById(mDatabase.getMyTankId());
+//				double angle = Math.atan2(AppConfig.TARGET_RADIUS + AppConfig.FIRE_DISTANCE, distance);
+//				int d = (int) (distance / Math.cos(angle));
+//				int r = Utils.r2a(angle);
+//				int dest = Utils.angleTo(nowX, nowY, target.x, target.y);
+//				dest = dest + r;
+//				Position movePosition = Utils.getNextPositionByDistance(nowX, nowY, dest, 9);
+//				int dx = movePosition.x;
+//				int dy = movePosition.y;
+//				int xSeg = Math.abs(nowX - dx);
+//				int ySeg = Math.abs(nowY - dy);
+//
+//				int xAngle = Utils.angleTo(nowX, nowY, dx, nowY);
+//				int yAngle = Utils.angleTo(nowX, nowY, nowX, dy);
+//				
+//				int moveAngle = 0;
+//				int moveSeg = 0;
+//				if (xSeg > ySeg && xSeg > 2) {
+//					moveAngle = xAngle;
+//					moveSeg = xSeg;
+//				} else if (xSeg <= ySeg && ySeg > 2) {
+//					moveAngle = yAngle;
+//					moveSeg = ySeg;
+//				}
+//				for (int i = 0; i < 3; i++) {
+//					if (judgeTankMoveThreePointIsSafe(tank, moveAngle, 1)) {
+//						mHelper.addTrack(moveAngle);
+//					} else {
+//						break;
+//					}
+//				}
 
 		}
 
@@ -202,18 +237,17 @@ public class MoveMentRadar {
 
 		if ((tmp.x > (800 + R - 20)) || (tmp.y > (0.5625 * (800 + R) - 20)) || (tmp.x < (800 - R + 20))
 				|| (tmp.y < (0.5625 * (800 - R) + 20))) {
-			//System.out.print("主动进攻路线规划  毒圈避开angel: " + angel + "\n");
+			// System.out.print("主动进攻路线规划 毒圈避开angel: " + angel + "\n");
 			return false;
 		}
 		boolean inBlocks = mDatabase.inBlocks(tmp.x, tmp.y);
 		if (inBlocks) {
-			//System.out.print("主动进攻路线规划  block避开angel: " + angel + "\n");
+			// System.out.print("主动进攻路线规划 block避开angel: " + angel + "\n");
 			return false;
 		}
 		count++;
 		return judgeTankMoveThreePointIsSafe(tmp, angel, count);
 	}
-	
 
 	/**
 	 * x1 = xcos(angle)-ysin(angle) y1 = xsin(angle)+ycos(angle)

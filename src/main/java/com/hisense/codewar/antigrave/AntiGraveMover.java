@@ -231,7 +231,8 @@ public class AntiGraveMover {
 		int bulletSize = mDatabase.getBullets().size();
 		List<GravePoint> points = new ArrayList<>();
 		List<TankGameInfo> list = mDatabase.getEnemyTanks();
-
+		boolean canFire = mFireHelper.canFire();
+		
 		for (TankGameInfo tank : list) {
 			boolean attackMe = mDatabase.isAttackMe(tank.id);
 			int dis = Utils.distanceTo(nowX, nowY, tank.x, tank.y);
@@ -239,21 +240,25 @@ public class AntiGraveMover {
 			boolean fireBlock = mDatabase.fireInBlocks(nowX, nowY, tank.x, tank.y);
 			boolean fireNearReady = mFireHelper.nearFire();
 			int power = -500;
-			if (tank.id == targetId) {
-				if (fireBlock || dis > AppConfig.COMBAT_MAX_DISTANCE) {
-					power = 200;
-				} else if (fireNearReady) {
-					power = -200;
-				}
+			if(!canFire) {
+				power = -2000;
+			}
+			else if (canFire && tank.id == targetId) {
+//				if (fireBlock || dis > AppConfig.COMBAT_MAX_DISTANCE) {
+//					power = 200;
+//				} else if (fireNearReady) {
+//					power = -200;
+//				}
+				power = 1000;
 			}
 
-			else if (bulletSize >= 2 && attackMe) {
-				power = -1000;
-			} else if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
-				power = -200;
-			} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
-				power = -500;
-			}
+//			else if (bulletSize >= 2 && attackMe) {
+//				power = -1000;
+//			} else if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
+//				power = -200;
+//			} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
+//				power = -500;
+//			}
 			GravePoint gPoint = new GravePoint(tank.x, tank.y, power);
 			points.add(gPoint);
 		}
@@ -366,7 +371,7 @@ public class AntiGraveMover {
 			int power = -500;
 			if (tank.id == leader.id) {
 				if (dis > AppConfig.COMBAT_MAX_DISTANCE) {
-					power = 300;
+					power = -300;
 				} else if (dis < AppConfig.COMBAT_MIN_DISTANCE) {
 					power = -500;
 				}

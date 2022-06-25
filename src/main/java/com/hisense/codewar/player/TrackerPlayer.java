@@ -83,7 +83,7 @@ public class TrackerPlayer implements TankGamePlayInterface {
 			if (needDodge) {
 				boolean dodgeDone = mMovementHelper.dodge(tank, mTick.get());
 			}  else {
-				mMovementHelper.move(tank, mTick.get());
+				mMovementHelper.move(tank, 3,mTick.get());
 			} 
 
 		} catch (Exception e) {

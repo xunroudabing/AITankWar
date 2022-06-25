@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.hisense.codewar.config.AppConfig;
 import com.hisense.codewar.data.CombatMovementHelper;
 import com.hisense.codewar.data.CombatRealTimeDatabase;
+import com.hisense.codewar.data.CombatMovementHelper.MoveEvent;
 import com.hisense.codewar.model.Bullet;
 import com.hisense.codewar.model.Position;
 import com.hisense.codewar.model.Bullet.DodgeSuggestion;
@@ -113,6 +114,24 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 		});
 
 		mDatabase.setToDoList(toDoList);
+		try {
+			Position position = dodage(nowX, nowY, toDoList);
+			if (position != null) {
+				int heading = Utils.angleTo(nowX, nowY, position.x, position.y);
+				MoveEvent event = new MoveEvent();
+				event.startX = nowX;
+				event.startY = nowY;
+				event.dstX = position.x;
+				event.dstY = position.y;
+				event.heading = heading;
+
+				mMovementHelper.addDodge(event);
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.error(e.toString());
+		}
+		
 		return 0;
 	}
 
@@ -191,20 +210,20 @@ public class DodageLvl4Algorithm implements IDodageAlgorithm {
 					minDis = dis;
 				}
 			}
-			//不安全
+			// 不安全
 			else {
-				//被击中次数最少
+				// 被击中次数最少
 				int dis = Utils.distanceTo(nowX, nowY, position.x, position.y);
-				if(hitCount <= minHitCount && dis <= minHitDis) {
+				if (hitCount <= minHitCount && dis <= minHitDis) {
 					minHitCount = hitCount;
 					minHitDis = dis;
-					betterPosition = position;					
+					betterPosition = position;
 				}
 			}
-			
+
 		}
-		
-		if(bestPosition == null) {
+
+		if (bestPosition == null) {
 			return betterPosition;
 		}
 		return bestPosition;

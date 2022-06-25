@@ -101,11 +101,11 @@ public class CombatAttackRadar {
 
 			mTargetTankId = enemyId;
 			mNearestTankId = nearEnemyId;
-			
+
 			TankGameInfo tank = mDatabase.getTankById(mTargetTankId);
 			mTargetTank = new TankGameInfo(mTargetTankId, tank.x, tank.y, tank.r, tank.hp);
 			boolean fireBlock = mDatabase.fireInBlocks(nowX, nowY, mTargetTank.x, mTargetTank.y);
-			if(fireBlock) {
+			if (fireBlock) {
 				TankGameInfo nearTank = mDatabase.getTankById(nearEnemyId);
 				mTargetTank = new TankGameInfo(nearTank.id, nearTank.x, nearTank.y, nearTank.r, nearTank.hp);
 			}
@@ -184,6 +184,19 @@ public class CombatAttackRadar {
 			return null;
 		}
 		return mDatabase.getTankById(mNearestTankId);
+	}
+
+	public TankGameInfo getEnemyTankNear(int range) {
+		List<TankGameInfo> list = mDatabase.getEnemyTanks();
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		for (TankGameInfo tank : list) {
+			int dis = Utils.distanceTo(nowX, nowY, tank.x, tank.y);
+			if (dis <= range) {
+				return tank;
+			}
+		}
+		return null;
 	}
 
 }

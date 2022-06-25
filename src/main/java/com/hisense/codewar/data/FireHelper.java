@@ -149,8 +149,101 @@ public class FireHelper {
 		return false;
 	}
 
+	public boolean fire2(ITtank tank, TankGameInfo target) {
+		boolean guessFireEnable = false;
+		boolean guessFire = false;
+		if (target == null) {
+			log.debug("[Fire]not target!!");
+			return false;
+		}
+
+		int mtankid = mDatabase.getMyTankId();
+		int nowX = mDatabase.getNowX();
+		int nowY = mDatabase.getNowY();
+		int heading = mDatabase.getHeading();
+
+		int dest = Utils.angleTo(nowX, nowY, target.x, target.y);
+		int range = Utils.getFireRange(nowX, nowY, target.x, target.y);
+		range -= 5;
+		int distance = Utils.distanceTo(nowX, nowY, target.x, target.y);
+		// 是否有队友正在向目标射击,有则进行预测射击
+//		boolean friendShooting = CombatFriendBulletDatabase.getInstance().exist(target.id, mTick, mtankid);
+//		if (friendShooting) {
+//			guessFireEnable = true;
+//		}
+		// 预测射击
+		int guessDest = 0;
+		int orignDest = 0;
+		if (guessFireEnable) {
+			Position guessPosition = mEnemyDatabase.guessPositionByPattern(target.id);
+			if (guessPosition != null) {
+				guessDest = Utils.angleTo(nowX, nowY, guessPosition.x, guessPosition.y);
+				orignDest = dest;
+				dest = guessDest;
+				guessFire = true;
+				log.debug(String.format("[Guess-Fire]me[%d]-->enemyid[%d]currentPos[%d,%d]guessPos[%d,%d]", mtankid,
+						target.id, target.x, target.y, guessPosition.x, guessPosition.y));
+			}
+		}
+
+		// 射界内，不需要转向，直接开火
+		if (heading > Math.abs(dest - range) && heading < Math.abs(dest + range)) {
+			// 避免误伤
+			if (willHitFriends(dest)) {
+				return false;
+			}
+			if (distance <= 396) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire2]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return false;
+			} else if (distance > 396 && distance <= 594) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire2]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return true;
+			}
+		} else {
+			// 避免误伤
+			if (willHitFriends(dest)) {
+				return false;
+			}
+			if (distance <= 396) {
+				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
+				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
+				mTick = 0;
+				log.info(String.format(
+						"[Fire2]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
+						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+				if (mStatistics != null) {
+					mStatistics.fireCounter();
+				}
+				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
+				return true;
+			}
+		}
+		log.info(String.format(
+				"[Fire]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]", mtankid,
+				guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
+
+		return false;
+	}
+
 	public boolean fire2(ITtank tank) {
-		boolean guessFireEnable = true;
+		boolean guessFireEnable = false;
 		boolean guessFire = false;
 		TankGameInfo target = mAttackRadar.getTargetTank();
 		if (target == null) {
@@ -188,15 +281,6 @@ public class FireHelper {
 
 		// 射界内，不需要转向，直接开火
 		if (heading > Math.abs(dest - range) && heading < Math.abs(dest + range)) {
-			if (distance <= 70) {
-				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
-				mTick = 0;
-				if (mStatistics != null) {
-					mStatistics.fireCounter();
-				}
-				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
-				return false;
-			}
 			// 避免误伤
 			if (willHitFriends(dest)) {
 				return false;
@@ -226,19 +310,6 @@ public class FireHelper {
 				return true;
 			}
 		} else {
-			if (distance <= 70) {
-				tank.tank_action(TankGameActionType.TANK_ACTION_ROTATE, dest);
-				tank.tank_action(TankGameActionType.TANK_ACTION_FIRE, dest);
-				mTick = 0;
-				log.info(String.format(
-						"[Fire2]me[%d]guessFire[%b]pos[%d,%d]dest[%d]oridest[%d]-->tankid[%d]pos[%d,%d]heading[%d]",
-						mtankid, guessFire, nowX, nowY, dest, orignDest, target.id, target.x, target.y, target.r));
-				if (mStatistics != null) {
-					mStatistics.fireCounter();
-				}
-				CombatFriendBulletDatabase.getInstance().createBullet(mtankid, target.id, target.x, target.y, dest);
-				return true;
-			}
 			// 避免误伤
 			if (willHitFriends(dest)) {
 				return false;
